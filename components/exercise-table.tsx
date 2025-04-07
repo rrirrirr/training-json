@@ -14,7 +14,11 @@ interface ExerciseTableProps {
   compact?: boolean
 }
 
-export default function ExerciseTable({ exercises, trainingPlan, compact = false }: ExerciseTableProps) {
+export default function ExerciseTable({
+  exercises,
+  trainingPlan,
+  compact = false,
+}: ExerciseTableProps) {
   const [expandedExercise, setExpandedExercise] = useState<string | number | null>(null)
 
   const toggleExpand = (exerciseId: string | number) => {
@@ -30,9 +34,15 @@ export default function ExerciseTable({ exercises, trainingPlan, compact = false
       <table className="min-w-full divide-y divide-gray-200">
         <thead>
           <tr>
-            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Övning</th>
-            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Set</th>
-            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Reps</th>
+            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Övning
+            </th>
+            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Set
+            </th>
+            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Reps
+            </th>
             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Intensitet
             </th>
@@ -53,9 +63,15 @@ export default function ExerciseTable({ exercises, trainingPlan, compact = false
 
             return (
               <React.Fragment key={`${exerciseIdentifier}-${index}`}>
-                <tr className={index % 2 === 0 ? "bg-white bg-opacity-50" : "bg-gray-50 bg-opacity-50"}>
+                <tr
+                  className={
+                    index % 2 === 0 ? "bg-white bg-opacity-50" : "bg-gray-50 bg-opacity-50"
+                  }
+                >
                   <td className="px-3 py-2 whitespace-nowrap">
-                    <span className={combinedData.isMainLift ? "font-bold" : ""}>{combinedData.name}</span>
+                    <span className={combinedData.isMainLift ? "font-bold" : ""}>
+                      {combinedData.name}
+                    </span>
                   </td>
                   <td className="px-3 py-2 text-center whitespace-nowrap">{exercise.sets}</td>
                   <td className="px-3 py-2 text-center whitespace-nowrap">{exercise.reps}</td>
@@ -64,7 +80,10 @@ export default function ExerciseTable({ exercises, trainingPlan, compact = false
                   </td>
                   {!compact && (
                     <td className="px-3 py-2 text-sm">
-                      <CommentDisplay comment={exercise.comment || ""} commentStyle={exercise.commentStyle} />
+                      <CommentDisplay
+                        comment={exercise.comment || ""}
+                        commentStyle={exercise.commentStyle}
+                      />
                     </td>
                   )}
                   <td className="px-3 py-2 text-center">
@@ -74,7 +93,11 @@ export default function ExerciseTable({ exercises, trainingPlan, compact = false
                       className="h-6 w-6 p-0"
                       onClick={() => toggleExpand(exerciseIdentifier)}
                     >
-                      {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      {isExpanded ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
                     </Button>
                   </td>
                 </tr>
@@ -92,7 +115,8 @@ export default function ExerciseTable({ exercises, trainingPlan, compact = false
 
                         {combinedData.targetMuscles && combinedData.targetMuscles.length > 0 && (
                           <div className="mb-2">
-                            <span className="font-medium">Målmuskler:</span> {combinedData.targetMuscles.join(", ")}
+                            <span className="font-medium">Målmuskler:</span>{" "}
+                            {combinedData.targetMuscles.join(", ")}
                           </div>
                         )}
 
@@ -104,7 +128,8 @@ export default function ExerciseTable({ exercises, trainingPlan, compact = false
 
                         {(exercise.tips || combinedData.generalTips) && (
                           <div className="mb-2">
-                            <span className="font-medium">Tips:</span> {exercise.tips || combinedData.generalTips}
+                            <span className="font-medium">Tips:</span>{" "}
+                            {exercise.tips || combinedData.generalTips}
                           </div>
                         )}
 
@@ -134,8 +159,14 @@ export default function ExerciseTable({ exercises, trainingPlan, compact = false
 }
 
 // Helper component to format and highlight the load
-function LoadDisplay({ load, loadStyle }: { load: string; loadStyle?: ExerciseInstance["loadStyle"] }) {
-  if (load === "-") return <span>-</span>
+function LoadDisplay({
+  load,
+  loadStyle,
+}: {
+  load: string
+  loadStyle?: ExerciseInstance["loadStyle"]
+}) {
+  if (!load || load === "-") return <span>-</span>
 
   // Apply custom styling if provided
   const style: React.CSSProperties = {}
@@ -144,7 +175,7 @@ function LoadDisplay({ load, loadStyle }: { load: string; loadStyle?: ExerciseIn
   }
 
   // Check if the load contains a kg value
-  const hasKg = load.toLowerCase().includes("kg")
+  const hasKg = typeof load === "string" && load.toLowerCase().includes("kg")
 
   if (hasKg) {
     // Extract the kg value and the rest of the text
@@ -170,7 +201,10 @@ function LoadDisplay({ load, loadStyle }: { load: string; loadStyle?: ExerciseIn
 function CommentDisplay({
   comment,
   commentStyle,
-}: { comment: string; commentStyle?: ExerciseInstance["commentStyle"] }) {
+}: {
+  comment: string
+  commentStyle?: ExerciseInstance["commentStyle"]
+}) {
   if (!comment) return null
 
   // Apply custom styling if provided
@@ -188,4 +222,3 @@ function CommentDisplay({
     </span>
   )
 }
-
