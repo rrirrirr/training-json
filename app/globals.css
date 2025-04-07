@@ -2,14 +2,107 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-rgb: 245, 247, 250;
+@layer base {
+  :root {
+ --radius: 0.5rem;
+   --background: oklch(1 0 0);
+   --foreground: oklch(0.141 0.005 285.823);
+   --card: oklch(1 0 0);
+   --card-foreground: oklch(0.141 0.005 285.823);
+   --popover: oklch(1 0 0);
+   --popover-foreground: oklch(0.141 0.005 285.823);
+   --primary: oklch(0.606 0.25 292.717);
+   --primary-foreground: oklch(0.969 0.016 293.756);
+   --secondary: oklch(0.967 0.001 286.375);
+   --secondary-foreground: oklch(0.21 0.006 285.885);
+   --muted: oklch(0.967 0.001 286.375);
+   --muted-foreground: oklch(0.552 0.016 285.938);
+   --accent: oklch(0.967 0.001 286.375);
+   --accent-foreground: oklch(0.21 0.006 285.885);
+   --destructive: oklch(0.577 0.245 27.325);
+   --border: oklch(0.92 0.004 286.32);
+   --input: oklch(0.92 0.004 286.32);
+   --ring: oklch(0.606 0.25 292.717);
+   --chart-1: oklch(0.646 0.222 41.116);
+   --chart-2: oklch(0.6 0.118 184.704);
+   --chart-3: oklch(0.398 0.07 227.392);
+   --chart-4: oklch(0.828 0.189 84.429);
+   --chart-5: oklch(0.769 0.188 70.08);
+   --sidebar: oklch(0.985 0 0);
+   --sidebar-foreground: oklch(0.141 0.005 285.823);
+   --sidebar-primary: oklch(0.606 0.25 292.717);
+   --sidebar-primary-foreground: oklch(0.969 0.016 293.756);
+   --sidebar-accent: oklch(0.967 0.001 286.375);
+   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
+   --sidebar-border: oklch(0.92 0.004 286.32);
+   --sidebar-ring: oklch(0.606 0.25 292.717);
+
+   --session-gym-bg: 0.984 0.03 247;     /* Light Blueish */
+    --session-gym-border: 0.906 0.09 250;
+    --session-barmark-bg: 0.978 0.02 150;  /* Light Greenish */
+    --session-barmark-border: 0.92 0.08 150;
+    --session-egen-vila-bg: 0.975 0.004 260; /* Light Grayish */
+    --session-egen-vila-border: 0.91 0.006 260;
+    --session-default-bg-values: var(--card); /* Store card values */
+    --session-default-border-values: var(--border); /* Store border values */
+  }
+
+  .dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+    
+    /* Chart colors for dark mode */
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    
+    /* Sidebar variables for dark mode */
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --session-gym-bg: 0.24 0.08 250;     /* Dark Blueish */
+    --session-gym-border: 0.35 0.11 250;
+    --session-barmark-bg: 0.26 0.05 150;  /* Dark Greenish */
+    --session-barmark-border: 0.37 0.08 150;
+    --session-egen-vila-bg: 0.25 0.005 260; /* Dark Grayish */
+    --session-egen-vila-border: 0.36 0.008 260;
+    --session-default-bg-values: var(--card); /* Store card values */
+    --session-default-border-values: var(--border); /* Store border values */
+  }
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
 /* Custom scrollbar for better UX */
@@ -57,14 +150,3 @@ body {
     -webkit-overflow-scrolling: touch;
   }
 }
-
-/* Ensure cards don't get too wide */
-.max-w-4xl {
-  max-width: 64rem;
-}
-
-/* Ensure tables don't cause horizontal scrolling within cards */
-.overflow-hidden {
-  overflow: hidden;
-}
-
