@@ -200,7 +200,7 @@ function LoadDisplay({ load, loadStyle }: { load: string; loadStyle?: any }) {
   }
 
   // Check if the load contains a kg value
-  const hasKg = load.toLowerCase().includes("kg")
+  const hasKg = typeof load === "string" && load.toLowerCase().includes("kg")
 
   if (hasKg) {
     // Extract the kg value and the rest of the text
