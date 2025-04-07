@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import type { TrainingPlanData } from "@/types/training-plan"
 import { fetchTrainingPlan } from "@/utils/fetch-training-plan"
-import Sidebar from "@/components/sidebar"
+import AppSidebar from "@/components/app-sidebar"
 import TabNavigation from "@/components/tab-navigation"
 import WeeklyView from "@/components/weekly-view"
 import MonthlyView from "@/components/monthly-view"
@@ -11,8 +11,11 @@ import AppHeader from "@/components/app-header"
 import { Button } from "@/components/ui/button"
 import { BookOpen, Loader2, Upload } from "lucide-react"
 import { exampleTrainingPlan } from "@/utils/example-training-plan"
+import { TrainingPlanProvider, useTrainingPlans } from "@/contexts/training-plan-context"
+import { SidebarProvider } from "@/components/ui/sidebar"
 
-export default function TrainingPlanApp() {
+function TrainingPlanContent() {
+  const { currentPlan, addPlan } = useTrainingPlans()
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null)
   const [selectedMonth, setSelectedMonth] = useState(1)
   const [trainingPlan, setTrainingPlan] = useState<TrainingPlanData | null>(null)
@@ -37,6 +40,35 @@ export default function TrainingPlanApp() {
       }
     }
   }
+
+  // Set training plan data from context
+  useEffect(() => {
+    if (currentPlan) {
+      handleImportData(currentPlan.data)
+    }
+  }, [currentPlan])
+
+  // Handle custom events for creating new plan
+  useEffect(() => {
+    const handleCreatePlan = (e: CustomEvent) => {
+      const { name } = e.detail || {}
+      if (name) {
+        // Create empty training plan
+        const emptyPlan = {
+          exerciseDefinitions: [],
+          weeks: [],
+          monthBlocks: [],
+        }
+        addPlan(name, emptyPlan)
+      }
+    }
+
+    window.addEventListener("create-training-plan", handleCreatePlan as EventListener)
+
+    return () => {
+      window.removeEventListener("create-training-plan", handleCreatePlan as EventListener)
+    }
+  }, [addPlan])
 
   // Handle loading example data
   const handleLoadExample = () => {
@@ -85,7 +117,6 @@ export default function TrainingPlanApp() {
   if (!trainingPlan) {
     return (
       <div className="flex flex-col h-screen">
-        <AppHeader onImportData={handleImportData} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-lg p-8 bg-blue-50 rounded-lg border border-blue-200">
             <h2 className="text-2xl font-bold text-blue-700 mb-4">Välkommen till Träningsplan</h2>
@@ -120,7 +151,6 @@ export default function TrainingPlanApp() {
   if (error) {
     return (
       <div className="flex flex-col h-screen">
-        <AppHeader onImportData={handleImportData} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-md p-6 bg-red-50 rounded-lg border border-red-200">
             <h2 className="text-xl font-bold text-red-700 mb-2">Ett fel uppstod</h2>
@@ -147,7 +177,6 @@ export default function TrainingPlanApp() {
   if (trainingPlan.weeks.length === 0) {
     return (
       <div className="flex flex-col h-screen">
-        <AppHeader onImportData={handleImportData} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-md p-6 bg-yellow-50 rounded-lg border border-yellow-200">
             <h2 className="text-xl font-bold text-yellow-700 mb-2">Ingen träningsplan laddad</h2>
@@ -177,13 +206,11 @@ export default function TrainingPlanApp() {
 
   // Main app view
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      <AppHeader onImportData={handleImportData} />
-
+    <div className="flex flex-col h-screen bg-background">
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - hidden on mobile, shown on larger screens */}
         <div className="hidden md:block h-full">
-          <Sidebar
+          <AppSidebar
             weeks={allWeeks}
             selectedWeek={selectedWeek}
             onSelectWeek={handleWeekSelect}
@@ -198,6 +225,8 @@ export default function TrainingPlanApp() {
 
         {/* Main content */}
         <div className="flex flex-col flex-1 overflow-hidden">
+          <AppHeader onImportData={handleImportData} />
+
           {/* Mobile-only Tab Navigation */}
           <div className="md:hidden">
             <TabNavigation
@@ -249,5 +278,16 @@ export default function TrainingPlanApp() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Wrap component with providers
+export default function TrainingPlanApp() {
+  return (
+    <TrainingPlanProvider>
+      <SidebarProvider>
+        <TrainingPlanContent />
+      </SidebarProvider>
+    </TrainingPlanProvider>
   )
 }

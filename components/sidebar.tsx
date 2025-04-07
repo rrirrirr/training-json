@@ -1,8 +1,9 @@
 "use client"
 
 import type { Week, MonthBlock } from "@/types/training-plan"
-import { Calendar, List } from "lucide-react"
+import { Calendar, List, Plus, FilePlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useTrainingPlans } from "@/contexts/training-plan-context"
 
 interface SidebarProps {
   weeks: number[]
@@ -27,6 +28,7 @@ export default function Sidebar({
   viewMode,
   onViewModeChange,
 }: SidebarProps) {
+  const { currentPlan } = useTrainingPlans()
   // Function to get week type (A/B) and special status (deload/test)
   const getWeekInfo = (weekNumber: number) => {
     const weekData = trainingData.find((w) => w.weekNumber === weekNumber)
@@ -40,8 +42,21 @@ export default function Sidebar({
   return (
     <div className="w-64 bg-gray-800 text-white h-full flex flex-col shadow-lg">
       <div className="p-4 border-b border-gray-700">
-        <h1 className="text-xl font-bold">Träningsplan</h1>
-        <p className="text-sm text-gray-400">Träningsöversikt</p>
+        <div className="flex justify-between items-center mb-1">
+          <h1 className="text-xl font-bold">Träningsplan</h1>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-gray-400 hover:text-white hover:bg-gray-700"
+            title="Create new training plan"
+            onClick={() => window.dispatchEvent(new CustomEvent("new-training-plan"))}
+          >
+            <FilePlus className="h-4 w-4" />
+          </Button>
+        </div>
+        <p className="text-sm text-gray-400">
+          {currentPlan ? currentPlan.name : "Träningsöversikt"}
+        </p>
       </div>
 
       {/* View mode toggle */}
