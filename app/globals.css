@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-rgb: 245, 247, 250;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+}
+
+/* Custom scrollbar for better UX */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Make tables more mobile-friendly */
+  table {
+    font-size: 0.875rem;
+  }
+
+  th,
+  td {
+    padding: 0.5rem 0.25rem !important;
+  }
+
+  /* Adjust spacing for mobile */
+  .p-4 {
+    padding: 0.75rem;
+  }
+
+  /* Make sure content doesn't overflow on small screens */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Ensure cards don't get too wide */
+.max-w-4xl {
+  max-width: 64rem;
+}
+
+/* Ensure tables don't cause horizontal scrolling within cards */
+.overflow-hidden {
+  overflow: hidden;
+}
+
