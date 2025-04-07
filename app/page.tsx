@@ -9,45 +9,16 @@ import WeeklyView from "@/components/weekly-view"
 import MonthlyView from "@/components/monthly-view"
 import AppHeader from "@/components/app-header"
 import { Button } from "@/components/ui/button"
-import { BookOpen, Loader2 } from "lucide-react"
+import { BookOpen, Loader2, Upload } from "lucide-react"
 import { exampleTrainingPlan } from "@/utils/example-training-plan"
 
 export default function TrainingPlanApp() {
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null)
   const [selectedMonth, setSelectedMonth] = useState(1)
   const [trainingPlan, setTrainingPlan] = useState<TrainingPlanData | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<"week" | "month">("month")
-
-  // Fetch training plan data
-  useEffect(() => {
-    async function loadTrainingPlan() {
-      try {
-        setLoading(true)
-        const data = await fetchTrainingPlan()
-        setTrainingPlan(data)
-
-        // Set initial selections
-        if (data.weeks.length > 0) {
-          setSelectedWeek(data.weeks[0].weekNumber)
-        }
-
-        if (data.monthBlocks.length > 0) {
-          setSelectedMonth(data.monthBlocks[0].id)
-        }
-
-        setError(null)
-      } catch (err) {
-        setError("Failed to load training plan. Please import a JSON file.")
-        console.error(err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadTrainingPlan()
-  }, [])
 
   // Handle importing new data
   const handleImportData = (data: TrainingPlanData) => {
@@ -73,7 +44,9 @@ export default function TrainingPlanApp() {
   }
 
   // Find the week data for the selected week
-  const weekData = selectedWeek ? trainingPlan?.weeks.find((week) => week.weekNumber === selectedWeek) : null
+  const weekData = selectedWeek
+    ? trainingPlan?.weeks.find((week) => week.weekNumber === selectedWeek)
+    : null
 
   // Find the month data for the selected month
   const monthData = trainingPlan?.monthBlocks.find((block) => block.id === selectedMonth)
@@ -108,23 +81,90 @@ export default function TrainingPlanApp() {
     )
   }
 
-  // Error or no data state
-  if (error || !trainingPlan || trainingPlan.weeks.length === 0) {
+  // No data state - Welcome screen
+  if (!trainingPlan) {
     return (
       <div className="flex flex-col h-screen">
         <AppHeader onImportData={handleImportData} />
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-center max-w-md p-6 bg-blue-50 rounded-lg border border-blue-200">
-            <h2 className="text-xl font-bold text-blue-700 mb-2">
-              {error ? "Ett fel uppstod" : "Ingen träningsplan laddad"}
-            </h2>
-            <p className="text-gray-700 mb-4">{error || "Importera en träningsplan för att komma igång."}</p>
+          <div className="text-center max-w-lg p-8 bg-blue-50 rounded-lg border border-blue-200">
+            <h2 className="text-2xl font-bold text-blue-700 mb-4">Välkommen till Träningsplan</h2>
+            <p className="text-gray-700 mb-6">
+              Börja genom att importera din egen träningsplan eller ladda ett exempelprogram för att
+              utforska applikationen.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-6">
+              <Button
+                onClick={handleLoadExample}
+                variant="outline"
+                className="flex items-center justify-center"
+              >
+                <BookOpen className="h-4 w-4 mr-2" />
+                Ladda Exempelplan
+              </Button>
+              <Button
+                onClick={() => document.getElementById("import-button")?.click()}
+                className="flex items-center justify-center"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Importera Din Plan
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex flex-col h-screen">
+        <AppHeader onImportData={handleImportData} />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-md p-6 bg-red-50 rounded-lg border border-red-200">
+            <h2 className="text-xl font-bold text-red-700 mb-2">Ett fel uppstod</h2>
+            <p className="text-gray-700 mb-4">{error}</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
               <Button onClick={handleLoadExample} className="flex items-center">
                 <BookOpen className="h-4 w-4 mr-2" />
-                Load Example Plan
+                Ladda Exempelplan
               </Button>
-              <Button onClick={() => document.getElementById("import-button")?.click()}>Import Your Own Plan</Button>
+              <Button
+                onClick={() => document.getElementById("import-button")?.click()}
+                variant="outline"
+              >
+                Försök Igen
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // No weeks in the plan
+  if (trainingPlan.weeks.length === 0) {
+    return (
+      <div className="flex flex-col h-screen">
+        <AppHeader onImportData={handleImportData} />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-md p-6 bg-yellow-50 rounded-lg border border-yellow-200">
+            <h2 className="text-xl font-bold text-yellow-700 mb-2">Ingen träningsplan laddad</h2>
+            <p className="text-gray-700 mb-4">
+              Den importerade JSON-filen innehåller inga träningsveckor.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
+              <Button onClick={handleLoadExample} className="flex items-center">
+                <BookOpen className="h-4 w-4 mr-2" />
+                Ladda Exempelplan
+              </Button>
+              <Button
+                onClick={() => document.getElementById("import-button")?.click()}
+                variant="outline"
+              >
+                Importera Annan Plan
+              </Button>
             </div>
           </div>
         </div>
@@ -135,6 +175,7 @@ export default function TrainingPlanApp() {
   // Get all week numbers for the sidebar
   const allWeeks = trainingPlan.weeks.map((week) => week.weekNumber).sort((a, b) => a - b)
 
+  // Main app view
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       <AppHeader onImportData={handleImportData} />
@@ -192,7 +233,9 @@ export default function TrainingPlanApp() {
               <MonthlyView monthBlock={monthData} trainingPlan={trainingPlan} />
             ) : (
               <div className="text-center p-8">
-                <p className="text-gray-500">Välj en månad eller vecka för att visa träningsplanen</p>
+                <p className="text-gray-500">
+                  Välj en månad eller vecka för att visa träningsplanen
+                </p>
               </div>
             )}
           </div>
@@ -201,4 +244,3 @@ export default function TrainingPlanApp() {
     </div>
   )
 }
-
