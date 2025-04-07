@@ -182,25 +182,32 @@ export default function TrainingPlanApp() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - hidden on mobile, shown on larger screens */}
-        <div className="hidden md:block">
+        <div className="hidden md:block h-full">
           <Sidebar
             weeks={allWeeks}
             selectedWeek={selectedWeek}
             onSelectWeek={handleWeekSelect}
+            months={trainingPlan.monthBlocks}
+            selectedMonth={selectedMonth}
+            onSelectMonth={handleMonthSelect}
             trainingData={trainingPlan.weeks}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
           />
         </div>
 
         {/* Main content */}
         <div className="flex flex-col flex-1 overflow-hidden">
-          {/* Tab Navigation */}
-          <TabNavigation
-            months={trainingPlan.monthBlocks}
-            selectedMonth={selectedMonth}
-            onSelectMonth={handleMonthSelect}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-          />
+          {/* Mobile-only Tab Navigation */}
+          <div className="md:hidden">
+            <TabNavigation
+              months={trainingPlan.monthBlocks}
+              selectedMonth={selectedMonth}
+              onSelectMonth={handleMonthSelect}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+            />
+          </div>
 
           {/* Mobile Week Selector */}
           <div className="md:hidden p-2 bg-white border-b border-gray-200">
