@@ -2,12 +2,13 @@
 "use client"
 
 import { useState } from "react" // Removed useEffect as context handles loading
-import { Calendar, List, FilePlus, ChevronDown, Pencil, Trash2, Plus, FileText } from "lucide-react"
+import { Calendar, List, FilePlus, ChevronDown, Pencil, Trash2, Plus, FileText, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useTrainingPlans } from "@/contexts/training-plan-context" // Assuming context provides everything needed now
 import PlanNameDialog from "./plan-name-dialog"
 import JsonEditor from "./json-editor"
+import { useInfoModal } from "@/components/modals/info-modal" // Added for info modal
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,6 +70,9 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
   const [planToEdit, setPlanToEdit] = useState<SavedTrainingPlan | null>(null)
   const [planToDelete, setPlanToDelete] = useState<SavedTrainingPlan | null>(null)
   const [planToViewJson, setPlanToViewJson] = useState<SavedTrainingPlan | null>(null)
+
+  // Get access to info modal
+  const infoModalStore = useInfoModal()
 
   // Function to get week type (uses trainingData from context)
   const getWeekInfo = (weekNumber: number) => {
@@ -324,7 +328,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
         )}
       </SidebarContent>
 
-      {/* Footer: Legend and Toggle */}
+      {/* Footer: Legend and Info Button */}
       <SidebarFooter className={cn(!isOpen && "items-center")}>
         {isOpen && ( // Only show legend if open
           <div className="p-4 text-sm text-muted-foreground">
@@ -338,9 +342,20 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
             </div>
           </div>
         )}
-        {/* Sidebar Trigger button is handled by LayoutClient/Header now */}
-        {/* If you need a toggle button *inside* the sidebar itself, add it here */}
-        {/* <div className="p-4"><SidebarTrigger /></div> */}
+        
+        {/* Info Button in Footer */}
+        <div className="p-4 border-t border-border">
+          <Button
+            variant="ghost"
+            size={isOpen ? "default" : "icon"}
+            onClick={() => infoModalStore.open()}
+            className={cn("w-full", isOpen && "justify-start")}
+            aria-label="Information"
+          >
+            <Info className={cn("h-4 w-4", isOpen && "mr-2")} />
+            {isOpen && "Format & Information"}
+          </Button>
+        </div>
       </SidebarFooter>
 
       {/* Dialogs remain the same */}
@@ -375,16 +390,13 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
       >
         <DialogContent>
           <DialogHeader>
-            {" "}
-            <DialogTitle>Delete Training Plan</DialogTitle>{" "}
+            <DialogTitle>Delete Training Plan</DialogTitle>
             <DialogDescription>
-              {" "}
               Are you sure you want to delete "{planToDelete?.name}"? This action cannot be
-              undone.{" "}
-            </DialogDescription>{" "}
+              undone.
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            {" "}
             <Button
               variant="outline"
               onClick={() => {
@@ -392,13 +404,11 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
                 setPlanToDelete(null)
               }}
             >
-              {" "}
-              Cancel{" "}
-            </Button>{" "}
+              Cancel
+            </Button>
             <Button variant="destructive" onClick={handleConfirmDelete}>
-              {" "}
-              Delete{" "}
-            </Button>{" "}
+              Delete
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

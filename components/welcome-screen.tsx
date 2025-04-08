@@ -1,11 +1,10 @@
 "use client"
 
-import { Upload, BookOpen, Info, FilePlus, ChevronRight, Sparkles } from "lucide-react"
+import { Upload, BookOpen, FilePlus, ChevronRight, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import type { TrainingPlanData } from "@/types/training-plan"
 import { useUploadModal } from "@/components/modals/upload-modal"
-import { useInfoModal } from "@/components/modals/info-modal"
 import { useAiInfoModal } from "@/components/modals/ai-info-modal"
 import { useNewPlanModal } from "@/components/modals/new-plan-modal"
 
@@ -22,7 +21,6 @@ export default function WelcomeScreen({
 }: WelcomeScreenProps) {
   // Get the modal stores directly
   const uploadModalStore = useUploadModal()
-  const infoModalStore = useInfoModal()
   const aiInfoModalStore = useAiInfoModal()
   const newPlanModalStore = useNewPlanModal()
 
