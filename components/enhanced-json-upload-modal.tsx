@@ -14,10 +14,11 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import type { TrainingPlanData } from "@/types/training-plan"
-import { AlertCircle, Upload, Sparkles } from "lucide-react"
+import { AlertCircle, Upload, Sparkles, FilePlus, FileText, ExternalLink, ArrowLeft } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
 import { useAiInfoModal } from "@/components/modals/ai-info-modal"
+import Link from "next/link"
 
 interface EnhancedJsonUploadModalProps {
   isOpen: boolean
@@ -121,19 +122,23 @@ export default function EnhancedJsonUploadModal({
           </DialogDescription>
         </DialogHeader>
 
-        {/* AI Generation Link */}
-        <div className="bg-primary/5 p-4 rounded-lg mb-4">
+        {/* AI Generation Link - Enhanced with a clearer button */}
+        <div className="bg-primary/10 p-4 rounded-lg mb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <Sparkles className="h-5 w-5 mr-2 text-primary" />
-              <span className="font-medium">Need help creating a plan?</span>
+              <div>
+                <span className="font-medium block">Coming from an AI assistant?</span>
+                <span className="text-xs text-muted-foreground">Switch to the AI guide to get started</span>
+              </div>
             </div>
             <Button 
-              variant="link" 
               onClick={handleOpenAiGuide}
-              className="text-primary"
+              className="flex items-center gap-1"
+              size="sm"
             >
-              Create a plan with AI
+              <ArrowLeft className="h-4 w-4" />
+              AI Guide
             </Button>
           </div>
         </div>
@@ -186,6 +191,37 @@ export default function EnhancedJsonUploadModal({
           </Alert>
         )}
 
+        <div className="mt-4 flex flex-col space-y-3">
+          <div className="bg-primary/5 p-4 rounded-lg flex justify-between items-center">
+            <div>
+              <h3 className="text-sm font-medium">Need more information?</h3>
+              <p className="text-xs text-muted-foreground">View our documentation for JSON format details</p>
+            </div>
+            <Link href="/documentation" passHref>
+              <Button variant="outline" size="sm" className="flex items-center gap-1">
+                <FileText className="h-4 w-4" />
+                Documentation
+              </Button>
+            </Link>
+          </div>
+          
+          <div className="bg-muted p-4 rounded-lg flex justify-between items-center">
+            <div>
+              <h3 className="text-sm font-medium">Created JSON with AI?</h3>
+              <p className="text-xs text-muted-foreground">Already have JSON from an AI assistant?</p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setActiveTab("paste")}
+              className="flex items-center gap-1"
+            >
+              <FilePlus className="h-4 w-4" />
+              Paste JSON
+            </Button>
+          </div>
+        </div>
+
         <Separator className="my-2" />
         
         {/* Note about required metadata */}
@@ -206,10 +242,16 @@ export default function EnhancedJsonUploadModal({
           </pre>
         </div>
 
-        <DialogFooter className="mt-4">
+        <DialogFooter className="mt-4 space-x-2">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
+          <Link href="/documentation" passHref>
+            <Button variant="secondary" className="flex items-center gap-1">
+              <FileText className="h-4 w-4" />
+              Documentation
+            </Button>
+          </Link>
         </DialogFooter>
       </DialogContent>
     </Dialog>

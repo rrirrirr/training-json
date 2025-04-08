@@ -1,7 +1,7 @@
 "use client"
 
 import { create } from 'zustand'
-import JsonInfoModal from '@/components/json-info-modal'
+import AiAssistantDialog from '@/components/ai-assistant-dialog' // Use our new component
 
 interface AiInfoModalStore {
   isOpen: boolean
@@ -19,10 +19,9 @@ export function AiInfoModal() {
   const { isOpen, close } = useAiInfoModal()
   
   return (
-    <JsonInfoModal 
+    <AiAssistantDialog 
       isOpen={isOpen} 
-      onClose={close} 
-      defaultTab="ai" 
+      onClose={close}
     />
   )
 }

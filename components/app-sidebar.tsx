@@ -12,6 +12,7 @@ import { useInfoModal } from "@/components/modals/info-modal"
 import { useUploadModal } from "@/components/modals/upload-modal"
 import BlockSelector from "./shared/block-selector"
 import WeekSelector from "./shared/week-selector"
+import Link from "next/link"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -289,6 +290,21 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
             </div>
           </div>
         )}
+        
+        {/* Documentation Link - NEW */}
+        <div className="p-4 border-t border-border">
+          <Link href="/documentation" passHref>
+            <Button
+              variant="ghost"
+              size={isOpen ? "default" : "icon"}
+              className={cn("w-full", isOpen && "justify-start")}
+              aria-label="Documentation"
+            >
+              <FileText className={cn("h-4 w-4", isOpen && "mr-2")} />
+              {isOpen && "Documentation"}
+            </Button>
+          </Link>
+        </div>
         
         {/* Info Button in Footer */}
         <div className="p-4 border-t border-border">

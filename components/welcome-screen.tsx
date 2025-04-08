@@ -1,10 +1,11 @@
 "use client"
 
-import { Upload, BookOpen, ChevronRight, Sparkles } from "lucide-react"
+import { Upload, BookOpen, ChevronRight, Sparkles, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { TrainingPlanData } from "@/types/training-plan"
 import { useUploadModal } from "@/components/modals/upload-modal"
 import { useAiInfoModal } from "@/components/modals/ai-info-modal"
+import Link from "next/link"
 
 interface WelcomeScreenProps {
   onLoadExample: () => void
@@ -46,10 +47,19 @@ export default function WelcomeScreen({
             >
               <div className="flex items-center">
                 <Sparkles className="h-6 w-6 mr-3" />
-                <span>Skapa Träningsplan med AI</span>
+                <span>Skapa AI Träningsplan</span>
               </div>
               <ChevronRight className="h-5 w-5 opacity-80" />
             </Button>
+          </div>
+
+          {/* Documentation Link */}
+          <div className="text-center mb-6">
+            <Link href="/documentation" passHref>
+              <Button variant="link" className="text-primary">
+                View Documentation <ExternalLink className="h-4 w-4 ml-1" />
+              </Button>
+            </Link>
           </div>
 
           {/* Secondary Options */}
