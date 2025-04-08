@@ -1,4 +1,3 @@
-// components/mobile-navbar.tsx
 "use client"
 
 import { Button } from "@/components/ui/button"
@@ -18,7 +17,7 @@ interface MobileNavBarProps {
   onJumpToSelection: (monthId: number, weekId: number | null) => void
 }
 
-export function MobileNavBar({
+export default function MobileNavBar({
   months,
   weeks,
   selectedMonth,
@@ -54,83 +53,63 @@ export function MobileNavBar({
   const mainButtonText = selectedWeek !== null ? `Vecka ${selectedWeek}` : `Block ${selectedMonth}`
 
   return (
-    <div className="md:hidden p-2 border-b bg-white flex items-center justify-between space-x-2">
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={handlePrevWeek}
-        disabled={selectedWeek === null || selectedWeek === weeks[0]}
-      >
-        <ChevronLeft className="h-4 w-4" />
-      </Button>
-
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetTrigger asChild>
-          <Button variant="outline" className="flex-grow text-center">
-            {mainButtonText}
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="bottom" className="h-[80vh] flex flex-col p-0">
-          <SheetHeader className="p-6 pb-2">
-            <SheetTitle>Välj period</SheetTitle>
-          </SheetHeader>
-          <Tabs defaultValue="blocks" className="flex-1 flex flex-col overflow-hidden px-6 pb-6">
-            <TabsList className="w-full flex mb-2">
-              <TabsTrigger className="flex-grow" value="blocks">
-                Block
-              </TabsTrigger>
-              <TabsTrigger className="flex-grow" value="weeks">
-                Veckor
-              </TabsTrigger>
-            </TabsList>
-            {/* Block Selection List */}
-            <TabsContent value="blocks" className="flex-1 overflow-y-auto">
-              <div className="space-y-1">
-                {months.map((block) => (
-                  <button
-                    key={block.id}
-                    onClick={() => handleSheetSelection(block.id, null)}
-                    className={cn(
-                      "w-full text-left p-2 rounded-md text-sm hover:bg-accent",
-                      selectedMonth === block.id && selectedWeek === null
-                        ? "bg-accent font-semibold"
-                        : ""
-                    )}
-                  >
-                    {block.name}
-                  </button>
-                ))}
-              </div>
-            </TabsContent>
-            {/* Week Selection List */}
-            <TabsContent value="weeks" className="flex-1 overflow-y-auto">
-              <div className="space-y-1">
-                {weeks.map((week) => (
-                  <button
-                    key={week}
-                    onClick={() => handleSheetSelection(selectedMonth, week)}
-                    className={cn(
-                      "w-full text-left p-2 rounded-md text-sm hover:bg-accent",
-                      selectedWeek === week ? "bg-accent font-semibold" : ""
-                    )}
-                  >
-                    Vecka {week}
-                  </button>
-                ))}
-              </div>
-            </TabsContent>
-          </Tabs>
-        </SheetContent>
-      </Sheet>
-
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={handleNextWeek}
-        disabled={selectedWeek === null || selectedWeek === weeks[weeks.length - 1]}
-      >
-        <ChevronRight className="h-4 w-4" />
-      </Button>
-    </div>
+    <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+      <SheetTrigger asChild>
+        <Button variant="outline" className="flex-grow text-center">
+          {mainButtonText}
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="bottom" className="h-[80vh] flex flex-col p-0">
+        <SheetHeader className="p-6 pb-2">
+          <SheetTitle>Välj period</SheetTitle>
+        </SheetHeader>
+        <Tabs defaultValue="blocks" className="flex-1 flex flex-col overflow-hidden px-6 pb-6">
+          <TabsList className="w-full flex mb-2">
+            <TabsTrigger className="flex-grow" value="blocks">
+              Block
+            </TabsTrigger>
+            <TabsTrigger className="flex-grow" value="weeks">
+              Veckor
+            </TabsTrigger>
+          </TabsList>
+          {/* Block Selection List */}
+          <TabsContent value="blocks" className="flex-1 overflow-y-auto">
+            <div className="space-y-1">
+              {months.map((block) => (
+                <button
+                  key={block.id}
+                  onClick={() => handleSheetSelection(block.id, null)}
+                  className={cn(
+                    "w-full text-left p-2 rounded-md text-sm hover:bg-accent",
+                    selectedMonth === block.id && selectedWeek === null
+                      ? "bg-accent font-semibold"
+                      : ""
+                  )}
+                >
+                  {block.name}
+                </button>
+              ))}
+            </div>
+          </TabsContent>
+          {/* Week Selection List */}
+          <TabsContent value="weeks" className="flex-1 overflow-y-auto">
+            <div className="space-y-1">
+              {weeks.map((week) => (
+                <button
+                  key={week}
+                  onClick={() => handleSheetSelection(selectedMonth, week)}
+                  className={cn(
+                    "w-full text-left p-2 rounded-md text-sm hover:bg-accent",
+                    selectedWeek === week ? "bg-accent font-semibold" : ""
+                  )}
+                >
+                  Vecka {week}
+                </button>
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </SheetContent>
+    </Sheet>
   )
 }

@@ -123,26 +123,6 @@ function TrainingPlanContent() {
 
   return (
     <>
-      {/* Mobile Navigation Bar */}
-      <div className="md:hidden sticky top-0 z-20 bg-background border-b">
-        {/* Pass context state and actions */}
-        <MobileNavBar
-          months={monthsForSidebar} // Use derived data from context
-          weeks={weeksForSidebar} // Use derived data from context
-          selectedMonth={selectedMonth} // Use state from context
-          selectedWeek={selectedWeek} // Use state from context
-          onWeekChange={selectWeek} // Use context action
-          // Adapt onJumpToSelection to call context actions
-          onJumpToSelection={(monthId, weekId) => {
-            if (weekId !== null) {
-              selectWeek(weekId) // This also sets viewMode='week' and potentially month
-            } else {
-              selectMonth(monthId) // This sets viewMode='month'
-            }
-          }}
-        />
-      </div>
-
       {/* Content View (Add padding here) */}
       <div className="p-4 md:p-6">
         {" "}
