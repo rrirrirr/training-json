@@ -1,6 +1,107 @@
 import type { TrainingPlanData } from "@/types/training-plan"
 
 export const exampleTrainingPlan: TrainingPlanData = {
+  metadata: {
+    planName: "5x5 Strength Training Program",
+    creationDate: "2025-04-08T10:00:00Z",
+    description: "A 20-week strength training program with progressive overload based on 5x5 methodology",
+    author: "Training Plan App Team",
+    version: "1.0.0"
+  },
+  
+  sessionTypes: [
+    {
+      id: "gym",
+      name: "Gym",
+      defaultStyle: {
+        backgroundColor: "blue-50",
+        borderColor: "blue-200",
+        textColor: "blue-800"
+      }
+    },
+    {
+      id: "barmark",
+      name: "Barmark",
+      defaultStyle: {
+        backgroundColor: "green-50",
+        borderColor: "green-200",
+        textColor: "green-800"
+      }
+    },
+    {
+      id: "rest",
+      name: "Eget/Vila",
+      defaultStyle: {
+        backgroundColor: "gray-50",
+        borderColor: "gray-200",
+        textColor: "gray-800"
+      }
+    }
+  ],
+  
+  blocks: [
+    {
+      id: "block-1",
+      name: "Foundation Phase",
+      focus: "Grund & Volym",
+      durationWeeks: 4,
+      description: "Månad 1 (Vecka 1-4): 3 Gympass/vecka - Block 1: Grund & Volym",
+      style: {
+        backgroundColor: "violet-50",
+        borderColor: "violet-200",
+        textColor: "violet-900"
+      }
+    },
+    {
+      id: "block-2",
+      name: "Strength Building Phase",
+      focus: "Styrkeuppbyggnad",
+      durationWeeks: 4,
+      description: "Månad 2 (Vecka 5-8): 3 Gympass/vecka - Block 2: Styrkeuppbyggnad",
+      style: {
+        backgroundColor: "blue-50",
+        borderColor: "blue-200",
+        textColor: "blue-800"
+      }
+    },
+    {
+      id: "block-3",
+      name: "Power Phase",
+      focus: "Styrka & Kraft",
+      durationWeeks: 4,
+      description: "Månad 3 (Vecka 9-12): 4 Gympass/vecka - Block 3: Styrka & Kraft",
+      style: {
+        backgroundColor: "indigo-50",
+        borderColor: "indigo-200",
+        textColor: "indigo-800"
+      }
+    },
+    {
+      id: "block-4",
+      name: "Deload Phase",
+      focus: "Återhämtning & Kraft",
+      durationWeeks: 4,
+      description: "Månad 4 (Vecka 13-16): 4 Gympass/vecka - Block 3: Styrka & Kraft",
+      style: {
+        backgroundColor: "yellow-50",
+        borderColor: "yellow-200",
+        textColor: "yellow-800"
+      }
+    },
+    {
+      id: "block-5",
+      name: "Testing Phase",
+      focus: "Maxstyrka & Test",
+      durationWeeks: 4,
+      description: "Månad 5 (Vecka 17-20): 4 Gympass/vecka - Block 4: Maxstyrka & Test",
+      style: {
+        backgroundColor: "green-50",
+        borderColor: "green-200",
+        textColor: "green-800"
+      }
+    }
+  ],
+  
   exerciseDefinitions: [
     {
       id: "sq",
@@ -134,11 +235,13 @@ export const exampleTrainingPlan: TrainingPlanData = {
       generalTips: "Välj övningar som kompletterar ditt program",
     },
   ],
+  
   weeks: [
     {
       weekNumber: 1,
       weekType: "A",
-      blockInfo: "Månad 1 (Vecka 1-4): 3 Gympass/vecka - Block 1: Grund & Volym",
+      blockId: "block-1", // Reference to block instead of blockInfo string
+      blockInfo: "Månad 1 (Vecka 1-4): 3 Gympass/vecka - Block 1: Grund & Volym", // For backward compatibility
       gymDays: 3,
       tm: {
         SQ: 115,
@@ -149,11 +252,11 @@ export const exampleTrainingPlan: TrainingPlanData = {
       sessions: [
         {
           sessionName: "Gympass 1",
-          sessionType: "Gym",
+          sessionTypeId: "gym", // Reference to session type
+          sessionType: "Gym", // For backward compatibility
           exercises: [
             {
               exerciseId: "sq",
-              name: "Knäböj (SQ)", // Include name for backward compatibility
               sets: 3,
               reps: "8",
               load: "90 kg (~78%)",
@@ -161,7 +264,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "bp",
-              name: "Bänkpress (BP)",
               sets: 3,
               reps: "8",
               load: "60 kg (75%)",
@@ -169,7 +271,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "db_row",
-              name: "Hantelrodd (DB Row)",
               sets: 3,
               reps: "8-10 /arm",
               load: "Tungt, RPE 8-9",
@@ -177,7 +278,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "face_pulls",
-              name: "Face Pulls",
               sets: 3,
               reps: "15",
               load: "Lätt",
@@ -185,7 +285,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "farmers_walk",
-              name: "Farmer's Walk",
               sets: 3,
               reps: "30-40m",
               load: "Tungt grepp",
@@ -195,11 +294,11 @@ export const exampleTrainingPlan: TrainingPlanData = {
         },
         {
           sessionName: "Eget Pass / Övrigt",
-          sessionType: "Eget/Vila",
+          sessionTypeId: "rest",
+          sessionType: "Eget/Vila", // For backward compatibility
           exercises: [
             {
               exerciseId: "own_choice",
-              name: "(Chins/Dips/Löpning/Hopp)",
               sets: "-",
               reps: "-",
               load: "-",
@@ -209,11 +308,11 @@ export const exampleTrainingPlan: TrainingPlanData = {
         },
         {
           sessionName: "Gympass 2",
-          sessionType: "Gym",
+          sessionTypeId: "gym",
+          sessionType: "Gym", // For backward compatibility
           exercises: [
             {
               exerciseId: "pc",
-              name: "Frivändning (PC)",
               sets: 3,
               reps: "5",
               load: "Teknik, lätt",
@@ -221,7 +320,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "ohp",
-              name: "Militärpress (OHP)",
               sets: 3,
               reps: "8",
               load: "40 kg (80%)",
@@ -229,7 +327,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "lat_pulldown",
-              name: "Latsdrag",
               sets: 3,
               reps: "10-12",
               load: "Medel",
@@ -237,7 +334,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "bicep_curl",
-              name: "Biceps Curl",
               sets: 3,
               reps: "10-12",
               load: "Medel-Tungt",
@@ -245,7 +341,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "plank",
-              name: "Plankan",
               sets: 3,
               reps: "30-45s",
               load: "-",
@@ -255,11 +350,11 @@ export const exampleTrainingPlan: TrainingPlanData = {
         },
         {
           sessionName: "Eget Pass / Övrigt",
-          sessionType: "Eget/Vila",
+          sessionTypeId: "rest",
+          sessionType: "Eget/Vila", // For backward compatibility
           exercises: [
             {
               exerciseId: "own_choice",
-              name: "(Chins/Dips/Löpning/Hopp)",
               sets: "-",
               reps: "-",
               load: "-",
@@ -269,11 +364,11 @@ export const exampleTrainingPlan: TrainingPlanData = {
         },
         {
           sessionName: "Gympass 3",
-          sessionType: "Gym",
+          sessionTypeId: "gym",
+          sessionType: "Gym", // For backward compatibility
           exercises: [
             {
               exerciseId: "pc",
-              name: "PC Teknik",
               sets: 3,
               reps: "3",
               load: "Lätt",
@@ -281,7 +376,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "dl",
-              name: "Marklyft (DL)",
               sets: 3,
               reps: "8",
               load: "110 kg (~78%)",
@@ -289,7 +383,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "bp_var",
-              name: "Bänkpress Variation",
               sets: 3,
               reps: "10",
               load: "50 kg (~62%)",
@@ -297,7 +390,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "chins",
-              name: "Chins",
               sets: "3-4",
               reps: "AMRAP",
               load: "Kroppsvikt",
@@ -305,7 +397,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "side_plank",
-              name: "Sidoplanka",
               sets: 2,
               reps: "30s /sida",
               load: "-",
@@ -315,11 +406,11 @@ export const exampleTrainingPlan: TrainingPlanData = {
         },
         {
           sessionName: "Vila / Eget Pass",
-          sessionType: "Eget/Vila",
+          sessionTypeId: "rest",
+          sessionType: "Eget/Vila", // For backward compatibility
           exercises: [
             {
               exerciseId: "own_choice",
-              name: "(Chins/Dips/Löpning/Hopp/Vila)",
               sets: "-",
               reps: "-",
               load: "-",
@@ -332,7 +423,8 @@ export const exampleTrainingPlan: TrainingPlanData = {
     {
       weekNumber: 2,
       weekType: "B",
-      blockInfo: "Månad 1 (Vecka 1-4): 3 Gympass/vecka - Block 1: Grund & Volym",
+      blockId: "block-1", // Same block as week 1
+      blockInfo: "Månad 1 (Vecka 1-4): 3 Gympass/vecka - Block 1: Grund & Volym", // For backward compatibility
       gymDays: 3,
       tm: {
         SQ: 120,
@@ -343,11 +435,11 @@ export const exampleTrainingPlan: TrainingPlanData = {
       sessions: [
         {
           sessionName: "Gympass 1",
-          sessionType: "Gym",
+          sessionTypeId: "gym",
+          sessionType: "Gym", // For backward compatibility
           exercises: [
             {
               exerciseId: "sq",
-              name: "Knäböj (SQ)",
               sets: 3,
               reps: "8",
               load: "95 kg (~79%)",
@@ -355,7 +447,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "bp",
-              name: "Bänkpress (BP)",
               sets: 3,
               reps: "8",
               load: "65 kg (~79%)",
@@ -363,7 +454,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "db_row",
-              name: "Hantelrodd (DB Row)",
               sets: 3,
               reps: "8-10 /arm",
               load: "Tungt, RPE 8-9",
@@ -371,7 +461,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "face_pulls",
-              name: "Face Pulls",
               sets: 3,
               reps: "15",
               load: "Lätt",
@@ -379,7 +468,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "farmers_walk",
-              name: "Farmer's Walk",
               sets: 3,
               reps: "30-40m",
               load: "Tungt grepp",
@@ -389,11 +477,11 @@ export const exampleTrainingPlan: TrainingPlanData = {
         },
         {
           sessionName: "Eget Pass / Övrigt",
-          sessionType: "Eget/Vila",
+          sessionTypeId: "rest",
+          sessionType: "Eget/Vila", // For backward compatibility
           exercises: [
             {
               exerciseId: "own_choice",
-              name: "(Chins/Dips/Löpning/Hopp)",
               sets: "-",
               reps: "-",
               load: "-",
@@ -403,11 +491,11 @@ export const exampleTrainingPlan: TrainingPlanData = {
         },
         {
           sessionName: "Gympass 2",
-          sessionType: "Gym",
+          sessionTypeId: "gym",
+          sessionType: "Gym", // For backward compatibility
           exercises: [
             {
               exerciseId: "pc",
-              name: "Frivändning (PC)",
               sets: 3,
               reps: "5",
               load: "Teknik, lätt",
@@ -415,7 +503,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "ohp",
-              name: "Militärpress (OHP)",
               sets: 3,
               reps: "8",
               load: "42.5 kg (~81%)",
@@ -423,7 +510,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "lat_pulldown",
-              name: "Latsdrag",
               sets: 3,
               reps: "10-12",
               load: "Medel",
@@ -431,7 +517,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "bicep_curl",
-              name: "Biceps Curl",
               sets: 3,
               reps: "10-12",
               load: "Medel-Tungt",
@@ -439,7 +524,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "plank",
-              name: "Plankan",
               sets: 3,
               reps: "30-45s",
               load: "-",
@@ -449,11 +533,11 @@ export const exampleTrainingPlan: TrainingPlanData = {
         },
         {
           sessionName: "Eget Pass / Övrigt",
-          sessionType: "Eget/Vila",
+          sessionTypeId: "rest",
+          sessionType: "Eget/Vila", // For backward compatibility
           exercises: [
             {
               exerciseId: "own_choice",
-              name: "(Chins/Dips/Löpning/Hopp)",
               sets: "-",
               reps: "-",
               load: "-",
@@ -463,11 +547,11 @@ export const exampleTrainingPlan: TrainingPlanData = {
         },
         {
           sessionName: "Gympass 3",
-          sessionType: "Gym",
+          sessionTypeId: "gym",
+          sessionType: "Gym", // For backward compatibility
           exercises: [
             {
               exerciseId: "pc",
-              name: "PC Teknik",
               sets: 3,
               reps: "3",
               load: "Lätt",
@@ -475,7 +559,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "rdl",
-              name: "Rumänsk Marklyft (RDL)",
               sets: 3,
               reps: "8",
               load: "100 kg (~69%)",
@@ -483,7 +566,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "bp_var",
-              name: "Bänkpress Variation",
               sets: 3,
               reps: "10",
               load: "52.5 kg (~64%)",
@@ -491,7 +573,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "chins",
-              name: "Chins",
               sets: "3-4",
               reps: "AMRAP",
               load: "Kroppsvikt",
@@ -499,7 +580,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "side_plank",
-              name: "Sidoplanka",
               sets: 2,
               reps: "30s /sida",
               load: "-",
@@ -509,11 +589,11 @@ export const exampleTrainingPlan: TrainingPlanData = {
         },
         {
           sessionName: "Vila / Eget Pass",
-          sessionType: "Eget/Vila",
+          sessionTypeId: "rest",
+          sessionType: "Eget/Vila", // For backward compatibility
           exercises: [
             {
               exerciseId: "own_choice",
-              name: "(Chins/Dips/Löpning/Hopp/Vila)",
               sets: "-",
               reps: "-",
               load: "-",
@@ -526,7 +606,8 @@ export const exampleTrainingPlan: TrainingPlanData = {
     {
       weekNumber: 16,
       weekType: "A",
-      blockInfo: "Månad 4 (Vecka 13-16): 4 Gympass/vecka - Block 3: Styrka & Kraft",
+      blockId: "block-4", // Deload phase
+      blockInfo: "Månad 4 (Vecka 13-16): 4 Gympass/vecka - Block 3: Styrka & Kraft", // For backward compatibility
       gymDays: 4,
       isDeload: true,
       tm: {
@@ -538,11 +619,11 @@ export const exampleTrainingPlan: TrainingPlanData = {
       sessions: [
         {
           sessionName: "Gympass 1 (DELOAD)",
-          sessionType: "Gym",
+          sessionTypeId: "gym",
+          sessionType: "Gym", // For backward compatibility
           exercises: [
             {
               exerciseId: "sq",
-              name: "Knäböj (SQ)",
               sets: 3,
               reps: "5",
               load: "105 kg (70%)",
@@ -550,7 +631,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "bp",
-              name: "Bänkpress (BP)",
               sets: 3,
               reps: "5",
               load: "70 kg (70%)",
@@ -558,7 +638,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "db_row",
-              name: "Hantelrodd (DB Row)",
               sets: 2,
               reps: "8 /arm",
               load: "Medel",
@@ -566,7 +645,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "face_pulls",
-              name: "Face Pulls",
               sets: 2,
               reps: "15",
               load: "Lätt",
@@ -576,11 +654,11 @@ export const exampleTrainingPlan: TrainingPlanData = {
         },
         {
           sessionName: "Barmark 1",
-          sessionType: "Barmark",
+          sessionTypeId: "barmark",
+          sessionType: "Barmark", // For backward compatibility
           exercises: [
             {
               exerciseId: "light_cardio",
-              name: "Lätt löpning",
               sets: 1,
               reps: "15-20 min",
               load: "Låg intensitet",
@@ -588,7 +666,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "mobility",
-              name: "Rörlighetsövningar",
               sets: 1,
               reps: "10 min",
               load: "-",
@@ -601,17 +678,18 @@ export const exampleTrainingPlan: TrainingPlanData = {
     {
       weekNumber: 20,
       weekType: "A",
-      blockInfo: "Månad 5 (Vecka 17-20): 4 Gympass/vecka - Block 4: Maxstyrka & Test",
+      blockId: "block-5", // Testing phase
+      blockInfo: "Månad 5 (Vecka 17-20): 4 Gympass/vecka - Block 4: Maxstyrka & Test", // For backward compatibility
       gymDays: 4,
       isTest: true,
       sessions: [
         {
           sessionName: "Gympass 1 (TEST)",
-          sessionType: "Gym",
+          sessionTypeId: "gym",
+          sessionType: "Gym", // For backward compatibility
           exercises: [
             {
               exerciseId: "sq",
-              name: "Knäböj (SQ)",
               sets: 1,
               reps: "1-3",
               load: "1RM Test",
@@ -619,7 +697,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "bp",
-              name: "Bänkpress (BP)",
               sets: 1,
               reps: "1-3",
               load: "1RM Test",
@@ -627,7 +704,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
             },
             {
               exerciseId: "own_choice",
-              name: "Lätt accessoriskt arbete",
               sets: 2,
               reps: "10-15",
               load: "Lätt",
@@ -637,11 +713,11 @@ export const exampleTrainingPlan: TrainingPlanData = {
         },
         {
           sessionName: "Vila",
-          sessionType: "Eget/Vila",
+          sessionTypeId: "rest",
+          sessionType: "Eget/Vila", // For backward compatibility
           exercises: [
             {
               exerciseId: "rest",
-              name: "Vila",
               sets: "-",
               reps: "-",
               load: "-",
@@ -652,6 +728,8 @@ export const exampleTrainingPlan: TrainingPlanData = {
       ],
     },
   ],
+  
+  // Keep monthBlocks for backward compatibility
   monthBlocks: [
     { id: 1, name: "Månad 1 (Vecka 1-4)", weeks: [1, 2, 3, 4] },
     { id: 2, name: "Månad 2 (Vecka 5-8)", weeks: [5, 6, 7, 8] },
@@ -660,4 +738,3 @@ export const exampleTrainingPlan: TrainingPlanData = {
     { id: 5, name: "Månad 5 (Vecka 17-20)", weeks: [17, 18, 19, 20] },
   ],
 }
-

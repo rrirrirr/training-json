@@ -14,6 +14,7 @@ A comprehensive web application for managing and tracking personalized training 
 - **Data Import/Export**: Import and export training plans as JSON
 - **Mobile Responsive**: Fully responsive design that works on all devices
 - **Local Storage**: Plans are saved in the browser's local storage
+- **Normalized JSON Structure**: Well-organized data structure with references between sections
 
 ## Getting Started
 
@@ -68,9 +69,67 @@ A comprehensive web application for managing and tracking personalized training 
 2. Either paste JSON data or upload a JSON file
 3. Review the imported plan and make any necessary adjustments
 
-### Plan JSON Structure
+## Plan JSON Structure
 
-The application uses a structured JSON format to represent training plans. See the "Info" button in the app for detailed JSON structure information, or use the "Generate with AI" feature to create a new plan with AI assistance.
+The application uses a normalized JSON structure to represent training plans. This structure has clear references between sections:
+
+### Top-level Sections:
+
+- `metadata`: Contains plan-wide information like name and creation date
+- `sessionTypes`: Defines available session types with consistent styling
+- `blocks`: Defines training blocks with focus, duration, and styling
+- `exerciseDefinitions`: Defines exercises with IDs and details
+- `weeks`: Contains weekly training plans with references to blocks
+- `monthBlocks`: Defines month groupings for navigation
+
+### References Between Sections:
+
+- Weeks reference blocks via `blockId`
+- Sessions reference sessionTypes via `sessionTypeId`
+- Exercises reference exerciseDefinitions via `exerciseId`
+
+Example snippet:
+```json
+{
+  "metadata": {
+    "planName": "5x5 Strength Program",
+    "creationDate": "2025-04-08T10:00:00Z"
+  },
+  "sessionTypes": [
+    {
+      "id": "gym",
+      "name": "Gym",
+      "defaultStyle": {
+        "backgroundColor": "blue-50",
+        "borderColor": "blue-200"
+      }
+    }
+  ],
+  "blocks": [
+    {
+      "id": "block-1",
+      "name": "Foundation Phase",
+      "focus": "Grund & Volym",
+      "durationWeeks": 4
+    }
+  ],
+  "weeks": [
+    {
+      "weekNumber": 1,
+      "blockId": "block-1",
+      "sessions": [
+        {
+          "sessionName": "Gympass 1",
+          "sessionTypeId": "gym",
+          "exercises": [...]
+        }
+      ]
+    }
+  ]
+}
+```
+
+For detailed documentation on the JSON structure, see [docs/json-structure.md](docs/json-structure.md).
 
 ## Project Structure
 
@@ -81,6 +140,7 @@ training-plan-manager/
 │   ├── ui/               # Shadcn UI components
 │   └── ...               # Application-specific components
 ├── contexts/             # React context providers
+├── docs/                 # Documentation
 ├── hooks/                # Custom React hooks
 ├── lib/                  # Utility functions and libraries
 ├── public/               # Static assets

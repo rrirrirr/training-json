@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import type { Session, TrainingPlanData } from "@/types/training-plan"
+import type { Session, TrainingPlanData, SessionTypeDefinition } from "@/types/training-plan"
 import { Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -102,10 +102,23 @@ interface SessionCardProps {
 
 export default function SessionCard({ session, trainingPlan, compact = false }: SessionCardProps) {
   const [showDetails, setShowDetails] = useState(false)
-  const { sessionName, sessionType, sessionStyle, exercises } = session
+  const { sessionName, sessionTypeId, sessionType, sessionStyle, exercises } = session
+
+  // Find the session type from sessionTypeId
+  const sessionTypeObj: SessionTypeDefinition | undefined = 
+    trainingPlan.sessionTypes?.find(type => type.id === sessionTypeId);
+  
+  // Use the session type name if available, otherwise fall back to the legacy sessionType
+  const displaySessionType = sessionTypeObj?.name || sessionType || "Unknown";
 
   // Get background style and class
   const getDefaultBg = () => {
+    // If we have a session type with default style, use it
+    if (sessionTypeObj?.defaultStyle?.backgroundColor) {
+      return `bg-${sessionTypeObj.defaultStyle.backgroundColor}`
+    }
+    
+    // Fall back to legacy logic based on sessionType
     switch (sessionType) {
       case "Gym":
         return "bg-blue-50"
@@ -118,12 +131,19 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
     }
   }
 
+  // Get background class and style
   const { className: bgClass, style: bgStyle } = sessionStyle?.backgroundColor
     ? getColorValue(sessionStyle.backgroundColor, "bg-", getDefaultBg())
     : { className: getDefaultBg(), style: {} }
 
   // Get border style and class
   const getDefaultBorder = () => {
+    // If we have a session type with default style, use it
+    if (sessionTypeObj?.defaultStyle?.borderColor) {
+      return `border-${sessionTypeObj.defaultStyle.borderColor}`
+    }
+    
+    // Fall back to legacy logic based on sessionType
     switch (sessionType) {
       case "Gym":
         return "border-blue-200"
@@ -136,6 +156,7 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
     }
   }
 
+  // Get border class and style
   const { className: borderClass, style: borderStyle } = sessionStyle?.borderColor
     ? getColorValue(sessionStyle.borderColor, "border-", getDefaultBorder())
     : { className: getDefaultBorder(), style: {} }
@@ -164,9 +185,10 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
       <CardHeader className="flex flex-row justify-between items-start pb-4 border-b">
         <div>
           <CardTitle>{sessionName}</CardTitle>
-          {sessionStyle?.note && (
-            <CardDescription className="mt-1 italic">{sessionStyle.note}</CardDescription>
-          )}
+          <CardDescription className="mt-1">
+            {displaySessionType}
+            {sessionStyle?.note && <span className="ml-2 italic">{sessionStyle.note}</span>}
+          </CardDescription>
         </div>
         <Button
           variant="ghost"

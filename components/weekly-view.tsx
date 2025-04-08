@@ -1,4 +1,4 @@
-import type { Week, TrainingPlanData } from "@/types/training-plan"
+import type { Week, TrainingPlanData, BlockDefinition } from "@/types/training-plan"
 import SessionCard from "./session-card"
 import { cn } from "@/lib/utils"
 
@@ -45,7 +45,8 @@ export default function WeeklyView({ week, trainingPlan, compact = false }: Week
   const {
     weekNumber,
     weekType,
-    blockInfo,
+    blockId,
+    blockInfo, // Keep for backward compatibility
     gymDays,
     barmarkDays,
     isDeload,
@@ -54,10 +55,19 @@ export default function WeeklyView({ week, trainingPlan, compact = false }: Week
     weekStyle,
   } = week
 
+  // Find the associated block from the blockId
+  const block: BlockDefinition | undefined = trainingPlan.blocks?.find(b => b.id === blockId);
+  const blockDescription = block?.description || blockInfo || "";
+  const blockFocus = block?.focus || "";
+
   // Get default background based on week type
   const getDefaultBg = () => {
     if (isDeload) return "bg-yellow-50"
     if (isTest) return "bg-green-50"
+    // If we have a block with a style, use its background
+    if (block?.style?.backgroundColor) {
+      return `bg-${block.style.backgroundColor}`
+    }
     return "bg-white"
   }
 
@@ -65,6 +75,10 @@ export default function WeeklyView({ week, trainingPlan, compact = false }: Week
   const getDefaultBorder = () => {
     if (isDeload) return "border-yellow-200"
     if (isTest) return "border-green-200"
+    // If we have a block with a style, use its border
+    if (block?.style?.borderColor) {
+      return `border-${block.style.borderColor}`
+    }
     return "border-gray-200"
   }
 
@@ -116,7 +130,12 @@ export default function WeeklyView({ week, trainingPlan, compact = false }: Week
                 </span>
               )}
             </h1>
-            {blockInfo && <p className="text-gray-600 mt-1">{blockInfo}</p>}
+            {blockDescription && <p className="text-gray-600 mt-1">{blockDescription}</p>}
+            {block && blockFocus && (
+              <div className="text-sm text-gray-600 mt-1">
+                <span className="font-medium">Focus: </span>{blockFocus}
+              </div>
+            )}
             {weekStyle?.note && (
               <p className="text-sm italic text-gray-500 mt-1">{weekStyle.note}</p>
             )}
