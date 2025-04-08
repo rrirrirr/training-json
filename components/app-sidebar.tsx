@@ -1,14 +1,16 @@
 // components/app-sidebar.tsx
 "use client"
 
-import { useState } from "react" // Removed useEffect as context handles loading
+import { useState } from "react"
 import { Calendar, List, FilePlus, ChevronDown, Pencil, Trash2, Plus, FileText, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { useTrainingPlans } from "@/contexts/training-plan-context" // Assuming context provides everything needed now
+import { useTrainingPlans } from "@/contexts/training-plan-context"
 import PlanNameDialog from "./plan-name-dialog"
 import JsonEditor from "./json-editor"
-import { useInfoModal } from "@/components/modals/info-modal" // Added for info modal
+import { useInfoModal } from "@/components/modals/info-modal"
+import BlockSelector from "./shared/block-selector"
+import WeekSelector from "./shared/week-selector"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,12 +33,9 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  // SidebarMenuSub, // Assuming no submenus needed for weeks/months now
-  // SidebarMenuSubButton,
-  // SidebarMenuSubItem,
   SidebarTrigger,
   SidebarFooter,
-} from "@/components/ui/sidebar" // Ensure this path is correct
+} from "@/components/ui/sidebar"
 
 // Removed props related to data/state/callbacks
 interface AppSidebarProps {
@@ -59,24 +58,24 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
     changeViewMode,
     weeksForSidebar,
     monthsForSidebar,
-    trainingData, // Get full data if getWeekInfo needs it
+    trainingData,
   } = useTrainingPlans()
 
-  // Internal state for dialogs remains
+  // Internal state for dialogs
   const [isNewPlanDialogOpen, setIsNewPlanDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isJsonEditorOpen, setIsJsonEditorOpen] = useState(false)
-  const [planToEdit, setPlanToEdit] = useState<SavedTrainingPlan | null>(null)
-  const [planToDelete, setPlanToDelete] = useState<SavedTrainingPlan | null>(null)
-  const [planToViewJson, setPlanToViewJson] = useState<SavedTrainingPlan | null>(null)
+  const [planToEdit, setPlanToEdit] = useState<any | null>(null)
+  const [planToDelete, setPlanToDelete] = useState<any | null>(null)
+  const [planToViewJson, setPlanToViewJson] = useState<any | null>(null)
 
   // Get access to info modal
   const infoModalStore = useInfoModal()
 
   // Function to get week type (uses trainingData from context)
   const getWeekInfo = (weekNumber: number) => {
-    const weekData = trainingData?.find((w) => w.weekNumber === weekNumber) // Use optional chaining
+    const weekData = trainingData?.find((w) => w.weekNumber === weekNumber)
     return {
       type: weekData?.weekType || "",
       isDeload: weekData?.isDeload || false,
@@ -84,20 +83,20 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
     }
   }
 
-  // Event handlers for dialogs remain mostly the same
-  const handleEditPlan = (plan: SavedTrainingPlan, e: React.MouseEvent) => {
+  // Event handlers for dialogs
+  const handleEditPlan = (plan: any, e: React.MouseEvent) => {
     e.stopPropagation()
     setPlanToEdit(plan)
     setIsEditDialogOpen(true)
   }
 
-  const handleViewJson = (plan: SavedTrainingPlan, e: React.MouseEvent) => {
+  const handleViewJson = (plan: any, e: React.MouseEvent) => {
     e.stopPropagation()
     setPlanToViewJson(plan)
     setIsJsonEditorOpen(true)
   }
 
-  const handleDeletePlan = (plan: SavedTrainingPlan, e: React.MouseEvent) => {
+  const handleDeletePlan = (plan: any, e: React.MouseEvent) => {
     e.stopPropagation()
     setPlanToDelete(plan)
     setIsDeleteDialogOpen(true)
@@ -105,15 +104,15 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
 
   const handleSavePlanName = (name: string) => {
     if (planToEdit) {
-      updatePlan(planToEdit.id, { name }) // Use context action
+      updatePlan(planToEdit.id, { name })
     }
     setPlanToEdit(null)
-    setIsEditDialogOpen(false) // Close dialog on save
+    setIsEditDialogOpen(false)
   }
 
   const handleConfirmDelete = () => {
     if (planToDelete) {
-      deletePlan(planToDelete.id) // Use context action
+      deletePlan(planToDelete.id)
     }
     setPlanToDelete(null)
     setIsDeleteDialogOpen(false)
@@ -123,12 +122,9 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
     return new Date(timestamp).toLocaleDateString()
   }
 
-  // Handle creating a new plan (might still dispatch event or directly call context)
+  // Handle creating a new plan
   const triggerCreateNewPlan = (name: string) => {
-    // Option 1: Dispatch event (if page listens)
     window.dispatchEvent(new CustomEvent("create-training-plan", { detail: { name } }))
-    // Option 2: Directly call context if possible (needs addPlan in context signature)
-    // addPlan(name, { exerciseDefinitions: [], weeks: [], monthBlocks: [] });
     setIsNewPlanDialogOpen(false)
   }
 
@@ -156,13 +152,13 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
                   )}
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
-              {/* Dropdown Content remains the same, using context data/actions */}
+              {/* Dropdown Content */}
               <DropdownMenuContent className="w-[--radix-popper-anchor-width]">
                 {plans.map((plan) => (
                   <DropdownMenuItem key={plan.id} asChild onSelect={(e) => e.preventDefault()}>
                     <div
                       className="flex items-center justify-between w-full cursor-pointer px-2 py-1.5 group"
-                      onClick={() => setCurrentPlan(plan)} // Use context action
+                      onClick={() => setCurrentPlan(plan)}
                     >
                       {/* Plan name and date */}
                       <div className="flex-1 truncate">
@@ -180,8 +176,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
                           onClick={(e) => handleViewJson(plan, e)}
                           aria-label={`View JSON for ${plan.name}`}
                         >
-                          {" "}
-                          <FileText className="h-4 w-4" />{" "}
+                          <FileText className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -190,8 +185,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
                           onClick={(e) => handleEditPlan(plan, e)}
                           aria-label={`Edit ${plan.name}`}
                         >
-                          {" "}
-                          <Pencil className="h-4 w-4" />{" "}
+                          <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -200,8 +194,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
                           onClick={(e) => handleDeletePlan(plan, e)}
                           aria-label={`Delete ${plan.name}`}
                         >
-                          {" "}
-                          <Trash2 className="h-4 w-4" />{" "}
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
@@ -228,7 +221,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
         <Button
           variant={viewMode === "month" ? "default" : "outline"}
           size={isOpen ? "sm" : "icon"}
-          onClick={() => changeViewMode("month")} // Use context action
+          onClick={() => changeViewMode("month")}
           className={cn("w-full", isOpen && "justify-start")}
           aria-label="Block View"
         >
@@ -237,7 +230,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
         <Button
           variant={viewMode === "week" ? "default" : "outline"}
           size={isOpen ? "sm" : "icon"}
-          onClick={() => changeViewMode("week")} // Use context action
+          onClick={() => changeViewMode("week")}
           className={cn("w-full", isOpen && "justify-start")}
           aria-label="Weekly View"
         >
@@ -245,80 +238,25 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
         </Button>
       </div>
 
-      {/* Content: Month/Week Selection */}
+      {/* Content: Month/Week Selection using shared components */}
       <SidebarContent className="flex-1 overflow-auto">
-        {isOpen ? ( // Only show lists if sidebar is open
+        {isOpen ? (
           <>
             {viewMode === "month" ? (
-              <div className="p-4">
-                <h2 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
-                  Blocks
-                </h2>
-                <div className="space-y-1">
-                  {monthsForSidebar.map((month) => (
-                    <button
-                      key={month.id}
-                      onClick={() => selectMonth(month.id)} // Use context action
-                      className={cn(
-                        "w-full p-2 rounded text-left text-sm transition-colors",
-                        selectedMonth === month.id
-                          ? "bg-accent text-accent-foreground"
-                          : "text-foreground hover:bg-accent/50"
-                      )}
-                    >
-                      {month.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <BlockSelector
+                blocks={monthsForSidebar}
+                selectedBlockId={selectedMonth}
+                onSelectBlock={selectMonth}
+                variant="sidebar"
+              />
             ) : (
-              <div className="p-4">
-                <h2 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
-                  Weeks
-                </h2>
-                <div
-                  className={cn(
-                    "gap-2",
-                    isOpen ? "grid grid-cols-4" : "flex flex-col items-center"
-                  )}
-                >
-                  {weeksForSidebar.map((week) => {
-                    const { type, isDeload, isTest } = getWeekInfo(week)
-                    return (
-                      <button
-                        key={week}
-                        onClick={() => selectWeek(week)} // Use context action
-                        className={cn(
-                          "p-2 rounded text-center text-sm transition-colors flex flex-col items-center justify-center aspect-square", // Make it square-ish
-                          selectedWeek === week
-                            ? "bg-accent text-accent-foreground"
-                            : "text-foreground hover:bg-accent/50",
-                          isDeload && isOpen
-                            ? "border-l-4 border-yellow-500"
-                            : isDeload
-                              ? "ring-2 ring-yellow-500"
-                              : "", // Indicate differently when collapsed
-                          isTest && isOpen
-                            ? "border-l-4 border-green-500"
-                            : isTest
-                              ? "ring-2 ring-green-500"
-                              : "" // Indicate differently when collapsed
-                        )}
-                        aria-label={`Week ${week}${type ? ` (${type})` : ""}${isDeload ? " Deload" : ""}${isTest ? " Test" : ""}`}
-                      >
-                        <div className="font-medium">{week}</div>
-                        {isOpen && type && <div className="text-xs opacity-75">{type}</div>}
-                        {!isOpen && isDeload && (
-                          <div className="w-1 h-1 rounded-full bg-yellow-500 mt-1"></div>
-                        )}
-                        {!isOpen && isTest && (
-                          <div className="w-1 h-1 rounded-full bg-green-500 mt-1"></div>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
+              <WeekSelector
+                weeks={weeksForSidebar}
+                selectedWeek={selectedWeek}
+                onSelectWeek={selectWeek}
+                variant="sidebar"
+                getWeekInfo={getWeekInfo}
+              />
             )}
           </>
         ) : (
@@ -330,7 +268,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
 
       {/* Footer: Legend and Info Button */}
       <SidebarFooter className={cn(!isOpen && "items-center")}>
-        {isOpen && ( // Only show legend if open
+        {isOpen && (
           <div className="p-4 text-sm text-muted-foreground">
             <div className="flex items-center mb-2">
               <div className="w-4 h-4 border-l-4 border-yellow-500 mr-2 shrink-0"></div>
@@ -358,7 +296,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
         </div>
       </SidebarFooter>
 
-      {/* Dialogs remain the same */}
+      {/* Dialogs */}
       <PlanNameDialog
         isOpen={isEditDialogOpen}
         onClose={() => {
@@ -374,7 +312,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
       <PlanNameDialog
         isOpen={isNewPlanDialogOpen}
         onClose={() => setIsNewPlanDialogOpen(false)}
-        onSave={triggerCreateNewPlan} // Use the wrapper function
+        onSave={triggerCreateNewPlan}
         title="New Training Plan"
         description="Give your new training plan a name."
         saveButtonText="Create"

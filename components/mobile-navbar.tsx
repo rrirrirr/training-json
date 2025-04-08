@@ -1,15 +1,18 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useState } from "react"
-import type { MonthBlock } from "@/types/training-plan"
+import type { MonthBlock, Week } from "@/types/training-plan"
 import { cn } from "@/lib/utils"
+import { useTrainingPlans } from "@/contexts/training-plan-context"
+import BlockSelector from "@/components/shared/block-selector"
+import WeekSelector from "@/components/shared/week-selector"
+import { Info } from "lucide-react"
 
 interface MobileNavBarProps {
-  months: MonthBlock[] // Still using MonthBlock for backward compatibility
+  months: MonthBlock[]
   weeks: number[]
   selectedMonth: number
   selectedWeek: number | null
@@ -17,7 +20,7 @@ interface MobileNavBarProps {
   onJumpToSelection: (monthId: number, weekId: number | null) => void
 }
 
-export default function MobileNavBar({
+export function MobileNavBar({
   months,
   weeks,
   selectedMonth,
@@ -26,20 +29,15 @@ export default function MobileNavBar({
   onJumpToSelection,
 }: MobileNavBarProps) {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const { trainingData } = useTrainingPlans()
 
-  // Handle previous week navigation
-  const handlePrevWeek = () => {
-    const currentWeekIndex = weeks.findIndex((w) => w === selectedWeek)
-    if (selectedWeek !== null && currentWeekIndex > 0) {
-      onWeekChange(weeks[currentWeekIndex - 1])
-    }
-  }
-
-  // Handle next week navigation
-  const handleNextWeek = () => {
-    const currentWeekIndex = weeks.findIndex((w) => w === selectedWeek)
-    if (selectedWeek !== null && currentWeekIndex < weeks.length - 1) {
-      onWeekChange(weeks[currentWeekIndex + 1])
+  // Function to get week type and status
+  const getWeekInfo = (weekNumber: number) => {
+    const weekData = trainingData.find((w) => w.weekNumber === weekNumber)
+    return {
+      type: weekData?.weekType || "",
+      isDeload: weekData?.isDeload || false,
+      isTest: weekData?.isTest || false,
     }
   }
 
@@ -52,6 +50,9 @@ export default function MobileNavBar({
   // Display text for the main button
   const mainButtonText = selectedWeek !== null ? `Vecka ${selectedWeek}` : `Block ${selectedMonth}`
 
+  // Get the current month name
+  const currentMonthName = months.find(m => m.id === selectedMonth)?.name || `Block ${selectedMonth}`
+
   return (
     <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
       <SheetTrigger asChild>
@@ -60,55 +61,49 @@ export default function MobileNavBar({
         </Button>
       </SheetTrigger>
       <SheetContent side="bottom" className="h-[80vh] flex flex-col p-0">
-        <SheetHeader className="p-6 pb-2">
-          <SheetTitle>Välj period</SheetTitle>
+        <SheetHeader className="p-4 pb-2 border-b">
+          <SheetTitle>Träningsplan</SheetTitle>
         </SheetHeader>
-        <Tabs defaultValue="blocks" className="flex-1 flex flex-col overflow-hidden px-6 pb-6">
-          <TabsList className="w-full flex mb-2">
-            <TabsTrigger className="flex-grow" value="blocks">
-              Block
-            </TabsTrigger>
-            <TabsTrigger className="flex-grow" value="weeks">
-              Veckor
-            </TabsTrigger>
+        
+        <Tabs defaultValue="blocks" className="flex-1 flex flex-col overflow-hidden">
+          <TabsList className="mx-4 my-2 w-auto">
+            <TabsTrigger value="blocks">Block</TabsTrigger>
+            <TabsTrigger value="weeks">Veckor</TabsTrigger>
           </TabsList>
-          {/* Block Selection List */}
-          <TabsContent value="blocks" className="flex-1 overflow-y-auto">
-            <div className="space-y-1">
-              {months.map((block) => (
-                <button
-                  key={block.id}
-                  onClick={() => handleSheetSelection(block.id, null)}
-                  className={cn(
-                    "w-full text-left p-2 rounded-md text-sm hover:bg-accent",
-                    selectedMonth === block.id && selectedWeek === null
-                      ? "bg-accent font-semibold"
-                      : ""
-                  )}
-                >
-                  {block.name}
-                </button>
-              ))}
-            </div>
+          
+          {/* Block Selection Tab */}
+          <TabsContent value="blocks" className="flex-1 overflow-y-auto pt-0">
+            <BlockSelector 
+              blocks={months}
+              selectedBlockId={selectedMonth}
+              onSelectBlock={(blockId) => handleSheetSelection(blockId, null)}
+              variant="mobile"
+            />
           </TabsContent>
-          {/* Week Selection List */}
-          <TabsContent value="weeks" className="flex-1 overflow-y-auto">
-            <div className="space-y-1">
-              {weeks.map((week) => (
-                <button
-                  key={week}
-                  onClick={() => handleSheetSelection(selectedMonth, week)}
-                  className={cn(
-                    "w-full text-left p-2 rounded-md text-sm hover:bg-accent",
-                    selectedWeek === week ? "bg-accent font-semibold" : ""
-                  )}
-                >
-                  Vecka {week}
-                </button>
-              ))}
-            </div>
+          
+          {/* Week Selection Tab */}
+          <TabsContent value="weeks" className="flex-1 overflow-y-auto pt-0">
+            <WeekSelector 
+              weeks={weeks}
+              selectedWeek={selectedWeek}
+              onSelectWeek={(weekId) => handleSheetSelection(selectedMonth, weekId)}
+              variant="mobile"
+              getWeekInfo={getWeekInfo}
+            />
           </TabsContent>
         </Tabs>
+        
+        {/* Legend for week colors */}
+        <SheetFooter className="p-4 border-t flex-row justify-start gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center">
+            <div className="w-4 h-4 border-l-4 border-yellow-500 mr-2"></div>
+            <span>DELOAD week</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 border-l-4 border-green-500 mr-2"></div>
+            <span>TEST week</span>
+          </div>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   )

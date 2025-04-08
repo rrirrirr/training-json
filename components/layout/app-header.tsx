@@ -28,7 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
-import MobileNavBar from "@/components/mobile-navbar"
+import { MobileNavBar } from "@/components/mobile-navbar" // Fixed: Use named import
 
 interface HeaderProps {
   onToggleSidebar: () => void
@@ -247,17 +247,16 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
       {/* View Mode Toggle Button - Mobile only */}
       <div className="md:hidden flex justify-center items-center w-full px-4">
         <MobileNavBar
-          months={monthsForSidebar} // Use derived data from context
-          weeks={weeksForSidebar} // Use derived data from context
-          selectedMonth={selectedMonth} // Use state from context
-          selectedWeek={selectedWeek} // Use state from context
-          onWeekChange={selectWeek} // Use context action
-          // Adapt onJumpToSelection to call context actions
+          months={monthsForSidebar}
+          weeks={weeksForSidebar}
+          selectedMonth={selectedMonth}
+          selectedWeek={selectedWeek}
+          onWeekChange={selectWeek}
           onJumpToSelection={(monthId, weekId) => {
             if (weekId !== null) {
-              selectWeek(weekId) // This also sets viewMode='week' and potentially month
+              selectWeek(weekId)
             } else {
-              selectMonth(monthId) // This sets viewMode='month'
+              selectMonth(monthId)
             }
           }}
         />
