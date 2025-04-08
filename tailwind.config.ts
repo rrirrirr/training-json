@@ -8,6 +8,95 @@ const config: Config = {
     "./app/**/*.{ts,tsx}",
     "*.{js,ts,jsx,tsx,mdx}",
   ],
+  safelist: [
+    // Background colors for all color names and intensities
+    ...[
+      "slate",
+      "gray",
+      "zinc",
+      "neutral",
+      "stone",
+      "red",
+      "orange",
+      "amber",
+      "yellow",
+      "lime",
+      "green",
+      "emerald",
+      "teal",
+      "cyan",
+      "sky",
+      "blue",
+      "indigo",
+      "violet",
+      "purple",
+      "fuchsia",
+      "pink",
+      "rose",
+    ].flatMap((color) =>
+      ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900"].map(
+        (intensity) => `bg-${color}-${intensity}`
+      )
+    ),
+    // Border colors
+    ...[
+      "slate",
+      "gray",
+      "zinc",
+      "neutral",
+      "stone",
+      "red",
+      "orange",
+      "amber",
+      "yellow",
+      "lime",
+      "green",
+      "emerald",
+      "teal",
+      "cyan",
+      "sky",
+      "blue",
+      "indigo",
+      "violet",
+      "purple",
+      "fuchsia",
+      "pink",
+      "rose",
+    ].flatMap((color) =>
+      ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900"].map(
+        (intensity) => `border-${color}-${intensity}`
+      )
+    ),
+    // Text colors
+    ...[
+      "slate",
+      "gray",
+      "zinc",
+      "neutral",
+      "stone",
+      "red",
+      "orange",
+      "amber",
+      "yellow",
+      "lime",
+      "green",
+      "emerald",
+      "teal",
+      "cyan",
+      "sky",
+      "blue",
+      "indigo",
+      "violet",
+      "purple",
+      "fuchsia",
+      "pink",
+      "rose",
+    ].flatMap((color) =>
+      ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900"].map(
+        (intensity) => `text-${color}-${intensity}`
+      )
+    ),
+  ],
   theme: {
     extend: {
       colors: {

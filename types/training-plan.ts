@@ -18,10 +18,10 @@ export type ExerciseInstance = {
   comment?: string
   loadStyle?: {
     strong?: boolean
-    color?: string
+    color?: string // Can be Tailwind color like "blue-500" or hex/rgb
   }
   commentStyle?: {
-    color?: string
+    color?: string // Can be Tailwind color like "blue-500" or hex/rgb
     fontStyle?: string
   }
   targetRPE?: number
@@ -32,6 +32,9 @@ export type SessionStyle = {
   styleClass?: string
   icon?: string
   note?: string
+  backgroundColor?: string // Can be Tailwind color like "blue-50" or hex/rgb
+  borderColor?: string // Can be Tailwind color like "blue-200" or hex/rgb
+  textColor?: string // Can be Tailwind color like "blue-800" or hex/rgb
 }
 
 export type Session = {
@@ -44,8 +47,9 @@ export type Session = {
 export type WeekStyle = {
   styleClass?: string
   note?: string
-  backgroundColor?: string
-  borderColor?: string
+  backgroundColor?: string // Can be Tailwind color like "blue-50" or hex/rgb
+  borderColor?: string // Can be Tailwind color like "blue-200" or hex/rgb
+  textColor?: string // Can be Tailwind color like "blue-800" or hex/rgb
 }
 
 export type Week = {
@@ -65,6 +69,11 @@ export type MonthBlock = {
   id: number
   name: string
   weeks: number[]
+  style?: {
+    backgroundColor?: string // Can be Tailwind color like "blue-50" or hex/rgb
+    textColor?: string // Can be Tailwind color like "blue-800" or hex/rgb
+    borderColor?: string // Can be Tailwind color like "blue-200" or hex/rgb
+  }
 }
 
 export type TrainingPlanData = {
@@ -72,4 +81,3 @@ export type TrainingPlanData = {
   weeks: Week[]
   monthBlocks: MonthBlock[]
 }
-

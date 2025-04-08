@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown, Plus, Edit, Trash2, MoreVertical, FileEdit } from "lucide-react"
+import { ChevronDown, Plus, Edit, Trash2, MoreVertical, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -22,14 +22,17 @@ import {
 
 import { useTrainingPlans, type SavedTrainingPlan } from "@/contexts/training-plan-context"
 import PlanNameDialog from "@/components/plan-name-dialog"
+import JsonEditor from "./json-editor" // Import the new JSON editor component
 
 export default function PlanSelector() {
   const { plans, currentPlan, setCurrentPlan, deletePlan, updatePlan } = useTrainingPlans()
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isJsonEditorOpen, setIsJsonEditorOpen] = useState(false) // New state for JSON editor
   const [planToEdit, setPlanToEdit] = useState<SavedTrainingPlan | null>(null)
   const [planToDelete, setPlanToDelete] = useState<SavedTrainingPlan | null>(null)
+  const [planToViewJson, setPlanToViewJson] = useState<SavedTrainingPlan | null>(null) // New state for JSON viewing
 
   // Handle plan selection
   const handleSelectPlan = (plan: SavedTrainingPlan) => {
@@ -42,6 +45,14 @@ export default function PlanSelector() {
     e.stopPropagation()
     setPlanToEdit(plan)
     setIsEditDialogOpen(true)
+    setIsPopoverOpen(false)
+  }
+
+  // Handle view JSON click
+  const handleViewJsonClick = (plan: SavedTrainingPlan, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setPlanToViewJson(plan)
+    setIsJsonEditorOpen(true)
     setIsPopoverOpen(false)
   }
 
@@ -96,7 +107,7 @@ export default function PlanSelector() {
               <div
                 key={plan.id}
                 className={`
-                  flex items-center justify-between p-2 cursor-pointer hover:bg-gray-100
+                  flex items-center justify-between p-2 cursor-pointer hover:bg-gray-100 group
                   ${currentPlan?.id === plan.id ? "bg-blue-50" : ""}
                 `}
                 onClick={() => handleSelectPlan(plan)}
@@ -105,24 +116,39 @@ export default function PlanSelector() {
                   <div className="font-medium">{plan.name}</div>
                   <div className="text-xs text-gray-500">Updated: {formatDate(plan.updatedAt)}</div>
                 </div>
-                <div className="flex items-center space-x-1">
+                <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-blue-500"
+                    onClick={(e) => handleViewJsonClick(plan, e)}
+                    title="Edit JSON"
+                    aria-label="Edit JSON"
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span className="sr-only">Edit JSON</span>
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
                     onClick={(e) => handleEditClick(plan, e)}
-                    title="Edit plan name"
+                    title="Rename Plan"
+                    aria-label="Rename Plan"
                   >
-                    <FileEdit className="h-4 w-4" />
+                    <Edit className="h-4 w-4" />
+                    <span className="sr-only">Rename Plan</span>
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-red-500"
                     onClick={(e) => handleDeleteClick(plan, e)}
-                    title="Delete plan"
+                    title="Delete Plan"
+                    aria-label="Delete Plan"
                   >
                     <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Delete Plan</span>
                   </Button>
                 </div>
               </div>
@@ -143,6 +169,16 @@ export default function PlanSelector() {
         title="Rename Training Plan"
         description="Update the name of your training plan."
         saveButtonText="Update"
+      />
+
+      {/* JSON Editor Dialog */}
+      <JsonEditor
+        isOpen={isJsonEditorOpen}
+        onClose={() => {
+          setIsJsonEditorOpen(false)
+          setPlanToViewJson(null)
+        }}
+        plan={planToViewJson}
       />
 
       {/* Delete Confirmation Dialog */}

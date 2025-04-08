@@ -1,7 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -55,12 +61,14 @@ After I answer these questions, please create a complete training plan JSON with
    - gymDays: Number of gym sessions per week
    - isDeload: Boolean, true for deload weeks
    - isTest: Boolean, true for test/max weeks
+   - weekStyle: Styling information for the week (backgroundColor, borderColor, textColor)
    - tm: Object with training maxes for main lifts
    - sessions: Array of session objects
 
 3. Each session should include:
    - sessionName: Name of the session (e.g., "Gympass 1")
    - sessionType: "Gym", "Barmark", or "Eget/Vila"
+   - sessionStyle: Styling information (backgroundColor, borderColor, textColor)
    - exercises: Array of exercise instances
 
 4. Each exercise instance should include:
@@ -68,16 +76,23 @@ After I answer these questions, please create a complete training plan JSON with
    - sets: Number or string of sets
    - reps: Number or string of reps
    - load: Description of weight/intensity
+   - loadStyle: Styling options for the load (color, strong)
    - comment: Additional notes
+   - commentStyle: Styling options for the comment (color, fontStyle)
 
 5. monthBlocks: An array of objects grouping weeks into months/blocks:
    - id: Month/block ID
    - name: Display name (e.g., "Månad 1 (Vecka 1-4)")
    - weeks: Array of week numbers in this block
+   - style: Optional styling for the month block
 
-Please ensure the JSON is valid, properly formatted, and follows a logical progression based on my training goals.`
+Please ensure the JSON is valid, properly formatted, and follows a logical progression based on my training goals. Feel free to use any Tailwind color names (like blue-500, red-200) or hex/RGB values for styling elements.`
 
-export default function JsonInfoModal({ isOpen, onClose, defaultTab = "structure" }: JsonInfoModalProps) {
+export default function JsonInfoModal({
+  isOpen,
+  onClose,
+  defaultTab = "structure",
+}: JsonInfoModalProps) {
   const [showCopyNotification, setShowCopyNotification] = useState(false)
 
   return (
@@ -85,7 +100,9 @@ export default function JsonInfoModal({ isOpen, onClose, defaultTab = "structure
       <DialogContent className="sm:max-w-[700px] max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>Training Plan JSON Format</DialogTitle>
-          <DialogDescription>Learn how to structure your training plan JSON file.</DialogDescription>
+          <DialogDescription>
+            Learn how to structure your training plan JSON file.
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue={defaultTab}>
@@ -100,24 +117,30 @@ export default function JsonInfoModal({ isOpen, onClose, defaultTab = "structure
             <TabsContent value="structure" className="space-y-4">
               <div>
                 <h3 className="text-lg font-semibold">Normalized Structure</h3>
-                <p className="text-sm text-gray-600 mt-1">The JSON file contains three main sections:</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  The JSON file contains three main sections:
+                </p>
                 <ul className="list-disc pl-6 mt-2 space-y-1 text-sm">
                   <li>
-                    <code className="bg-gray-100 px-1 rounded">exerciseDefinitions</code> - Definitions of all exercises
+                    <code className="bg-gray-100 px-1 rounded">exerciseDefinitions</code> -
+                    Definitions of all exercises
                   </li>
                   <li>
-                    <code className="bg-gray-100 px-1 rounded">weeks</code> - An array of all training weeks
+                    <code className="bg-gray-100 px-1 rounded">weeks</code> - An array of all
+                    training weeks
                   </li>
                   <li>
-                    <code className="bg-gray-100 px-1 rounded">monthBlocks</code> - Information about how weeks are
-                    grouped into months/blocks
+                    <code className="bg-gray-100 px-1 rounded">monthBlocks</code> - Information
+                    about how weeks are grouped into months/blocks
                   </li>
                 </ul>
               </div>
 
               <div>
                 <h3 className="text-lg font-semibold">Exercise Definitions</h3>
-                <p className="text-sm text-gray-600 mt-1">Each exercise definition has the following properties:</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Each exercise definition has the following properties:
+                </p>
                 <pre className="bg-gray-100 p-3 rounded-md text-xs overflow-auto mt-2">
                   {`{
   "id": "sq",                     // Unique identifier
@@ -137,7 +160,9 @@ export default function JsonInfoModal({ isOpen, onClose, defaultTab = "structure
 
               <div>
                 <h3 className="text-lg font-semibold">Week Object</h3>
-                <p className="text-sm text-gray-600 mt-1">Each week object has the following properties:</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Each week object has the following properties:
+                </p>
                 <pre className="bg-gray-100 p-3 rounded-md text-xs overflow-auto mt-2">
                   {`{
   "weekNumber": 1,                // Week number
@@ -150,6 +175,9 @@ export default function JsonInfoModal({ isOpen, onClose, defaultTab = "structure
   "weekStyle": {                  // Optional: Styling for the week
     "styleClass": "deload-week",  // CSS class name
     "note": "Focus on recovery",  // General note
+    "backgroundColor": "yellow-50", // Tailwind color for background
+    "borderColor": "yellow-200",  // Tailwind color for border
+    "textColor": "yellow-800"     // Tailwind color for text
   },
   "tm": {                         // Optional: Training maxes for the week
     "SQ": 115,
@@ -166,7 +194,9 @@ export default function JsonInfoModal({ isOpen, onClose, defaultTab = "structure
 
               <div>
                 <h3 className="text-lg font-semibold">Session Object</h3>
-                <p className="text-sm text-gray-600 mt-1">Each session object has the following properties:</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Each session object has the following properties:
+                </p>
                 <pre className="bg-gray-100 p-3 rounded-md text-xs overflow-auto mt-2">
                   {`{
   "sessionName": "Gympass 1",     // Name of the session
@@ -174,7 +204,10 @@ export default function JsonInfoModal({ isOpen, onClose, defaultTab = "structure
   "sessionStyle": {               // Optional: Styling for the session
     "styleClass": "gym-session",  // CSS class name
     "icon": "dumbbell",           // Icon name or path
-    "note": "Focus on technique"  // Session-specific note
+    "note": "Focus on technique", // Session-specific note
+    "backgroundColor": "blue-50", // Tailwind color for background
+    "borderColor": "blue-200",    // Tailwind color for border
+    "textColor": "blue-800"       // Tailwind color for text
   },
   "exercises": [                  // Array of exercise instances
     // ... exercise instance objects
@@ -196,11 +229,11 @@ export default function JsonInfoModal({ isOpen, onClose, defaultTab = "structure
   "load": "90 kg (~78%)",         // Load/intensity
   "loadStyle": {                  // Optional: Styling for the load
     "strong": true,               // Whether to make the load text bold
-    "color": "#b30000"            // Direct CSS color
+    "color": "blue-600"           // Tailwind color name or hex/RGB color
   },
   "comment": "Startvikt. Teknik!", // Additional comments
   "commentStyle": {               // Optional: Styling for the comment
-    "color": "#666",              // Direct CSS color
+    "color": "gray-600",          // Tailwind color name or hex/RGB color
     "fontStyle": "italic"         // Font style
   },
   "targetRPE": 8,                 // Optional: Target RPE
@@ -218,7 +251,12 @@ export default function JsonInfoModal({ isOpen, onClose, defaultTab = "structure
                   {`{
   "id": 1,                        // Month/block ID
   "name": "Månad 1 (Vecka 1-4)",  // Display name
-  "weeks": [1, 2, 3, 4]           // Week numbers included in this block
+  "weeks": [1, 2, 3, 4],          // Week numbers included in this block
+  "style": {                      // Optional: Styling for the month block
+    "backgroundColor": "blue-50", // Background color
+    "textColor": "blue-800",      // Text color
+    "borderColor": "blue-200"     // Border color
+  }
 }`}
                 </pre>
               </div>
@@ -227,7 +265,9 @@ export default function JsonInfoModal({ isOpen, onClose, defaultTab = "structure
             <TabsContent value="example" className="space-y-4">
               <div>
                 <h3 className="text-lg font-semibold">Example JSON</h3>
-                <p className="text-sm text-gray-600 mt-1">Here's a simplified example of a training plan JSON:</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Here's a simplified example of a training plan JSON with custom styling:
+                </p>
                 <pre className="bg-gray-100 p-3 rounded-md text-xs overflow-auto mt-2">
                   {`{
   "exerciseDefinitions": [
@@ -258,6 +298,11 @@ export default function JsonInfoModal({ isOpen, onClose, defaultTab = "structure
       "weekType": "A",
       "blockInfo": "Månad 1 (Vecka 1-4): 3 Gympass/vecka - Block 1: Grund & Volym",
       "gymDays": 3,
+      "weekStyle": {
+        "backgroundColor": "violet-50",
+        "borderColor": "violet-200",
+        "note": "Introduktionsvecka"
+      },
       "tm": {
         "SQ": 115,
         "BP": 80,
@@ -268,13 +313,26 @@ export default function JsonInfoModal({ isOpen, onClose, defaultTab = "structure
         {
           "sessionName": "Gympass 1",
           "sessionType": "Gym",
+          "sessionStyle": {
+            "note": "Fokus på teknik",
+            "backgroundColor": "blue-50",
+            "borderColor": "blue-200"
+          },
           "exercises": [
             { 
               "exerciseId": "sq", 
               "sets": 3, 
               "reps": "8", 
               "load": "90 kg (~78%)", 
-              "comment": "Startvikt. Teknik!" 
+              "loadStyle": {
+                "color": "blue-600",
+                "strong": true
+              },
+              "comment": "Startvikt. Teknik!",
+              "commentStyle": {
+                "color": "gray-600",
+                "fontStyle": "italic"
+              }
             },
             { 
               "exerciseId": "bp", 
@@ -296,8 +354,20 @@ export default function JsonInfoModal({ isOpen, onClose, defaultTab = "structure
     }
   ],
   "monthBlocks": [
-    { "id": 1, "name": "Månad 1 (Vecka 1-4)", "weeks": [1, 2, 3, 4] },
-    { "id": 2, "name": "Månad 2 (Vecka 5-8)", "weeks": [5, 6, 7, 8] }
+    { 
+      "id": 1, 
+      "name": "Månad 1 (Vecka 1-4)", 
+      "weeks": [1, 2, 3, 4],
+      "style": {
+        "backgroundColor": "violet-50",
+        "textColor": "violet-900"
+      }
+    },
+    { 
+      "id": 2, 
+      "name": "Månad 2 (Vecka 5-8)", 
+      "weeks": [5, 6, 7, 8] 
+    }
   ]
 }`}
                 </pre>
@@ -311,21 +381,22 @@ export default function JsonInfoModal({ isOpen, onClose, defaultTab = "structure
                   <li>
                     <strong>Normalized Structure Benefits</strong>
                     <p className="text-gray-600 mt-1">
-                      The normalized structure separates exercise definitions from their usage, reducing redundancy and
-                      making updates easier.
+                      The normalized structure separates exercise definitions from their usage,
+                      reducing redundancy and making updates easier.
                     </p>
                   </li>
                   <li>
                     <strong>Exercise IDs</strong>
                     <p className="text-gray-600 mt-1">
-                      Use short, descriptive IDs for exercises (e.g., "sq", "bp", "dl") to make the JSON more readable.
+                      Use short, descriptive IDs for exercises (e.g., "sq", "bp", "dl") to make the
+                      JSON more readable.
                     </p>
                   </li>
                   <li>
                     <strong>Required Fields</strong>
                     <p className="text-gray-600 mt-1">
-                      At minimum, include id and name for exercise definitions, and exerciseId, sets, reps, and load for
-                      exercise instances.
+                      At minimum, include id and name for exercise definitions, and exerciseId,
+                      sets, reps, and load for exercise instances.
                     </p>
                   </li>
                   <li>
@@ -336,7 +407,94 @@ export default function JsonInfoModal({ isOpen, onClose, defaultTab = "structure
                   </li>
                   <li>
                     <strong>JSON Validation</strong>
-                    <p className="text-gray-600 mt-1">Use a JSON validator to check your file before importing it.</p>
+                    <p className="text-gray-600 mt-1">
+                      Use a JSON validator to check your file before importing it.
+                    </p>
+                  </li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold">Using Custom Colors</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  You can customize the appearance of your training plan using Tailwind's color
+                  system:
+                </p>
+                <ul className="list-disc pl-6 mt-2 space-y-2 text-sm">
+                  <li>
+                    <strong>Color Format</strong>
+                    <p className="text-gray-600 mt-1">Colors can be specified in three formats:</p>
+                    <ul className="list-disc pl-6 mt-1 text-xs">
+                      <li>
+                        Tailwind color classes:{" "}
+                        <code className="bg-gray-100 px-1 rounded">blue-500</code>,{" "}
+                        <code className="bg-gray-100 px-1 rounded">red-200</code>, etc.
+                      </li>
+                      <li>
+                        Hex values: <code className="bg-gray-100 px-1 rounded">#3b82f6</code>,{" "}
+                        <code className="bg-gray-100 px-1 rounded">#ef4444</code>, etc.
+                      </li>
+                      <li>
+                        RGB/RGBA values:{" "}
+                        <code className="bg-gray-100 px-1 rounded">rgb(59, 130, 246)</code>,{" "}
+                        <code className="bg-gray-100 px-1 rounded">rgba(239, 68, 68, 0.8)</code>
+                      </li>
+                    </ul>
+                  </li>
+                  <li>
+                    <strong>Available Color Properties</strong>
+                    <p className="text-gray-600 mt-1">
+                      You can apply colors to different elements:
+                    </p>
+                    <ul className="list-disc pl-6 mt-1 text-xs">
+                      <li>
+                        <code className="bg-gray-100 px-1 rounded">
+                          sessionStyle.backgroundColor
+                        </code>{" "}
+                        - Session card background
+                      </li>
+                      <li>
+                        <code className="bg-gray-100 px-1 rounded">sessionStyle.borderColor</code> -
+                        Session card border
+                      </li>
+                      <li>
+                        <code className="bg-gray-100 px-1 rounded">sessionStyle.textColor</code> -
+                        Session text color
+                      </li>
+                      <li>
+                        <code className="bg-gray-100 px-1 rounded">loadStyle.color</code> -
+                        Load/intensity text color
+                      </li>
+                      <li>
+                        <code className="bg-gray-100 px-1 rounded">commentStyle.color</code> -
+                        Comment text color
+                      </li>
+                      <li>
+                        <code className="bg-gray-100 px-1 rounded">weekStyle.backgroundColor</code>{" "}
+                        - Week header background
+                      </li>
+                      <li>
+                        <code className="bg-gray-100 px-1 rounded">weekStyle.borderColor</code> -
+                        Week header border
+                      </li>
+                    </ul>
+                  </li>
+                  <li>
+                    <strong>Tailwind Color Scale</strong>
+                    <p className="text-gray-600 mt-1">
+                      Tailwind colors follow a scale from 50 (lightest) to 900 (darkest):
+                      <code className="bg-gray-100 px-1 rounded">blue-50</code>,
+                      <code className="bg-gray-100 px-1 rounded">blue-100</code>,
+                      <code className="bg-gray-100 px-1 rounded">blue-200</code>, etc.
+                    </p>
+                  </li>
+                  <li>
+                    <strong>Available Color Names</strong>
+                    <p className="text-gray-600 mt-1">
+                      Tailwind includes these color names: slate, gray, zinc, neutral, stone, red,
+                      orange, amber, yellow, lime, green, emerald, teal, cyan, sky, blue, indigo,
+                      violet, purple, fuchsia, pink, rose
+                    </p>
                   </li>
                 </ul>
               </div>
@@ -344,25 +502,27 @@ export default function JsonInfoModal({ isOpen, onClose, defaultTab = "structure
 
             <TabsContent value="ai" className="space-y-4">
               <div>
-                <h3 className="text-lg font-semibold">Using AI to Create Your Training Plan JSON</h3>
+                <h3 className="text-lg font-semibold">
+                  Using AI to Create Your Training Plan JSON
+                </h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  AI tools like ChatGPT, Claude, or v0 can help you create your training plan JSON file with minimal
-                  effort.
+                  AI tools like ChatGPT, Claude, or v0 can help you create your training plan JSON
+                  file with minimal effort.
                 </p>
               </div>
 
               <div>
                 <h3 className="text-base font-medium">Interactive Interview Process</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  The AI prompt below includes an interview process to understand your training goals before creating a
-                  personalized plan.
+                  The AI prompt below includes an interview process to understand your training
+                  goals before creating a personalized plan.
                 </p>
                 <ol className="list-decimal pl-6 mt-2 space-y-2 text-sm">
                   <li>
                     <strong>Copy the prompt</strong> using the button below
                   </li>
                   <li>
-                    <strong>Paste it to an AI assistant</strong> like ChatGPT-4 or v0
+                    <strong>Paste it to an AI assistant</strong> like ChatGPT-4 or Claude
                   </li>
                   <li>
                     <strong>Answer the interview questions</strong> about your training goals
@@ -381,6 +541,7 @@ export default function JsonInfoModal({ isOpen, onClose, defaultTab = "structure
                   <li>Adapts to your schedule and time constraints</li>
                   <li>Takes into account any injuries or limitations</li>
                   <li>Structures progressive overload based on your current strength levels</li>
+                  <li>Can include custom styling with your preferred colors</li>
                 </ul>
               </div>
 
@@ -405,8 +566,10 @@ export default function JsonInfoModal({ isOpen, onClose, defaultTab = "structure
           </ScrollArea>
         </Tabs>
 
-        {/* Add this just before the closing DialogContent tag */}
-        <CopyNotification show={showCopyNotification} onHide={() => setShowCopyNotification(false)} />
+        <CopyNotification
+          show={showCopyNotification}
+          onHide={() => setShowCopyNotification(false)}
+        />
         <div className="flex justify-end mt-4">
           <Button onClick={onClose}>Close</Button>
         </div>
@@ -414,4 +577,3 @@ export default function JsonInfoModal({ isOpen, onClose, defaultTab = "structure
     </Dialog>
   )
 }
-

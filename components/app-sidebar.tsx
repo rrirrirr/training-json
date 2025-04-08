@@ -1,21 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import {
-  Calendar,
-  List,
-  FilePlus,
-  ChevronDown,
-  Pencil,
-  Trash2,
-  Plus,
-  PanelLeftClose,
-  PanelLeftOpen,
-} from "lucide-react"
+import { Calendar, List, FilePlus, ChevronDown, Pencil, Trash2, Plus, FileText } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useTrainingPlans, SavedTrainingPlan } from "@/contexts/training-plan-context"
 import PlanNameDialog from "./plan-name-dialog"
+import JsonEditor from "./json-editor" // Import the new JSON editor component
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -74,8 +65,10 @@ export default function AppSidebar({
   const [isNewPlanDialogOpen, setIsNewPlanDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isJsonEditorOpen, setIsJsonEditorOpen] = useState(false) // New state for JSON editor
   const [planToEdit, setPlanToEdit] = useState<SavedTrainingPlan | null>(null)
   const [planToDelete, setPlanToDelete] = useState<SavedTrainingPlan | null>(null)
+  const [planToViewJson, setPlanToViewJson] = useState<SavedTrainingPlan | null>(null) // New state for JSON viewing
 
   // Function to get week type (A/B) and special status (deload/test)
   const getWeekInfo = (weekNumber: number) => {
@@ -92,6 +85,13 @@ export default function AppSidebar({
     e.stopPropagation()
     setPlanToEdit(plan)
     setIsEditDialogOpen(true)
+  }
+
+  // Handle view JSON
+  const handleViewJson = (plan: SavedTrainingPlan, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setPlanToViewJson(plan)
+    setIsJsonEditorOpen(true)
   }
 
   // Handle delete plan
@@ -139,7 +139,7 @@ export default function AppSidebar({
                 {plans.map((plan) => (
                   <DropdownMenuItem key={plan.id} asChild>
                     <div
-                      className="flex items-center justify-between w-full cursor-pointer px-2 py-1.5"
+                      className="flex items-center justify-between w-full cursor-pointer px-2 py-1.5 group"
                       onClick={() => setCurrentPlan(plan)}
                     >
                       <div className="flex-1 truncate">
@@ -148,7 +148,15 @@ export default function AppSidebar({
                           {formatDate(plan.updatedAt)}
                         </div>
                       </div>
-                      <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-blue-500"
+                          onClick={(e) => handleViewJson(plan, e)}
+                        >
+                          <FileText className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -350,6 +358,16 @@ export default function AppSidebar({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* JSON Editor Dialog */}
+      <JsonEditor
+        isOpen={isJsonEditorOpen}
+        onClose={() => {
+          setIsJsonEditorOpen(false)
+          setPlanToViewJson(null)
+        }}
+        plan={planToViewJson}
+      />
     </Sidebar>
   )
 }
