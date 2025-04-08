@@ -245,7 +245,7 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
       </div>
 
       {/* View Mode Toggle Button - Mobile only */}
-      <div className="md:hidden flex justify-center items-center w-full pl-4">
+      <div className="md:hidden flex justify-center items-center w-full px-4">
         <MobileNavBar
           months={monthsForSidebar} // Use derived data from context
           weeks={weeksForSidebar} // Use derived data from context
@@ -262,9 +262,6 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
           }}
         />
       </div>
-
-      {/* Spacer to push theme switcher to the right */}
-      <div className="flex-1"></div>
 
       {/* Theme Switcher - only desktop */}
       <Button
