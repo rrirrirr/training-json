@@ -1,4 +1,4 @@
-// Example: components/MobileNavBar.tsx
+// components/mobile-navbar.tsx
 "use client"
 
 import { Button } from "@/components/ui/button"
@@ -8,8 +8,6 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  SheetFooter,
-  SheetClose,
 } from "@/components/ui/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChevronLeft, ChevronRight } from "lucide-react"
@@ -18,7 +16,7 @@ import type { MonthBlock } from "@/types/training-plan"
 import { cn } from "@/lib/utils"
 
 interface MobileNavBarProps {
-  months: MonthBlock[]
+  months: MonthBlock[] // Still using MonthBlock for backward compatibility
   weeks: number[]
   selectedMonth: number
   selectedWeek: number | null
@@ -36,7 +34,7 @@ export function MobileNavBar({
 }: MobileNavBarProps) {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
 
-  // --- Prev/Next handlers (same as before) ---
+  // Handle previous week navigation
   const handlePrevWeek = () => {
     const currentWeekIndex = weeks.findIndex((w) => w === selectedWeek)
     if (selectedWeek !== null && currentWeekIndex > 0) {
@@ -44,6 +42,7 @@ export function MobileNavBar({
     }
   }
 
+  // Handle next week navigation
   const handleNextWeek = () => {
     const currentWeekIndex = weeks.findIndex((w) => w === selectedWeek)
     if (selectedWeek !== null && currentWeekIndex < weeks.length - 1) {
@@ -51,17 +50,18 @@ export function MobileNavBar({
     }
   }
 
-  // --- Sheet selection handler (same as before) ---
-  const handleSheetSelection = (monthId: number, weekId: number | null) => {
-    onJumpToSelection(monthId, weekId)
+  // Handle selection from the sheet
+  const handleSheetSelection = (blockId: number, weekId: number | null) => {
+    onJumpToSelection(blockId, weekId)
     setIsSheetOpen(false) // Close sheet after selection
   }
 
-  // --- Main button text (same as before) ---
-  const mainButtonText = selectedWeek !== null ? `Vecka ${selectedWeek}` : `Månad ${selectedMonth}`
+  // Display text for the main button
+  const mainButtonText = selectedWeek !== null 
+    ? `Vecka ${selectedWeek}` 
+    : `Block ${selectedMonth}`
 
   return (
-    // --- Navbar structure (same as before) ---
     <div className="md:hidden p-2 border-b bg-white flex items-center justify-between space-x-2">
       <Button
         variant="outline"
@@ -78,45 +78,35 @@ export function MobileNavBar({
             {mainButtonText}
           </Button>
         </SheetTrigger>
-        {/* Updated SheetContent structure */}
         <SheetContent side="bottom" className="h-[80vh] flex flex-col p-0">
-          {" "}
-          {/* Remove padding for edge-to-edge Tabs */}
           <SheetHeader className="p-6 pb-2">
-            {" "}
-            {/* Add padding back to header */}
-            <SheetTitle>Select Period</SheetTitle>
+            <SheetTitle>Välj period</SheetTitle>
           </SheetHeader>
-          {/* Tabs component taking remaining space */}
-          {/* Default Tabs orientation is horizontal TabsList above TabsContent */}
-          <Tabs defaultValue="months" className="flex-1 flex flex-col overflow-hidden px-6 pb-6">
-            {" "}
-            {/* Add padding back, allow flex col */}
-            {/* TabsList will render horizontally by default */}
+          <Tabs defaultValue="blocks" className="flex-1 flex flex-col overflow-hidden px-6 pb-6">
             <TabsList className="grid w-full grid-cols-2 mb-2">
-              <TabsTrigger value="months">Months</TabsTrigger>
-              <TabsTrigger value="weeks">Weeks</TabsTrigger>
+              <TabsTrigger value="blocks">Block</TabsTrigger>
+              <TabsTrigger value="weeks">Veckor</TabsTrigger>
             </TabsList>
-            {/* Month Selection List - now takes remaining space and scrolls */}
-            <TabsContent value="months" className="flex-1 overflow-y-auto">
+            {/* Block Selection List */}
+            <TabsContent value="blocks" className="flex-1 overflow-y-auto">
               <div className="space-y-1">
-                {months.map((month) => (
+                {months.map((block) => (
                   <button
-                    key={month.id}
-                    onClick={() => handleSheetSelection(month.id, null)}
+                    key={block.id}
+                    onClick={() => handleSheetSelection(block.id, null)}
                     className={cn(
                       "w-full text-left p-2 rounded-md text-sm hover:bg-accent",
-                      selectedMonth === month.id && selectedWeek === null
+                      selectedMonth === block.id && selectedWeek === null
                         ? "bg-accent font-semibold"
                         : ""
                     )}
                   >
-                    {month.name}
+                    {block.name}
                   </button>
                 ))}
               </div>
             </TabsContent>
-            {/* Week Selection List - now takes remaining space and scrolls */}
+            {/* Week Selection List */}
             <TabsContent value="weeks" className="flex-1 overflow-y-auto">
               <div className="space-y-1">
                 {weeks.map((week) => (
@@ -134,7 +124,6 @@ export function MobileNavBar({
               </div>
             </TabsContent>
           </Tabs>
-          {/* Footer removed as selection closes sheet */}
         </SheetContent>
       </Sheet>
 

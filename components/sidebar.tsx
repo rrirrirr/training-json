@@ -1,7 +1,7 @@
 "use client"
 
 import type { Week, MonthBlock } from "@/types/training-plan"
-import { Calendar, List, Plus, FilePlus } from "lucide-react"
+import { Calendar, List, FilePlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTrainingPlans } from "@/contexts/training-plan-context"
 
@@ -9,9 +9,9 @@ interface SidebarProps {
   weeks: number[]
   selectedWeek: number | null
   onSelectWeek: (week: number) => void
-  months: MonthBlock[]
+  months: MonthBlock[] // Using MonthBlock for backward compatibility
   selectedMonth: number
-  onSelectMonth: (monthId: number) => void
+  onSelectMonth: (blockId: number) => void
   trainingData: Week[]
   viewMode: "week" | "month"
   onViewModeChange: (mode: "week" | "month") => void
@@ -29,6 +29,7 @@ export default function Sidebar({
   onViewModeChange,
 }: SidebarProps) {
   const { currentPlan } = useTrainingPlans()
+  
   // Function to get week type (A/B) and special status (deload/test)
   const getWeekInfo = (weekNumber: number) => {
     const weekData = trainingData.find((w) => w.weekNumber === weekNumber)
@@ -66,10 +67,10 @@ export default function Sidebar({
             variant={viewMode === "month" ? "default" : "outline"}
             size="sm"
             onClick={() => onViewModeChange("month")}
-            title="Månadsvy"
+            title="Blockvy"
             className="flex-1"
           >
-            <Calendar className="h-4 w-4 mr-2" /> Månadsvy
+            <Calendar className="h-4 w-4 mr-2" /> Blockvy
           </Button>
           <Button
             variant={viewMode === "week" ? "default" : "outline"}
@@ -86,22 +87,22 @@ export default function Sidebar({
       {/* Dynamic content based on view mode */}
       <div className="flex-1 overflow-auto">
         {viewMode === "month" ? (
-          /* Month selection */
+          /* Block selection */
           <div className="p-4">
             <h2 className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">
-              Månader
+              Block
             </h2>
             <div className="space-y-1">
-              {months.map((month) => (
+              {months.map((block) => (
                 <button
-                  key={month.id}
-                  onClick={() => onSelectMonth(month.id)}
+                  key={block.id}
+                  onClick={() => onSelectMonth(block.id)}
                   className={`
                     w-full p-2 rounded text-left text-sm transition-colors
-                    ${selectedMonth === month.id ? "bg-blue-600 text-white" : "hover:bg-gray-700 text-gray-300"}
+                    ${selectedMonth === block.id ? "bg-blue-600 text-white" : "hover:bg-gray-700 text-gray-300"}
                   `}
                 >
-                  {month.name}
+                  {block.name}
                 </button>
               ))}
             </div>

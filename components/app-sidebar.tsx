@@ -226,9 +226,9 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
           size={isOpen ? "sm" : "icon"}
           onClick={() => changeViewMode("month")} // Use context action
           className={cn("w-full", isOpen && "justify-start")}
-          aria-label="Monthly View"
+          aria-label="Block View"
         >
-          <Calendar className={cn("h-4 w-4", isOpen && "mr-2")} /> {isOpen && "Monthly View"}
+          <Calendar className={cn("h-4 w-4", isOpen && "mr-2")} /> {isOpen && "Block View"}
         </Button>
         <Button
           variant={viewMode === "week" ? "default" : "outline"}
@@ -248,7 +248,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
             {viewMode === "month" ? (
               <div className="p-4">
                 <h2 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
-                  Months
+                  Blocks
                 </h2>
                 <div className="space-y-1">
                   {monthsForSidebar.map((month) => (
