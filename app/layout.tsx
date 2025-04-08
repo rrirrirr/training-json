@@ -7,6 +7,7 @@ import { TrainingPlanProvider } from "@/contexts/training-plan-context" // Your 
 import { SidebarProvider } from "@/components/ui/sidebar" // Your existing provider
 import { LayoutClient } from "@/components/layout/layout-client" // NEW: Client component wrapper
 import { Toaster } from "@/components/ui/toaster" // Assuming you use Shadcn Toaster
+import { ModalProvider } from "@/components/modals/modal-provider" // Added ModalProvider import
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -31,7 +32,10 @@ export default function RootLayout({
         >
           <TrainingPlanProvider>
             <SidebarProvider>
-              <LayoutClient>{children}</LayoutClient>
+              <LayoutClient>
+                {children}
+                <ModalProvider /> {/* Added ModalProvider inside client components */}
+              </LayoutClient>
             </SidebarProvider>
           </TrainingPlanProvider>
           <Toaster />

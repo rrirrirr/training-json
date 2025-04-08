@@ -8,6 +8,7 @@ import { useUploadModal } from "@/components/modals/upload-modal"
 import { useInfoModal } from "@/components/modals/info-modal"
 import { useAiInfoModal } from "@/components/modals/ai-info-modal"
 import { useNewPlanModal } from "@/components/modals/new-plan-modal"
+import { useState, useEffect } from "react"
 
 interface WelcomeScreenProps {
   onLoadExample: () => void
@@ -20,26 +21,79 @@ export default function WelcomeScreen({
   onImportData,
   onCreateNewPlan,
 }: WelcomeScreenProps) {
-  // Get the modal stores directly
+  const [debugInfo, setDebugInfo] = useState<string>("")
+  
+  // Get the store state directly to debug
   const uploadModalStore = useUploadModal()
   const infoModalStore = useInfoModal()
   const aiInfoModalStore = useAiInfoModal()
   const newPlanModalStore = useNewPlanModal()
   
-  const handleNewPlan = (name: string) => {
+  // For debugging, log the state of each modal store
+  useEffect(() => {
+    const storeState = {
+      uploadModalOpen: uploadModalStore.isOpen,
+      infoModalOpen: infoModalStore.isOpen,
+      aiInfoModalOpen: aiInfoModalStore.isOpen,
+      newPlanModalOpen: newPlanModalStore.isOpen,
+    }
+    setDebugInfo(JSON.stringify(storeState, null, 2))
+  }, [
+    uploadModalStore.isOpen, 
+    infoModalStore.isOpen, 
+    aiInfoModalStore.isOpen, 
+    newPlanModalStore.isOpen
+  ])
+  
+  const handleAiModalClick = () => {
+    console.log("AI Modal Button Clicked")
+    aiInfoModalStore.open()
+    // Force update debug info
+    setDebugInfo(prev => prev + " - AI button clicked")
+  }
+  
+  const handleInfoModalClick = () => {
+    console.log("Info Modal Button Clicked")
+    infoModalStore.open()
+    // Force update debug info
+    setDebugInfo(prev => prev + " - Info button clicked")
+  }
+  
+  const handleUploadModalClick = () => {
+    console.log("Upload Modal Button Clicked")
+    uploadModalStore.open(onImportData)
+    // Force update debug info
+    setDebugInfo(prev => prev + " - Upload button clicked")
+  }
+  
+  const handleNewPlanModalClick = () => {
+    console.log("New Plan Modal Button Clicked")
+    
     // Create empty training plan structure
     const emptyPlan: TrainingPlanData = {
       exerciseDefinitions: [],
       weeks: [],
       monthBlocks: [],
     }
-    onCreateNewPlan(name, emptyPlan)
+    
+    newPlanModalStore.open((name: string) => {
+      onCreateNewPlan(name, emptyPlan)
+    })
+    
+    // Force update debug info
+    setDebugInfo(prev => prev + " - New Plan button clicked")
   }
 
   return (
     <div className="flex flex-col min-h-screen">
       <div className="bg-primary/5 py-12 px-4 sm:px-6 lg:px-8 flex-1 flex items-center justify-center">
         <div className="max-w-4xl mx-auto">
+          {/* Debug Info (remove in production) */}
+          <div className="fixed top-0 right-0 bg-black/80 text-white p-4 text-xs font-mono max-w-[300px] z-50 overflow-auto max-h-[300px]">
+            <p>Debug Info:</p>
+            <pre>{debugInfo}</pre>
+          </div>
+          
           {/* Main Header */}
           <div className="text-center mb-10">
             <h1 className="text-4xl font-bold text-primary sm:text-5xl md:text-6xl mb-4">
@@ -53,10 +107,7 @@ export default function WelcomeScreen({
           {/* Primary Call to Action */}
           <div className="mb-12 flex justify-center">
             <Button 
-              onClick={() => {
-                // Direct call to open function
-                aiInfoModalStore.open()
-              }}
+              onClick={handleAiModalClick}
               size="lg"
               className="w-full sm:w-auto sm:min-w-[320px] flex items-center justify-between py-8 px-6 text-lg shadow-md"
             >
@@ -74,9 +125,7 @@ export default function WelcomeScreen({
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto">
               <Button
-                onClick={() => {
-                  uploadModalStore.open(onImportData)
-                }}
+                onClick={handleUploadModalClick}
                 variant="outline"
                 className="h-14 text-base flex items-center justify-between"
               >
@@ -106,9 +155,7 @@ export default function WelcomeScreen({
             <CardContent className="pt-6 pb-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Button
-                  onClick={() => {
-                    newPlanModalStore.open(handleNewPlan)
-                  }}
+                  onClick={handleNewPlanModalClick}
                   variant="ghost"
                   className="h-12 justify-start"
                 >
@@ -117,9 +164,7 @@ export default function WelcomeScreen({
                 </Button>
 
                 <Button 
-                  onClick={() => {
-                    infoModalStore.open()
-                  }}
+                  onClick={handleInfoModalClick} 
                   variant="ghost"
                   className="h-12 justify-start"
                 >
