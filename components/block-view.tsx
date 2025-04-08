@@ -1,4 +1,5 @@
 import type { MonthBlock, TrainingPlanData, BlockDefinition } from "@/types/training-plan"
+import { useRef } from "react"
 import WeeklyView from "./weekly-view"
 import { cn } from "@/lib/utils"
 
@@ -8,6 +9,9 @@ interface BlockViewProps {
 }
 
 export default function BlockView({ monthBlock, trainingPlan }: BlockViewProps) {
+  // Create refs for each week section
+  const weekRefs = useRef<{[key: number]: HTMLDivElement | null}>({});
+  
   // Get all weeks for this block
   const weeksInBlock = trainingPlan.weeks
     .filter((week) => monthBlock.weeks.includes(week.weekNumber))
@@ -107,6 +111,16 @@ export default function BlockView({ monthBlock, trainingPlan }: BlockViewProps) 
   
   const { styles, bgClass, borderClass, textClass } = getBlockStyles();
 
+  // Function to scroll to a specific week
+  const scrollToWeek = (weekNumber: number) => {
+    if (weekRefs.current[weekNumber]) {
+      weekRefs.current[weekNumber]?.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
   if (weeksInBlock.length === 0) {
     return (
       <div className="text-center p-8">
@@ -117,44 +131,65 @@ export default function BlockView({ monthBlock, trainingPlan }: BlockViewProps) 
 
   return (
     <div className="space-y-12 pb-8">
+      {/* Block header - made smaller and similar to week cards */}
       <div className={cn(
-        "py-4 px-6 rounded-lg border mb-8",
+        "py-3 px-4 rounded-lg border-2 mb-8 max-w-4xl mx-auto shadow-sm",
         bgClass || "bg-card",
-        borderClass || "border-border",
+        borderClass || "border-primary/20", // Slightly more prominent border
         textClass
       )} style={styles}>
-        <h2 className="text-2xl font-bold mb-2">{blockDefinition?.name || monthBlock.name}</h2>
-        
-        {blockDefinition?.focus && (
-          <div className="text-lg font-medium mb-2">
-            Fokus: {blockDefinition.focus}
+        <div className="md:flex md:justify-between md:items-start">
+          <div className="mb-3 md:mb-0">
+            <h2 className="text-xl font-bold mb-1">{blockDefinition?.name || monthBlock.name}</h2>
+            
+            {blockDefinition?.focus && (
+              <div className="text-base font-medium">
+                <span className="text-muted-foreground">Fokus:</span> {blockDefinition.focus}
+              </div>
+            )}
+            
+            {blockDefinition?.description && (
+              <p className="text-sm text-muted-foreground mt-1">
+                {blockDefinition.description}
+              </p>
+            )}
           </div>
-        )}
+          
+          {blockDefinition?.durationWeeks && (
+            <div className="text-sm bg-primary/5 px-3 py-1 rounded-md inline-block">
+              {blockDefinition.durationWeeks} veckor
+            </div>
+          )}
+        </div>
         
-        {blockDefinition?.description && (
-          <p className="text-muted-foreground">
-            {blockDefinition.description}
-          </p>
-        )}
-        
-        {blockDefinition?.durationWeeks && (
-          <div className="mt-2 text-sm">
-            Duration: {blockDefinition.durationWeeks} veckor
-          </div>
-        )}
-        
+        {/* Clickable week links */}
         <div className="mt-3 flex flex-wrap gap-2">
           {weeksInBlock.map(week => (
-            <span key={week.weekNumber} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+            <button
+              key={week.weekNumber}
+              onClick={() => scrollToWeek(week.weekNumber)}
+              className={cn(
+                "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium",
+                "bg-primary/10 text-primary hover:bg-primary/20 transition-colors",
+                "focus:outline-none focus:ring-2 focus:ring-primary/40"
+              )}
+            >
               Vecka {week.weekNumber}
               {week.weekType && week.weekType !== "-" && ` (${week.weekType})`}
-            </span>
+            </button>
           ))}
         </div>
       </div>
 
+      {/* Week sections with refs for scrolling */}
       {weeksInBlock.map((week) => (
-        <WeeklyView key={week.weekNumber} week={week} trainingPlan={trainingPlan} compact={true} />
+        <div 
+          key={week.weekNumber} 
+          ref={el => weekRefs.current[week.weekNumber] = el}
+          id={`week-${week.weekNumber}`}
+        >
+          <WeeklyView week={week} trainingPlan={trainingPlan} compact={true} />
+        </div>
       ))}
     </div>
   )
