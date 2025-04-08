@@ -2,13 +2,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useState } from "react"
@@ -57,9 +51,7 @@ export function MobileNavBar({
   }
 
   // Display text for the main button
-  const mainButtonText = selectedWeek !== null 
-    ? `Vecka ${selectedWeek}` 
-    : `Block ${selectedMonth}`
+  const mainButtonText = selectedWeek !== null ? `Vecka ${selectedWeek}` : `Block ${selectedMonth}`
 
   return (
     <div className="md:hidden p-2 border-b bg-white flex items-center justify-between space-x-2">
@@ -83,9 +75,13 @@ export function MobileNavBar({
             <SheetTitle>Välj period</SheetTitle>
           </SheetHeader>
           <Tabs defaultValue="blocks" className="flex-1 flex flex-col overflow-hidden px-6 pb-6">
-            <TabsList className="grid w-full grid-cols-2 mb-2">
-              <TabsTrigger value="blocks">Block</TabsTrigger>
-              <TabsTrigger value="weeks">Veckor</TabsTrigger>
+            <TabsList className="w-full flex mb-2">
+              <TabsTrigger className="flex-grow" value="blocks">
+                Block
+              </TabsTrigger>
+              <TabsTrigger className="flex-grow" value="weeks">
+                Veckor
+              </TabsTrigger>
             </TabsList>
             {/* Block Selection List */}
             <TabsContent value="blocks" className="flex-1 overflow-y-auto">
