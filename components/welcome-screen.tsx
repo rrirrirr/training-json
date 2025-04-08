@@ -25,7 +25,7 @@ export default function WelcomeScreen({
   const infoModalStore = useInfoModal()
   const aiInfoModalStore = useAiInfoModal()
   const newPlanModalStore = useNewPlanModal()
-  
+
   const handleNewPlan = (name: string) => {
     // Create empty training plan structure
     const emptyPlan: TrainingPlanData = {
@@ -46,13 +46,14 @@ export default function WelcomeScreen({
               AI Träningsplan Visualiserare
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Det här verktyget hjälper dig att visualisera och hantera träningsplaner, särskilt de som skapats med AI.
+              Det här verktyget hjälper dig att visualisera och hantera träningsplaner, särskilt de
+              som skapats med AI.
             </p>
           </div>
 
           {/* Primary Call to Action */}
           <div className="mb-12 flex justify-center">
-            <Button 
+            <Button
               onClick={() => {
                 // Direct call to open function
                 aiInfoModalStore.open()
@@ -70,8 +71,10 @@ export default function WelcomeScreen({
 
           {/* Secondary Options */}
           <div className="text-center mb-6">
-            <p className="text-base text-muted-foreground mb-4">Eller börja med en befintlig plan:</p>
-            
+            <p className="text-base text-muted-foreground mb-4">
+              Eller börja med en befintlig plan:
+            </p>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto">
               <Button
                 onClick={() => {
@@ -101,40 +104,11 @@ export default function WelcomeScreen({
             </div>
           </div>
 
-          {/* Additional Options in Cards */}
-          <Card className="mt-8 border border-primary/10 bg-background/60 shadow-sm">
-            <CardContent className="pt-6 pb-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Button
-                  onClick={() => {
-                    newPlanModalStore.open(handleNewPlan)
-                  }}
-                  variant="ghost"
-                  className="h-12 justify-start"
-                >
-                  <FilePlus className="h-4 w-4 mr-2" />
-                  <span>Skapa Manuellt</span>
-                </Button>
-
-                <Button 
-                  onClick={() => {
-                    infoModalStore.open()
-                  }}
-                  variant="ghost"
-                  className="h-12 justify-start"
-                >
-                  <Info className="h-4 w-4 mr-2" />
-                  <span>Format & Information</span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Info Text Footer */}
           <div className="mt-12 text-center">
             <p className="text-sm text-muted-foreground">
-              Använd detta verktyg för att enkelt organisera, visualisera och följa 
-              din träningsplan oavsett om den skapas manuellt eller genereras med AI.
+              Använd detta verktyg för att enkelt organisera, visualisera och följa din träningsplan
+              oavsett om den skapas manuellt eller genereras med AI.
             </p>
           </div>
         </div>
