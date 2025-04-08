@@ -73,10 +73,6 @@ export function MobileNavBar({
         </Button>
       </SheetTrigger>
       <SheetContent side="bottom" className="h-[80vh] flex flex-col p-0">
-        <SheetHeader className="p-4 pb-2 border-b">
-          <SheetTitle>Träningsplan</SheetTitle>
-        </SheetHeader>
-
         <Tabs defaultValue="blocks" className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="mx-4 my-2 w-auto">
             <TabsTrigger className="flex-grow" value="blocks">
