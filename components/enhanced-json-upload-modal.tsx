@@ -1,0 +1,217 @@
+"use client"
+
+import type React from "react"
+import { useState } from "react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
+import type { TrainingPlanData } from "@/types/training-plan"
+import { AlertCircle, Upload, Sparkles } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Separator } from "@/components/ui/separator"
+import { useAiInfoModal } from "@/components/modals/ai-info-modal"
+
+interface EnhancedJsonUploadModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onImport: (data: TrainingPlanData) => void
+}
+
+export default function EnhancedJsonUploadModal({ 
+  isOpen, 
+  onClose, 
+  onImport 
+}: EnhancedJsonUploadModalProps) {
+  const [jsonText, setJsonText] = useState("")
+  const [activeTab, setActiveTab] = useState("paste")
+  const [error, setError] = useState<string | null>(null)
+  const [file, setFile] = useState<File | null>(null)
+  
+  // Access the AI info modal
+  const aiInfoModalStore = useAiInfoModal()
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0]
+    if (selectedFile) {
+      setFile(selectedFile)
+      setError(null)
+    }
+  }
+
+  const validateAndImport = (jsonData: string) => {
+    try {
+      const data = JSON.parse(jsonData) as TrainingPlanData
+
+      // Basic validation
+      if (!data.weeks || !Array.isArray(data.weeks)) {
+        throw new Error("JSON must contain a 'weeks' array")
+      }
+
+      if (!data.monthBlocks || !Array.isArray(data.monthBlocks)) {
+        throw new Error("JSON must contain a 'monthBlocks' array")
+      }
+
+      if (!data.exerciseDefinitions || !Array.isArray(data.exerciseDefinitions)) {
+        throw new Error("JSON must contain an 'exerciseDefinitions' array")
+      }
+      
+      // Check for metadata and plan name
+      if (!data.metadata) {
+        throw new Error("JSON must contain a 'metadata' object with at least a 'planName' property")
+      }
+      
+      if (!data.metadata.planName || typeof data.metadata.planName !== 'string' || data.metadata.planName.trim() === '') {
+        throw new Error("The 'metadata' object must include a non-empty 'planName' property")
+      }
+
+      // Continue with other validations...
+      onImport(data)
+      onClose()
+      setJsonText("")
+      setFile(null)
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid JSON format")
+    }
+  }
+
+  const handleImportFromText = () => {
+    if (!jsonText.trim()) {
+      setError("Please enter JSON data")
+      return
+    }
+    validateAndImport(jsonText)
+  }
+
+  const handleImportFromFile = async () => {
+    if (!file) {
+      setError("Please select a file")
+      return
+    }
+
+    try {
+      const text = await file.text()
+      validateAndImport(text)
+    } catch (err) {
+      setError("Failed to read file")
+    }
+  }
+  
+  const handleOpenAiGuide = () => {
+    onClose() // Close the current modal
+    aiInfoModalStore.open() // Open the AI guide modal
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>Import Training Plan</DialogTitle>
+          <DialogDescription>
+            Upload a JSON file or paste JSON data to import your training plan. The JSON must include 
+            metadata with a plan name.
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* AI Generation Link */}
+        <div className="bg-primary/5 p-4 rounded-lg mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Sparkles className="h-5 w-5 mr-2 text-primary" />
+              <span className="font-medium">Need help creating a plan?</span>
+            </div>
+            <Button 
+              variant="link" 
+              onClick={handleOpenAiGuide}
+              className="text-primary"
+            >
+              Create a plan with AI
+            </Button>
+          </div>
+        </div>
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="paste">Paste JSON</TabsTrigger>
+            <TabsTrigger value="upload">Upload File</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="paste" className="mt-4">
+            <Textarea
+              placeholder="Paste your JSON data here... Include metadata with planName."
+              className="min-h-[200px] font-mono text-sm"
+              value={jsonText}
+              onChange={(e) => {
+                setJsonText(e.target.value)
+                setError(null)
+              }}
+            />
+            <Button onClick={handleImportFromText} className="mt-4">
+              Import from Text
+            </Button>
+          </TabsContent>
+
+          <TabsContent value="upload" className="mt-4">
+            <div className="border-2 border-dashed rounded-lg p-6 text-center relative">
+              <Upload className="mx-auto h-12 w-12 text-gray-400" />
+              <p className="mt-2 text-sm text-gray-600">Click to browse or drag and drop</p>
+              <input
+                type="file"
+                accept=".json"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                onClick={(e) => e.stopPropagation()}
+                onChange={handleFileChange}
+              />
+              {file && <p className="mt-2 text-sm font-medium text-green-600">Selected: {file.name}</p>}
+            </div>
+            <Button onClick={handleImportFromFile} className="mt-4" disabled={!file}>
+              Import from File
+            </Button>
+          </TabsContent>
+        </Tabs>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <Separator className="my-2" />
+        
+        {/* Note about required metadata */}
+        <div className="text-sm text-muted-foreground">
+          <p className="mb-2">
+            <strong>Note:</strong> The training plan JSON must include a metadata object with planName.
+          </p>
+          <pre className="bg-muted p-2 rounded text-xs overflow-x-auto">
+{`{
+  "metadata": {
+    "planName": "My Training Plan",
+    "creationDate": "2025-04-09"
+  },
+  "exerciseDefinitions": [...],
+  "weeks": [...],
+  "monthBlocks": [...]
+}`}
+          </pre>
+        </div>
+
+        <DialogFooter className="mt-4">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}

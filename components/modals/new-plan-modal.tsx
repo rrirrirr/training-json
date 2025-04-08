@@ -1,40 +1,42 @@
 "use client"
 
 import { create } from 'zustand'
-import PlanNameDialog from '@/components/plan-name-dialog'
+import { useUploadModal } from './upload-modal'
 import { TrainingPlanData } from '@/types/training-plan'
+import React from 'react'
 
 interface NewPlanModalStore {
   isOpen: boolean
-  onSaveCallback: ((name: string) => void) | null
-  open: (callback: (name: string) => void) => void
+  open: () => void
   close: () => void
 }
 
 export const useNewPlanModal = create<NewPlanModalStore>((set) => ({
   isOpen: false,
-  onSaveCallback: null,
-  open: (callback) => set({ isOpen: true, onSaveCallback: callback }),
+  open: () => set({ isOpen: true }),
   close: () => set({ isOpen: false }),
 }))
 
 export function NewPlanModal() {
-  const { isOpen, close, onSaveCallback } = useNewPlanModal()
+  const { isOpen, close } = useNewPlanModal()
+  const uploadModal = useUploadModal()
   
-  const handleSave = (name: string) => {
-    if (onSaveCallback) {
-      onSaveCallback(name)
+  // Instead of opening the name dialog, we'll directly redirect to the JSON upload modal
+  React.useEffect(() => {
+    if (isOpen) {
+      close() // Close this modal immediately
+      
+      // Open the upload modal with a callback that dispatches the plan-created-from-json event
+      uploadModal.open((data: TrainingPlanData) => {
+        // Create and dispatch a custom event with the imported JSON data
+        const event = new CustomEvent('plan-created-from-json', { 
+          detail: { data } 
+        })
+        window.dispatchEvent(event)
+      })
     }
-    close()
-  }
+  }, [isOpen, close, uploadModal])
   
-  return (
-    <PlanNameDialog 
-      isOpen={isOpen} 
-      onClose={close} 
-      onSave={handleSave} 
-      title="Skapa ny träningsplan" 
-      description="Ge din träningsplan ett namn som hjälper dig identifiera den senare." 
-    />
-  )
+  // This component doesn't render anything since it immediately redirects
+  return null
 }

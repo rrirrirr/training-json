@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react" // Added useMemo
+import { useState, useEffect, useMemo } from "react"
 import type { TrainingPlanData, MonthBlock } from "@/types/training-plan"
 import { exampleTrainingPlan } from "@/utils/example-training-plan"
 import WeeklyView from "@/components/weekly-view"
@@ -43,15 +43,42 @@ function TrainingPlanContent() {
     return () => clearTimeout(timer)
   }, [currentPlan])
 
+  // Add an event listener for plan-created-from-json
+  useEffect(() => {
+    const handlePlanCreatedFromJson = (e: CustomEvent<{ data: TrainingPlanData }>) => {
+      const data = e.detail.data;
+      // Use the planName from metadata rather than passing it separately
+      if (data && data.metadata && data.metadata.planName) {
+        addPlan(data.metadata.planName, data);
+      } else {
+        // If no metadata exists, generate a default name
+        addPlan(`Training Plan ${new Date().toLocaleDateString()}`, data);
+      }
+    };
+
+    // @ts-ignore - Custom event type
+    window.addEventListener('plan-created-from-json', handlePlanCreatedFromJson);
+    
+    return () => {
+      // @ts-ignore - Custom event type
+      window.removeEventListener('plan-created-from-json', handlePlanCreatedFromJson);
+    };
+  }, [addPlan]);
+
   // Handler for loading example (calls context action)
   const handleLoadExample = () => {
-    addPlan("Example Plan", exampleTrainingPlan)
+    // The example data already includes proper metadata with planName
+    addPlan(
+      exampleTrainingPlan.metadata?.planName || "Example 5x5 Strength Program", 
+      exampleTrainingPlan
+    )
   }
 
-  // Handler for creating new plan (calls context action)
-  const handleCreateNewPlan = (name: string) => {
-    const emptyPlan: TrainingPlanData = { exerciseDefinitions: [], weeks: [], monthBlocks: [] }
-    addPlan(name, emptyPlan)
+  // Handler for importing plan data (JSON)
+  const handleImportPlan = (data: TrainingPlanData) => {
+    // Extract the name from metadata or generate a default
+    const planName = data.metadata?.planName || `Imported Plan ${new Date().toLocaleDateString()}`;
+    addPlan(planName, data);
   }
 
   // Data finding logic uses state from context
@@ -71,8 +98,6 @@ function TrainingPlanContent() {
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center p-4">
-        {" "}
-        {/* Use h-full within main */}
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
@@ -83,11 +108,7 @@ function TrainingPlanContent() {
     return (
       <WelcomeScreen
         onLoadExample={handleLoadExample}
-        onCreateNewPlan={handleCreateNewPlan}
-        // onImportData might need context integration or local handling
-        onImportData={(importedData) => {
-          console.log("Import TBD", importedData)
-        }}
+        onImportData={handleImportPlan}
       />
     )
   }
@@ -115,7 +136,6 @@ function TrainingPlanContent() {
             This training plan doesn't have any weeks defined yet. Edit the plan JSON or import a
             different one.
           </p>
-          {/* Optional: Button to edit JSON or load example */}
         </div>
       </div>
     )
@@ -125,8 +145,6 @@ function TrainingPlanContent() {
     <>
       {/* Content View (Add padding here) */}
       <div className="p-4 md:p-6">
-        {" "}
-        {/* Added responsive padding */}
         {viewMode === "week" && weekData ? (
           <WeeklyView week={weekData} trainingPlan={trainingPlan} />
         ) : viewMode === "month" && monthData ? (

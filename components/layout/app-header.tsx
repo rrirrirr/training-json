@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { MobileNavBar } from "@/components/mobile-navbar"
+import { useUploadModal } from "@/components/modals/upload-modal"
 
 interface HeaderProps {
   onToggleSidebar: () => void
@@ -41,13 +42,13 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
   const { setTheme, theme } = useTheme()
   const { plans, currentPlan, setCurrentPlan, deletePlan, updatePlan, viewMode, changeViewMode } =
     useTrainingPlans()
+  const uploadModalStore = useUploadModal()
 
   // State for handling plan edit/delete/view
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isJsonEditorOpen, setIsJsonEditorOpen] = useState(false)
-  const [isNewPlanDialogOpen, setIsNewPlanDialogOpen] = useState(false)
   const [planToEdit, setPlanToEdit] = useState<SavedTrainingPlan | null>(null)
   const [planToDelete, setPlanToDelete] = useState<SavedTrainingPlan | null>(null)
   const [planToViewJson, setPlanToViewJson] = useState<SavedTrainingPlan | null>(null)
@@ -105,11 +106,16 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
     setIsDeleteDialogOpen(false)
   }
 
-  // Handle creating a new plan
-  const handleCreateNewPlan = (name: string) => {
-    // Dispatch event for the page to handle
-    window.dispatchEvent(new CustomEvent("create-training-plan", { detail: { name } }))
-    setIsNewPlanDialogOpen(false)
+  // Handle creating a new plan via JSON import
+  const handleCreateNewPlan = () => {
+    // Open the upload modal with a callback that dispatches the plan-created-from-json event
+    uploadModalStore.open((data) => {
+      // Create and dispatch a custom event with the imported JSON data
+      const event = new CustomEvent('plan-created-from-json', { 
+        detail: { data } 
+      })
+      window.dispatchEvent(event)
+    })
     setIsSheetOpen(false)
   }
 
@@ -212,14 +218,14 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
                   ))}
                 </div>
 
-                {/* New Plan Button */}
+                {/* New Plan Button - Now opens JSON Upload */}
                 <Button
-                  onClick={() => setIsNewPlanDialogOpen(true)}
+                  onClick={handleCreateNewPlan}
                   variant="outline"
                   className="w-full mt-3"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Create New Plan
+                  Import JSON Plan
                 </Button>
               </div>
 
@@ -292,15 +298,6 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
         title="Rename Training Plan"
         description="Update the name of your training plan."
         saveButtonText="Update"
-      />
-
-      <PlanNameDialog
-        isOpen={isNewPlanDialogOpen}
-        onClose={() => setIsNewPlanDialogOpen(false)}
-        onSave={handleCreateNewPlan}
-        title="New Training Plan"
-        description="Give your new training plan a name."
-        saveButtonText="Create"
       />
 
       <JsonEditor

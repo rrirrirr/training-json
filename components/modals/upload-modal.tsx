@@ -1,7 +1,7 @@
 "use client"
 
 import { create } from 'zustand'
-import JsonUploadModal from '@/components/json-upload-modal'
+import EnhancedJsonUploadModal from '@/components/enhanced-json-upload-modal'
 import { TrainingPlanData } from '@/types/training-plan'
 
 interface UploadModalStore {
@@ -29,7 +29,7 @@ export function UploadModal() {
   }
   
   return (
-    <JsonUploadModal 
+    <EnhancedJsonUploadModal 
       isOpen={isOpen} 
       onClose={close} 
       onImport={handleImport} 

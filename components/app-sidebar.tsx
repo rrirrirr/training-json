@@ -9,6 +9,7 @@ import { useTrainingPlans } from "@/contexts/training-plan-context"
 import PlanNameDialog from "./plan-name-dialog"
 import JsonEditor from "./json-editor"
 import { useInfoModal } from "@/components/modals/info-modal"
+import { useUploadModal } from "@/components/modals/upload-modal"
 import BlockSelector from "./shared/block-selector"
 import WeekSelector from "./shared/week-selector"
 import {
@@ -61,8 +62,10 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
     trainingData,
   } = useTrainingPlans()
 
+  // Get upload modal (for creating new plans via JSON upload)
+  const uploadModalStore = useUploadModal()
+
   // Internal state for dialogs
-  const [isNewPlanDialogOpen, setIsNewPlanDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isJsonEditorOpen, setIsJsonEditorOpen] = useState(false)
@@ -122,10 +125,16 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
     return new Date(timestamp).toLocaleDateString()
   }
 
-  // Handle creating a new plan
-  const triggerCreateNewPlan = (name: string) => {
-    window.dispatchEvent(new CustomEvent("create-training-plan", { detail: { name } }))
-    setIsNewPlanDialogOpen(false)
+  // Handle creating a new plan - now opens the upload modal
+  const handleCreateNewPlan = () => {
+    // Open the upload modal with a callback that dispatches the plan-created-from-json event
+    uploadModalStore.open((data) => {
+      // Create and dispatch a custom event with the imported JSON data
+      const event = new CustomEvent('plan-created-from-json', { 
+        detail: { data } 
+      })
+      window.dispatchEvent(event)
+    })
   }
 
   return (
@@ -201,13 +210,13 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => setIsNewPlanDialogOpen(true)}>
+                <DropdownMenuItem onSelect={() => handleCreateNewPlan()}>
                   <Button
                     variant="ghost"
                     className="w-full justify-start px-2 text-muted-foreground"
                     size="sm"
                   >
-                    <Plus className="mr-2 h-4 w-4" /> New Plan
+                    <Plus className="mr-2 h-4 w-4" /> New Plan (Import JSON)
                   </Button>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -308,14 +317,6 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
         title="Rename Training Plan"
         description="Update the name of your training plan."
         saveButtonText="Update"
-      />
-      <PlanNameDialog
-        isOpen={isNewPlanDialogOpen}
-        onClose={() => setIsNewPlanDialogOpen(false)}
-        onSave={triggerCreateNewPlan}
-        title="New Training Plan"
-        description="Give your new training plan a name."
-        saveButtonText="Create"
       />
       <Dialog
         open={isDeleteDialogOpen}

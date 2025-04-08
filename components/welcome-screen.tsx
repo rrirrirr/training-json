@@ -1,38 +1,23 @@
 "use client"
 
-import { Upload, BookOpen, FilePlus, ChevronRight, Sparkles } from "lucide-react"
+import { Upload, BookOpen, ChevronRight, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import type { TrainingPlanData } from "@/types/training-plan"
 import { useUploadModal } from "@/components/modals/upload-modal"
 import { useAiInfoModal } from "@/components/modals/ai-info-modal"
-import { useNewPlanModal } from "@/components/modals/new-plan-modal"
 
 interface WelcomeScreenProps {
   onLoadExample: () => void
   onImportData: (data: TrainingPlanData) => void
-  onCreateNewPlan: (name: string, emptyPlan: TrainingPlanData) => void
 }
 
 export default function WelcomeScreen({
   onLoadExample,
   onImportData,
-  onCreateNewPlan,
 }: WelcomeScreenProps) {
   // Get the modal stores directly
   const uploadModalStore = useUploadModal()
   const aiInfoModalStore = useAiInfoModal()
-  const newPlanModalStore = useNewPlanModal()
-
-  const handleNewPlan = (name: string) => {
-    // Create empty training plan structure
-    const emptyPlan: TrainingPlanData = {
-      exerciseDefinitions: [],
-      weeks: [],
-      monthBlocks: [],
-    }
-    onCreateNewPlan(name, emptyPlan)
-  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -70,7 +55,7 @@ export default function WelcomeScreen({
           {/* Secondary Options */}
           <div className="text-center mb-6">
             <p className="text-base text-muted-foreground mb-4">
-              Eller börja med en befintlig plan:
+              Eller börja med en färdig JSON plan:
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto">
@@ -83,7 +68,7 @@ export default function WelcomeScreen({
               >
                 <div className="flex items-center">
                   <Upload className="h-5 w-5 mr-2" />
-                  <span>Importera Plan</span>
+                  <span>Importera JSON Plan</span>
                 </div>
                 <ChevronRight className="h-4 w-4 opacity-70" />
               </Button>
