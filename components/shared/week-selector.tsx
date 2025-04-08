@@ -10,9 +10,9 @@ interface WeekSelectorProps {
   onSelectWeek: (week: number) => void
   variant?: "sidebar" | "mobile"
   getWeekInfo?: (weekNumber: number) => {
-    type: string;
-    isDeload: boolean;
-    isTest: boolean;
+    type: string
+    isDeload: boolean
+    isTest: boolean
   }
 }
 
@@ -21,7 +21,7 @@ export default function WeekSelector({
   selectedWeek,
   onSelectWeek,
   variant = "sidebar",
-  getWeekInfo
+  getWeekInfo,
 }: WeekSelectorProps) {
   const { trainingData } = useTrainingPlans()
 
@@ -39,20 +39,17 @@ export default function WeekSelector({
   const weekInfoFn = getWeekInfo || defaultGetWeekInfo
 
   // Determine if grid layout or list layout based on variant
-  const containerClassName = variant === "sidebar" 
-    ? "grid grid-cols-4 gap-2" 
-    : "grid grid-cols-3 gap-2 sm:grid-cols-4"
+  const containerClassName =
+    variant === "sidebar" ? "grid grid-cols-4 gap-2" : "grid grid-cols-3 gap-2 sm:grid-cols-4"
 
   // Get button styles based on variant and week properties
   const getWeekButtonStyles = (weekNumber: number) => {
     const { type, isDeload, isTest } = weekInfoFn(weekNumber)
     const isSelected = selectedWeek === weekNumber
-    
+
     return cn(
       "p-2 rounded text-center text-sm transition-colors",
-      isSelected 
-        ? "bg-primary text-primary-foreground" 
-        : "hover:bg-muted text-foreground",
+      isSelected ? "bg-primary text-primary-foreground" : "hover:bg-muted text-foreground",
       isDeload ? "border-l-4 border-yellow-500" : "",
       isTest ? "border-l-4 border-green-500" : ""
     )

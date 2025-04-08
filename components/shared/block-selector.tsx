@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import type { MonthBlock } from "@/types/training-plan"
+import { Button } from "@/components/ui/button"
 
 interface BlockSelectorProps {
   blocks: MonthBlock[]
@@ -14,32 +15,28 @@ export default function BlockSelector({
   blocks,
   selectedBlockId,
   onSelectBlock,
-  variant = "sidebar"
+  variant = "sidebar",
 }: BlockSelectorProps) {
-  // Determine styling based on variant
-  const getBlockButtonStyles = (isSelected: boolean) => {
-    return cn(
-      "w-full p-2 rounded text-left text-sm transition-colors",
-      isSelected
-        ? "bg-primary text-primary-foreground font-medium" 
-        : "hover:bg-muted text-foreground"
-    )
-  }
-
   return (
     <div className="p-4">
-      <h2 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+      <h2 className="justify-self-center text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
         Block
       </h2>
       <div className="space-y-1">
         {blocks.map((block) => (
-          <button
+          <Button
             key={block.id}
+            variant={selectedBlockId === block.id ? "default" : "ghost"}
+            size="sm"
             onClick={() => onSelectBlock(block.id)}
-            className={getBlockButtonStyles(selectedBlockId === block.id)}
+            className={cn(
+              "w-full justify-center text-center", // Center by default (mobile-first)
+              "md:justify-start md:text-left", // Align left on medium screens and up
+              selectedBlockId !== block.id && "text-foreground hover:bg-muted"
+            )}
           >
             {block.name}
-          </button>
+          </Button>
         ))}
       </div>
     </div>

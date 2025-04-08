@@ -5,7 +5,7 @@ import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import {
-  Menu,
+  PanelLeft,
   Moon,
   Sun,
   ChevronDown,
@@ -15,6 +15,8 @@ import {
   FileText,
   Calendar,
   List,
+  PanelLeftClose,
+  Menu,
 } from "lucide-react"
 import { useTrainingPlans, type SavedTrainingPlan } from "@/contexts/training-plan-context"
 import PlanNameDialog from "@/components/plan-name-dialog"
@@ -28,7 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
-import { MobileNavBar } from "@/components/mobile-navbar" // Fixed: Use named import
+import { MobileNavBar } from "@/components/mobile-navbar"
 
 interface HeaderProps {
   onToggleSidebar: () => void
@@ -240,7 +242,11 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
           onClick={onToggleSidebar}
           aria-label={isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}
         >
-          {isSidebarOpen ? <Menu className="h-5 w-5 rotate-90" /> : <Menu className="h-5 w-5" />}
+          {isSidebarOpen ? (
+            <PanelLeftClose className="h-5 w-5" />
+          ) : (
+            <PanelLeft className="h-5 w-5" />
+          )}
         </Button>
       </div>
 

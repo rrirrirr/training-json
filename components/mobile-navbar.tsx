@@ -1,7 +1,14 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetFooter,
+} from "@/components/ui/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useState } from "react"
 import type { MonthBlock, Week } from "@/types/training-plan"
@@ -9,7 +16,7 @@ import { cn } from "@/lib/utils"
 import { useTrainingPlans } from "@/contexts/training-plan-context"
 import BlockSelector from "@/components/shared/block-selector"
 import WeekSelector from "@/components/shared/week-selector"
-import { Info } from "lucide-react"
+import { Info, PanelBottom } from "lucide-react"
 
 interface MobileNavBarProps {
   months: MonthBlock[]
@@ -51,39 +58,48 @@ export function MobileNavBar({
   const mainButtonText = selectedWeek !== null ? `Vecka ${selectedWeek}` : `Block ${selectedMonth}`
 
   // Get the current month name
-  const currentMonthName = months.find(m => m.id === selectedMonth)?.name || `Block ${selectedMonth}`
+  const currentMonthName =
+    months.find((m) => m.id === selectedMonth)?.name || `Block ${selectedMonth}`
 
   return (
     <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" className="flex-grow text-center">
-          {mainButtonText}
+        <Button
+          variant="outline"
+          className="flex-grow flex items-center w-full px-4" // Kept flex, items-center, w-full, px-4. Removed justify-between.
+        >
+          <span className="flex-grow text-center">{mainButtonText}</span>
+          <PanelBottom className="h-4 w-4 ml-2" /> {/* Added ml-2 for spacing */}
         </Button>
       </SheetTrigger>
       <SheetContent side="bottom" className="h-[80vh] flex flex-col p-0">
         <SheetHeader className="p-4 pb-2 border-b">
           <SheetTitle>Träningsplan</SheetTitle>
         </SheetHeader>
-        
+
         <Tabs defaultValue="blocks" className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="mx-4 my-2 w-auto">
-            <TabsTrigger value="blocks">Block</TabsTrigger>
-            <TabsTrigger value="weeks">Veckor</TabsTrigger>
+            <TabsTrigger className="flex-grow" value="blocks">
+              Block
+            </TabsTrigger>
+            <TabsTrigger className="flex-grow" value="weeks">
+              Veckor
+            </TabsTrigger>
           </TabsList>
-          
+
           {/* Block Selection Tab */}
           <TabsContent value="blocks" className="flex-1 overflow-y-auto pt-0">
-            <BlockSelector 
+            <BlockSelector
               blocks={months}
               selectedBlockId={selectedMonth}
               onSelectBlock={(blockId) => handleSheetSelection(blockId, null)}
               variant="mobile"
             />
           </TabsContent>
-          
+
           {/* Week Selection Tab */}
           <TabsContent value="weeks" className="flex-1 overflow-y-auto pt-0">
-            <WeekSelector 
+            <WeekSelector
               weeks={weeks}
               selectedWeek={selectedWeek}
               onSelectWeek={(weekId) => handleSheetSelection(selectedMonth, weekId)}
@@ -92,7 +108,7 @@ export function MobileNavBar({
             />
           </TabsContent>
         </Tabs>
-        
+
         {/* Legend for week colors */}
         <SheetFooter className="p-4 border-t flex-row justify-start gap-4 text-xs text-muted-foreground">
           <div className="flex items-center">
