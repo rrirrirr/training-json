@@ -14,6 +14,9 @@ import {
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
+/**
+ * Represents a training plan structure.
+ */
 type Plan = {
   id: string | number
   name?: string
@@ -24,6 +27,9 @@ type Plan = {
   updatedAt?: string | number
 }
 
+/**
+ * Props for the PlanSwitcher component.
+ */
 type PlanSwitcherProps = {
   plans: Plan[]
   currentPlan: Plan | null
@@ -34,6 +40,11 @@ type PlanSwitcherProps = {
   onCreatePlan: () => void
 }
 
+/**
+ * Formats a date input (string or timestamp) into<y_bin_46>-MM-DD format.
+ * @param dateInput - The date string or timestamp.
+ * @returns Formatted date string or error message.
+ */
 const formatDisplayDate = (dateInput: string | number | undefined): string => {
   if (!dateInput) return "No date"
   try {
@@ -49,6 +60,11 @@ const formatDisplayDate = (dateInput: string | number | undefined): string => {
   }
 }
 
+/**
+ * Determines the display date (Created or Updated) for a plan item.
+ * @param plan - The plan object.
+ * @returns Object containing the date label and formatted value.
+ */
 const getPlanItemDate = (plan: Plan): { label: string; value: string } => {
   if (plan?.metadata?.creationDate) {
     return { label: "Created", value: formatDisplayDate(plan.metadata.creationDate) }
@@ -58,6 +74,9 @@ const getPlanItemDate = (plan: Plan): { label: string; value: string } => {
   return { label: "Date", value: "N/A" }
 }
 
+/**
+ * A component for switching between available training plans within the sidebar.
+ */
 export function PlanSwitcher({
   plans = [],
   currentPlan,
@@ -77,14 +96,13 @@ export function PlanSwitcher({
             <SidebarMenuButton
               data-sidebar="menu-button"
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="p-0 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" // Added hover classes back
               data-active={currentPlan ? "true" : "false"}
               aria-label="Select Plan"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground shrink-0">
                 <GalleryVerticalEnd className="size-4" />
               </div>
-
               {isOpen && (
                 <>
                   <div className="grid flex-1 text-left text-sm leading-tight">
@@ -121,7 +139,7 @@ export function PlanSwitcher({
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                className="h-8 w-8 text-primary -translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" // Restored animation & theme color
                                 onClick={(e) => onEditPlan(plan, e)}
                                 aria-label={`Edit JSON for ${planName}`}
                               >
@@ -137,7 +155,7 @@ export function PlanSwitcher({
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-destructive opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-75"
+                                className="h-8 w-8 text-destructive -translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 delay-75" // Restored animation
                                 onClick={(e) => onDeletePlan(plan, e)}
                                 aria-label={`Delete ${planName}`}
                               >
