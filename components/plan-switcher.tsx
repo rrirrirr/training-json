@@ -96,7 +96,7 @@ export function PlanSwitcher({
             <SidebarMenuButton
               data-sidebar="menu-button"
               size="lg"
-              className="p-0 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" // Added hover classes back
+              className="p-0"
               data-active={currentPlan ? "true" : "false"}
               aria-label="Select Plan"
             >

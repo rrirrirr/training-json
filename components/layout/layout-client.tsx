@@ -3,10 +3,7 @@
 import React from "react"
 import AppSidebar from "@/components/app-sidebar"
 import { AppHeader } from "@/components/layout/app-header"
-import {
-  Sidebar,
-  useSidebar,
-} from "@/components/ui/sidebar"
+import { Sidebar, useSidebar } from "@/components/ui/sidebar"
 import { MobileNavBar } from "@/components/mobile-navbar"
 import { useTrainingPlans } from "@/contexts/training-plan-context"
 
@@ -55,9 +52,7 @@ export function LayoutClient({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Page Content Rendered Here */}
-        <main className="flex-1 overflow-auto p-4 md:p-6">
-          {children}
-        </main>
+        <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
       </div>
     </div>
   )
