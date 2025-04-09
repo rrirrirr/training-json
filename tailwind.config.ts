@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss"
+import colors from "tailwindcss/colors"
 
 const config: Config = {
   darkMode: ["class"],
@@ -9,7 +10,6 @@ const config: Config = {
     "*.{js,ts,jsx,tsx,mdx}",
   ],
   safelist: [
-    // Background colors for all color names and intensities
     ...[
       "slate",
       "gray",
@@ -34,11 +34,10 @@ const config: Config = {
       "pink",
       "rose",
     ].flatMap((color) =>
-      ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900"].map(
+      ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900", "950"].map(
         (intensity) => `bg-${color}-${intensity}`
       )
     ),
-    // Border colors
     ...[
       "slate",
       "gray",
@@ -63,11 +62,10 @@ const config: Config = {
       "pink",
       "rose",
     ].flatMap((color) =>
-      ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900"].map(
+      ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900", "950"].map(
         (intensity) => `border-${color}-${intensity}`
       )
     ),
-    // Text colors
     ...[
       "slate",
       "gray",
@@ -92,7 +90,7 @@ const config: Config = {
       "pink",
       "rose",
     ].flatMap((color) =>
-      ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900"].map(
+      ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900", "950"].map(
         (intensity) => `text-${color}-${intensity}`
       )
     ),
@@ -135,6 +133,7 @@ const config: Config = {
         },
         sidebar: {
           DEFAULT: "var(--sidebar)",
+          background: "var(--sidebar-background)",
           foreground: "var(--sidebar-foreground)",
           primary: {
             DEFAULT: "var(--sidebar-primary)",
@@ -147,35 +146,28 @@ const config: Config = {
           border: "var(--sidebar-border)",
           ring: "var(--sidebar-ring)",
         },
-        blue: {
-          50: "#eff6ff",
-          100: "#dbeafe",
-          200: "#bfdbfe",
-          500: "#3b82f6",
-          600: "#2563eb",
-          700: "#1d4ed8",
-        },
-        yellow: {
-          50: "#fefce8",
-          200: "#fef08a",
-          500: "#eab308",
-        },
-        green: {
-          50: "#f0fdf4",
-          200: "#bbf7d0",
-          500: "#22c55e",
-        },
-        gray: {
-          50: "#f9fafb",
-          100: "#f3f4f6",
-          200: "#e5e7eb",
-          300: "#d1d5db",
-          400: "#9ca3af",
-          500: "#6b7280",
-          600: "#4b5563",
-          700: "#374151",
-          800: "#1f2937",
-        },
+        slate: { 950: "#090e1a" },
+        gray: { 950: "#0a0a0a" },
+        zinc: { 950: "#0a0a0c" },
+        neutral: { 950: "#0a0a0a" },
+        stone: { 950: "#0c0a09" },
+        red: { 950: "#1f0a0a" },
+        orange: { 950: "#200f01" },
+        amber: { 950: "#1d1101" },
+        yellow: { 950: "#1a1503" },
+        lime: { 950: "#0e1503" },
+        green: { 950: "#06150b" },
+        emerald: { 950: "#02160a" },
+        teal: { 950: "#011616" },
+        cyan: { 950: "#02181d" },
+        sky: { 950: "#06172a" },
+        blue: { 950: "#0f172a" },
+        indigo: { 950: "#0f112c" },
+        violet: { 950: "#160b2c" },
+        purple: { 950: "#190c2c" },
+        fuchsia: { 950: "#1d051e" },
+        pink: { 950: "#200514" },
+        rose: { 950: "#1f050d" },
       },
       borderRadius: {
         lg: "var(--radius)",
