@@ -19,6 +19,29 @@ The training plan JSON structure has been updated to a more normalized format wi
    - sessions reference sessionTypes via `sessionTypeId`
    - exercises reference exerciseDefinitions via `exerciseId`
 
+## Theme-Aware Styling with colorName
+
+The application now supports theme-aware styling using a simplified `colorName` property. Instead of specifying individual colors for background, text, and borders, you can simply specify a base color name:
+
+```json
+"style": {
+  "colorName": "blue"
+}
+```
+
+### Available Color Names
+You can use any of the following color names:
+- **Grays:** slate, gray, zinc, neutral, stone
+- **Colors:** red, orange, amber, yellow, lime, green, emerald, teal, cyan, sky, blue, indigo, violet, purple, fuchsia, pink, rose
+
+### How it Works
+When you specify a `colorName`, the application automatically selects appropriate color shades for:
+- Background colors (lighter in light mode, darker in dark mode)
+- Text colors (darker in light mode, lighter in dark mode)
+- Border colors (medium shades in both modes)
+
+The system ensures proper contrast and readability in both light and dark themes.
+
 ## Detailed Structure
 
 ### Metadata
@@ -41,18 +64,14 @@ The training plan JSON structure has been updated to a more normalized format wi
     "id": "gym",
     "name": "Gym",
     "defaultStyle": {
-      "backgroundColor": "blue-50",
-      "borderColor": "blue-200",
-      "textColor": "blue-800"
+      "colorName": "blue"
     }
   },
   {
     "id": "barmark",
     "name": "Barmark",
     "defaultStyle": {
-      "backgroundColor": "green-50",
-      "borderColor": "green-200",
-      "textColor": "green-800"
+      "colorName": "green"
     }
   }
 ]
@@ -69,9 +88,7 @@ The training plan JSON structure has been updated to a more normalized format wi
     "durationWeeks": 4,
     "description": "Månad 1 (Vecka 1-4): 3 Gympass/vecka - Block 1: Grund & Volym",
     "style": {
-      "backgroundColor": "violet-50",
-      "borderColor": "violet-200",
-      "textColor": "violet-900"
+      "colorName": "violet"
     }
   }
 ]
@@ -98,15 +115,21 @@ The training plan JSON structure has been updated to a more normalized format wi
   {
     "weekNumber": 1,
     "weekType": "A",
-    "blockId": "block-1", // Reference to block
+    "blockId": "block-1",
     "gymDays": 3,
+    "weekStyle": {
+      "colorName": "violet"
+    },
     "sessions": [
       {
         "sessionName": "Gympass 1",
-        "sessionTypeId": "gym", // Reference to session type
+        "sessionTypeId": "gym",
+        "sessionStyle": {
+          "colorName": "blue"
+        },
         "exercises": [
           {
-            "exerciseId": "sq", // Reference to exercise definition
+            "exerciseId": "sq",
             "sets": 3,
             "reps": "8",
             "load": "90 kg (~78%)",
@@ -121,21 +144,28 @@ The training plan JSON structure has been updated to a more normalized format wi
 
 ## Style Handling
 
-The new structure allows for consistent styling through multiple levels:
+The new structure allows for consistent styling through multiple levels using `colorName`:
 
-1. **Block-level styles**: Defined in `blocks[].style`
-2. **Session-type styles**: Defined in `sessionTypes[].defaultStyle`
-3. **Session-specific styles**: Override defaults using `sessions[].sessionStyle`
-4. **Week-specific styles**: Override block styles using `weeks[].weekStyle`
+1. **Block-level styles**: Defined in `blocks[].style.colorName`
+2. **Session-type styles**: Defined in `sessionTypes[].defaultStyle.colorName` 
+3. **Session-specific styles**: Override defaults using `sessions[].sessionStyle.colorName`
+4. **Week-specific styles**: Override block styles using `weeks[].weekStyle.colorName`
 
-Styles can be specified using Tailwind class names (like `blue-50`) or direct color values (`#e6f0ff`, `rgb(230, 240, 255)`).
+Special cases:
+- Deload weeks automatically use a "yellow" color scheme
+- Test weeks automatically use a "green" color scheme
 
-## Backward Compatibility
+## Month Blocks
 
-For backward compatibility, the system maintains:
-
-- Legacy `blockInfo` field alongside new `blockId` references
-- Legacy `sessionType` field alongside new `sessionTypeId` references
-- Legacy `monthBlocks` section for timeline organization
-
-The UI components check for both new and old fields to support plans in either format.
+```json
+"monthBlocks": [
+  { 
+    "id": 1, 
+    "name": "Månad 1 (Vecka 1-4)", 
+    "weeks": [1, 2, 3, 4],
+    "style": {
+      "colorName": "violet"
+    }
+  }
+]
+```

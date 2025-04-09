@@ -3,6 +3,8 @@
 import { cn } from "@/lib/utils"
 import { useTrainingPlans } from "@/contexts/training-plan-context"
 import type { Week } from "@/types/training-plan"
+import { useTheme } from "next-themes"
+import { getThemeAwareColorClasses } from "@/utils/color-utils"
 
 interface WeekSelectorProps {
   weeks: number[]
@@ -13,6 +15,7 @@ interface WeekSelectorProps {
     type: string
     isDeload: boolean
     isTest: boolean
+    colorName?: string
   }
 }
 
@@ -24,6 +27,7 @@ export default function WeekSelector({
   getWeekInfo,
 }: WeekSelectorProps) {
   const { trainingData } = useTrainingPlans()
+  const { theme } = useTheme()
 
   // Default week info function if not provided
   const defaultGetWeekInfo = (weekNumber: number) => {
@@ -32,6 +36,9 @@ export default function WeekSelector({
       type: weekData?.weekType || "",
       isDeload: weekData?.isDeload || false,
       isTest: weekData?.isTest || false,
+      colorName: weekData?.weekStyle?.colorName || 
+                 (weekData?.isDeload ? "yellow" : 
+                  weekData?.isTest ? "green" : undefined)
     }
   }
 
@@ -44,12 +51,21 @@ export default function WeekSelector({
 
   // Get button styles based on variant and week properties
   const getWeekButtonStyles = (weekNumber: number) => {
-    const { type, isDeload, isTest } = weekInfoFn(weekNumber)
+    const { type, isDeload, isTest, colorName } = weekInfoFn(weekNumber)
     const isSelected = selectedWeek === weekNumber
+
+    // Get theme-aware color classes if colorName is specified
+    const colorClasses = colorName && !isSelected 
+      ? getThemeAwareColorClasses(colorName, theme)
+      : null;
 
     return cn(
       "p-2 rounded text-center text-sm transition-colors",
-      isSelected ? "bg-primary text-primary-foreground" : "hover:bg-muted text-foreground",
+      // If selected, use primary styles
+      isSelected ? "bg-primary text-primary-foreground" : 
+      // If not selected but has colorName, use theme-aware styling
+      (colorClasses ? cn(colorClasses.bg, colorClasses.text) : "hover:bg-muted text-foreground"),
+      // Always add indicators for special weeks
       isDeload ? "border-l-4 border-yellow-500" : "",
       isTest ? "border-l-4 border-green-500" : ""
     )

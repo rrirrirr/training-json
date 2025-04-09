@@ -27,26 +27,88 @@ const COLOR_MAPPING = {
     border: "200" // Light border
   },
   dark: {
-    bg: "900", // Very dark background
+    bg: "900", // Darkest background that still maintains color identity
     text: "50", // Very light text
-    border: "800" // Dark border
+    border: "800" // Dark border that's still visible
   }
 };
 
 // Special cases for color shades that need adjustment
 const SPECIAL_MAPPINGS: Record<ColorName, Partial<Record<"light" | "dark", Partial<Record<"bg" | "text" | "border", string>>>>> = {
-  // For example, if yellow-900 is too dark for readable text in light mode:
+  // Yellow needs lighter text in light mode for readability
   yellow: {
     light: {
       text: "800" // Use a slightly lighter shade for better contrast
+    },
+    dark: {
+      text: "100", // Even lighter text for better contrast in dark mode
+      bg: "800"    // Not as dark as the default 900 to maintain yellowy feeling
     }
   },
-  // No special cases for other colors yet
+  // Orange also needs adjustments for readability
+  orange: {
+    light: {
+      text: "800" // Lighter text for better contrast
+    },
+    dark: {
+      bg: "800", // Less dark to maintain orange feeling
+      border: "700" // Lighter border for contrast
+    }
+  },
+  // Red needs adjustments for readability in dark mode
+  red: {
+    dark: {
+      bg: "800", // Not too dark to maintain reddish feeling
+      border: "700" // Lighter border
+    }
+  },
+  // Blue adjustments for dark mode
+  blue: {
+    dark: {
+      border: "700" // Lighter border for better visibility
+    }
+  },
+  // Green adjustments
+  green: {
+    dark: {
+      bg: "800", // Not too dark to maintain green feeling
+      border: "700" // Lighter border
+    }
+  },
+  // Cyan is often too light
+  cyan: {
+    light: {
+      text: "800" // Darker text for better contrast
+    },
+    dark: {
+      bg: "800" // Not too dark to maintain cyan feeling
+    }
+  },
+  // Purple adjustments
+  purple: {
+    dark: {
+      bg: "800", // Not too dark to maintain purple feeling
+      border: "700" // Lighter border
+    }
+  },
+  // Violet adjustments
+  violet: {
+    dark: {
+      bg: "800", // Not too dark to maintain violet feeling 
+      border: "700" // Lighter border
+    }
+  },
+  // Indigo adjustments
+  indigo: {
+    dark: {
+      bg: "800", // Not too dark to maintain indigo feeling
+      border: "700" // Lighter border
+    }
+  },
+  // No special cases for other colors - they'll use the defaults
   slate: {}, gray: {}, zinc: {}, neutral: {}, stone: {},
-  red: {}, orange: {}, amber: {}, lime: {},
-  green: {}, emerald: {}, teal: {}, cyan: {}, sky: {},
-  blue: {}, indigo: {}, violet: {}, purple: {}, fuchsia: {},
-  pink: {}, rose: {}
+  amber: {}, lime: {}, emerald: {}, teal: {}, sky: {},
+  fuchsia: {}, pink: {}, rose: {}
 };
 
 /**

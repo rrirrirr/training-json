@@ -14,27 +14,30 @@ export const exampleTrainingPlan: TrainingPlanData = {
       id: "gym",
       name: "Gym",
       defaultStyle: {
-        backgroundColor: "blue-50",
-        borderColor: "blue-200",
-        textColor: "blue-800"
+        colorName: "blue", // Added colorName instead of separate color properties
+        backgroundColor: "blue-50", // Kept for backward compatibility
+        borderColor: "blue-200", // Kept for backward compatibility
+        textColor: "blue-800" // Kept for backward compatibility
       }
     },
     {
       id: "barmark",
       name: "Barmark",
       defaultStyle: {
-        backgroundColor: "green-50",
-        borderColor: "green-200",
-        textColor: "green-800"
+        colorName: "green", // Added colorName instead of separate color properties
+        backgroundColor: "green-50", // Kept for backward compatibility
+        borderColor: "green-200", // Kept for backward compatibility
+        textColor: "green-800" // Kept for backward compatibility
       }
     },
     {
       id: "rest",
       name: "Eget/Vila",
       defaultStyle: {
-        backgroundColor: "gray-50",
-        borderColor: "gray-200",
-        textColor: "gray-800"
+        colorName: "gray", // Added colorName instead of separate color properties
+        backgroundColor: "gray-50", // Kept for backward compatibility
+        borderColor: "gray-200", // Kept for backward compatibility
+        textColor: "gray-800" // Kept for backward compatibility
       }
     }
   ],
@@ -47,9 +50,10 @@ export const exampleTrainingPlan: TrainingPlanData = {
       durationWeeks: 4,
       description: "Månad 1 (Vecka 1-4): 3 Gympass/vecka - Block 1: Grund & Volym",
       style: {
-        backgroundColor: "violet-50",
-        borderColor: "violet-200",
-        textColor: "violet-900"
+        colorName: "violet", // Added colorName instead of separate color properties
+        backgroundColor: "violet-50", // Kept for backward compatibility
+        borderColor: "violet-200", // Kept for backward compatibility
+        textColor: "violet-900" // Kept for backward compatibility
       }
     },
     {
@@ -59,9 +63,10 @@ export const exampleTrainingPlan: TrainingPlanData = {
       durationWeeks: 4,
       description: "Månad 2 (Vecka 5-8): 3 Gympass/vecka - Block 2: Styrkeuppbyggnad",
       style: {
-        backgroundColor: "blue-50",
-        borderColor: "blue-200",
-        textColor: "blue-800"
+        colorName: "blue", // Added colorName instead of separate color properties
+        backgroundColor: "blue-50", // Kept for backward compatibility
+        borderColor: "blue-200", // Kept for backward compatibility
+        textColor: "blue-800" // Kept for backward compatibility
       }
     },
     {
@@ -71,9 +76,10 @@ export const exampleTrainingPlan: TrainingPlanData = {
       durationWeeks: 4,
       description: "Månad 3 (Vecka 9-12): 4 Gympass/vecka - Block 3: Styrka & Kraft",
       style: {
-        backgroundColor: "indigo-50",
-        borderColor: "indigo-200",
-        textColor: "indigo-800"
+        colorName: "indigo", // Added colorName instead of separate color properties
+        backgroundColor: "indigo-50", // Kept for backward compatibility
+        borderColor: "indigo-200", // Kept for backward compatibility
+        textColor: "indigo-800" // Kept for backward compatibility
       }
     },
     {
@@ -83,9 +89,10 @@ export const exampleTrainingPlan: TrainingPlanData = {
       durationWeeks: 4,
       description: "Månad 4 (Vecka 13-16): 4 Gympass/vecka - Block 3: Styrka & Kraft",
       style: {
-        backgroundColor: "yellow-50",
-        borderColor: "yellow-200",
-        textColor: "yellow-800"
+        colorName: "yellow", // Added colorName instead of separate color properties
+        backgroundColor: "yellow-50", // Kept for backward compatibility
+        borderColor: "yellow-200", // Kept for backward compatibility
+        textColor: "yellow-800" // Kept for backward compatibility
       }
     },
     {
@@ -95,9 +102,10 @@ export const exampleTrainingPlan: TrainingPlanData = {
       durationWeeks: 4,
       description: "Månad 5 (Vecka 17-20): 4 Gympass/vecka - Block 4: Maxstyrka & Test",
       style: {
-        backgroundColor: "green-50",
-        borderColor: "green-200",
-        textColor: "green-800"
+        colorName: "green", // Added colorName instead of separate color properties
+        backgroundColor: "green-50", // Kept for backward compatibility
+        borderColor: "green-200", // Kept for backward compatibility
+        textColor: "green-800" // Kept for backward compatibility
       }
     }
   ],
@@ -249,11 +257,17 @@ export const exampleTrainingPlan: TrainingPlanData = {
         DL: 140,
         OHP: 50,
       },
+      weekStyle: {
+        colorName: "violet" // Added colorName for consistent styling with block
+      },
       sessions: [
         {
           sessionName: "Gympass 1",
           sessionTypeId: "gym", // Reference to session type
           sessionType: "Gym", // For backward compatibility
+          sessionStyle: {
+            colorName: "blue" // Added colorName for theme-aware styling
+          },
           exercises: [
             {
               exerciseId: "sq",
@@ -296,6 +310,9 @@ export const exampleTrainingPlan: TrainingPlanData = {
           sessionName: "Eget Pass / Övrigt",
           sessionTypeId: "rest",
           sessionType: "Eget/Vila", // For backward compatibility
+          sessionStyle: {
+            colorName: "gray" // Added colorName for theme-aware styling
+          },
           exercises: [
             {
               exerciseId: "own_choice",
@@ -310,6 +327,9 @@ export const exampleTrainingPlan: TrainingPlanData = {
           sessionName: "Gympass 2",
           sessionTypeId: "gym",
           sessionType: "Gym", // For backward compatibility
+          sessionStyle: {
+            colorName: "blue" // Added colorName for theme-aware styling
+          },
           exercises: [
             {
               exerciseId: "pc",
@@ -352,6 +372,9 @@ export const exampleTrainingPlan: TrainingPlanData = {
           sessionName: "Eget Pass / Övrigt",
           sessionTypeId: "rest",
           sessionType: "Eget/Vila", // For backward compatibility
+          sessionStyle: {
+            colorName: "gray" // Added colorName for theme-aware styling
+          },
           exercises: [
             {
               exerciseId: "own_choice",
@@ -366,6 +389,9 @@ export const exampleTrainingPlan: TrainingPlanData = {
           sessionName: "Gympass 3",
           sessionTypeId: "gym",
           sessionType: "Gym", // For backward compatibility
+          sessionStyle: {
+            colorName: "blue" // Added colorName for theme-aware styling
+          },
           exercises: [
             {
               exerciseId: "pc",
@@ -408,6 +434,9 @@ export const exampleTrainingPlan: TrainingPlanData = {
           sessionName: "Vila / Eget Pass",
           sessionTypeId: "rest",
           sessionType: "Eget/Vila", // For backward compatibility
+          sessionStyle: {
+            colorName: "gray" // Added colorName for theme-aware styling
+          },
           exercises: [
             {
               exerciseId: "own_choice",
@@ -432,11 +461,17 @@ export const exampleTrainingPlan: TrainingPlanData = {
         DL: 145,
         OHP: 52.5,
       },
+      weekStyle: {
+        colorName: "violet" // Added colorName for consistent styling with block
+      },
       sessions: [
         {
           sessionName: "Gympass 1",
           sessionTypeId: "gym",
           sessionType: "Gym", // For backward compatibility
+          sessionStyle: {
+            colorName: "blue" // Added colorName for theme-aware styling
+          },
           exercises: [
             {
               exerciseId: "sq",
@@ -479,6 +514,9 @@ export const exampleTrainingPlan: TrainingPlanData = {
           sessionName: "Eget Pass / Övrigt",
           sessionTypeId: "rest",
           sessionType: "Eget/Vila", // For backward compatibility
+          sessionStyle: {
+            colorName: "gray" // Added colorName for theme-aware styling
+          },
           exercises: [
             {
               exerciseId: "own_choice",
@@ -493,6 +531,9 @@ export const exampleTrainingPlan: TrainingPlanData = {
           sessionName: "Gympass 2",
           sessionTypeId: "gym",
           sessionType: "Gym", // For backward compatibility
+          sessionStyle: {
+            colorName: "blue" // Added colorName for theme-aware styling
+          },
           exercises: [
             {
               exerciseId: "pc",
@@ -535,6 +576,9 @@ export const exampleTrainingPlan: TrainingPlanData = {
           sessionName: "Eget Pass / Övrigt",
           sessionTypeId: "rest",
           sessionType: "Eget/Vila", // For backward compatibility
+          sessionStyle: {
+            colorName: "gray" // Added colorName for theme-aware styling
+          },
           exercises: [
             {
               exerciseId: "own_choice",
@@ -549,6 +593,9 @@ export const exampleTrainingPlan: TrainingPlanData = {
           sessionName: "Gympass 3",
           sessionTypeId: "gym",
           sessionType: "Gym", // For backward compatibility
+          sessionStyle: {
+            colorName: "blue" // Added colorName for theme-aware styling
+          },
           exercises: [
             {
               exerciseId: "pc",
@@ -591,6 +638,9 @@ export const exampleTrainingPlan: TrainingPlanData = {
           sessionName: "Vila / Eget Pass",
           sessionTypeId: "rest",
           sessionType: "Eget/Vila", // For backward compatibility
+          sessionStyle: {
+            colorName: "gray" // Added colorName for theme-aware styling
+          },
           exercises: [
             {
               exerciseId: "own_choice",
@@ -616,11 +666,17 @@ export const exampleTrainingPlan: TrainingPlanData = {
         DL: 180,
         OHP: 65,
       },
+      weekStyle: {
+        colorName: "yellow" // Added colorName for theme-aware styling - matches isDeload styling
+      },
       sessions: [
         {
           sessionName: "Gympass 1 (DELOAD)",
           sessionTypeId: "gym",
           sessionType: "Gym", // For backward compatibility
+          sessionStyle: {
+            colorName: "blue" // Added colorName for theme-aware styling
+          },
           exercises: [
             {
               exerciseId: "sq",
@@ -656,6 +712,9 @@ export const exampleTrainingPlan: TrainingPlanData = {
           sessionName: "Barmark 1",
           sessionTypeId: "barmark",
           sessionType: "Barmark", // For backward compatibility
+          sessionStyle: {
+            colorName: "green" // Added colorName for theme-aware styling
+          },
           exercises: [
             {
               exerciseId: "light_cardio",
@@ -682,11 +741,17 @@ export const exampleTrainingPlan: TrainingPlanData = {
       blockInfo: "Månad 5 (Vecka 17-20): 4 Gympass/vecka - Block 4: Maxstyrka & Test", // For backward compatibility
       gymDays: 4,
       isTest: true,
+      weekStyle: {
+        colorName: "green" // Added colorName for theme-aware styling - matches isTest styling
+      },
       sessions: [
         {
           sessionName: "Gympass 1 (TEST)",
           sessionTypeId: "gym",
           sessionType: "Gym", // For backward compatibility
+          sessionStyle: {
+            colorName: "blue" // Added colorName for theme-aware styling
+          },
           exercises: [
             {
               exerciseId: "sq",
@@ -715,6 +780,9 @@ export const exampleTrainingPlan: TrainingPlanData = {
           sessionName: "Vila",
           sessionTypeId: "rest",
           sessionType: "Eget/Vila", // For backward compatibility
+          sessionStyle: {
+            colorName: "gray" // Added colorName for theme-aware styling
+          },
           exercises: [
             {
               exerciseId: "rest",
@@ -729,12 +797,47 @@ export const exampleTrainingPlan: TrainingPlanData = {
     },
   ],
   
-  // Keep monthBlocks for backward compatibility
+  // Keep monthBlocks for backward compatibility and add colorName to style
   monthBlocks: [
-    { id: 1, name: "Månad 1 (Vecka 1-4)", weeks: [1, 2, 3, 4] },
-    { id: 2, name: "Månad 2 (Vecka 5-8)", weeks: [5, 6, 7, 8] },
-    { id: 3, name: "Månad 3 (Vecka 9-12)", weeks: [9, 10, 11, 12] },
-    { id: 4, name: "Månad 4 (Vecka 13-16)", weeks: [13, 14, 15, 16] },
-    { id: 5, name: "Månad 5 (Vecka 17-20)", weeks: [17, 18, 19, 20] },
+    { 
+      id: 1, 
+      name: "Månad 1 (Vecka 1-4)", 
+      weeks: [1, 2, 3, 4],
+      style: {
+        colorName: "violet" // Added colorName for month block style
+      }
+    },
+    { 
+      id: 2, 
+      name: "Månad 2 (Vecka 5-8)", 
+      weeks: [5, 6, 7, 8],
+      style: {
+        colorName: "blue" // Added colorName for month block style
+      }
+    },
+    { 
+      id: 3, 
+      name: "Månad 3 (Vecka 9-12)", 
+      weeks: [9, 10, 11, 12],
+      style: {
+        colorName: "indigo" // Added colorName for month block style
+      }
+    },
+    { 
+      id: 4, 
+      name: "Månad 4 (Vecka 13-16)", 
+      weeks: [13, 14, 15, 16],
+      style: {
+        colorName: "yellow" // Added colorName for month block style
+      }
+    },
+    { 
+      id: 5, 
+      name: "Månad 5 (Vecka 17-20)", 
+      weeks: [17, 18, 19, 20],
+      style: {
+        colorName: "green" // Added colorName for month block style
+      }
+    },
   ],
 }
