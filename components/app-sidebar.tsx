@@ -1,4 +1,3 @@
-// components/app-sidebar.tsx
 "use client"
 
 import { useState } from "react"
@@ -38,6 +37,12 @@ import {
   SidebarTrigger,
   SidebarFooter,
 } from "@/components/ui/sidebar"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 // Removed props related to data/state/callbacks
 interface AppSidebarProps {
@@ -156,7 +161,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
                 {plans.map((plan) => (
                   <DropdownMenuItem key={plan.id} asChild onSelect={(e) => e.preventDefault()}>
                     <div
-                      className="flex items-center justify-between w-full cursor-pointer px-2 py-1.5 group"
+                      className="flex items-center justify-between w-full cursor-pointer px-2 py-1.5 group relative overflow-hidden"
                       onClick={() => setCurrentPlan(plan)}
                     >
                       {/* Plan name and date */}
@@ -166,26 +171,45 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
                           {formatDate(plan.updatedAt)}
                         </div>
                       </div>
-                      {/* Action buttons */}
-                      <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-blue-500"
-                          onClick={(e) => handleViewJson(plan, e)}
-                          aria-label={`Edit JSON for ${plan.name}`}
-                        >
-                          <FileText className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive"
-                          onClick={(e) => handleDeletePlan(plan, e)}
-                          aria-label={`Delete ${plan.name}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      {/* Action buttons with improved animations and tooltips */}
+                      <div className="flex items-center space-x-1">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-blue-500 -translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200"
+                                onClick={(e) => handleViewJson(plan, e)}
+                                aria-label={`Edit JSON for ${plan.name}`}
+                              >
+                                <FileText className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom">
+                              <p>Edit JSON</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive -translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 delay-75"
+                                onClick={(e) => handleDeletePlan(plan, e)}
+                                aria-label={`Delete ${plan.name}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom">
+                              <p>Delete Plan</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                     </div>
                   </DropdownMenuItem>

@@ -30,6 +30,12 @@ import { Separator } from "@/components/ui/separator"
 import { MobileNavBar } from "@/components/mobile-navbar"
 import { useUploadModal } from "@/components/modals/upload-modal"
 import { useExportModal } from "@/components/modals/export-modal"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface HeaderProps {
   onToggleSidebar: () => void
@@ -155,7 +161,7 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
                     <div
                       key={plan.id}
                       className={`
-                        flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-muted group
+                        flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-muted group relative overflow-hidden
                         ${currentPlan?.id === plan.id ? "bg-accent/50" : ""}
                       `}
                       onClick={() => handleSelectPlan(plan)}
@@ -167,24 +173,43 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
                         </div>
                       </div>
                       <div className="flex items-center space-x-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-blue-500"
-                          onClick={(e) => handleViewJsonClick(plan, e)}
-                          aria-label={`View JSON for ${plan.name}`}
-                        >
-                          <FileText className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive"
-                          onClick={(e) => handleDeleteClick(plan, e)}
-                          aria-label={`Delete ${plan.name}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-blue-500 -translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200"
+                                onClick={(e) => handleViewJsonClick(plan, e)}
+                                aria-label={`View JSON for ${plan.name}`}
+                              >
+                                <FileText className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom">
+                              <p>Edit JSON</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive -translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 delay-75"
+                                onClick={(e) => handleDeleteClick(plan, e)}
+                                aria-label={`Delete ${plan.name}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom">
+                              <p>Delete Plan</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                     </div>
                   ))}
