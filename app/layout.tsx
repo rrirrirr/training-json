@@ -12,8 +12,8 @@ import { ModalProvider } from "@/components/modals/modal-provider" // Added Moda
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Training Plan Manager", // Adjust as needed
-  description: "Manage your training plans", // Adjust as needed
+  title: "T-JSON", // Updated title
+  description: "JSON-based training plan visualization tool", // Updated description
 }
 
 export default function RootLayout({

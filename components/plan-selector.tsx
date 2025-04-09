@@ -149,7 +149,7 @@ export default function PlanSelector() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Training Plan</DialogTitle>
+            <DialogTitle>Delete JSON Plan</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete "{planToDelete?.name}"? This action cannot be undone.
             </DialogDescription>

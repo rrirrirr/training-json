@@ -48,33 +48,31 @@
   }
 
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-    
-    /* Chart colors for dark mode */
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    
+ --background: oklch(0.16 0.019 266.5); /* HSL: 240 13.73% 10% */
+  --foreground: oklch(0.78 0.07 263.8);  /* HSL: 229.76 31.78% 74.71% */
+  --muted: oklch(0.26 0.022 266);     /* HSL: 232.5 15.44% 18.32% */
+  --muted-foreground: oklch(0.54 0.019 267.8); /* HSL: 233.79 11.37% 50% */
+  --popover: oklch(0.2 0.024 268.3);    /* HSL: 234.55 17.46% 12.35% */
+  --popover-foreground: oklch(0.57 0.02 268.1); /* HSL: 234 12.4% 52.55% */
+  --card: oklch(0.2 0.024 268.3);       /* HSL: 234.55 17.46% 12.35% */
+  --card-foreground: oklch(0.78 0.07 263.8); /* HSL: 229.76 31.78% 74.71% */
+  --border: oklch(0.37 0.023 266.1);    /* HSL: 232.5 15.38% 30.59% */
+  --input: oklch(0.23 0.03 265.8);     /* HSL: 232 20% 14.71% */
+  --primary: oklch(0.85 0 0);          /* HSL: 0 0% 82.75% (Gray) */
+  --primary-foreground: oklch(0.27 0 0); /* HSL: 0 0% 20% (Gray) */
+  --secondary: oklch(0.77 0.152 259.5); /* HSL: 225.45 71.22% 72.75% */
+  --secondary-foreground: oklch(0.2 0.024 268.3); /* HSL: 234.55 17.46% 12.35% */
+  --accent: oklch(0.17 0.025 268.3);    /* HSL: 234.55 17.83% 9.47% */
+  --accent-foreground: oklch(0.85 0 0); /* HSL: 0 0% 82.75% (Gray) */
+  --destructive: oklch(0.6 0.136 25.4);  /* HSL: 1.58 47.5% 52.94% */
+  --destructive-foreground: oklch(0.98 0.019 255); /* HSL: 210 40% 98.04% */
+  --ring: oklch(0.77 0.152 259.5);      /* HSL: 225.45 71.22% 72.75% */
+  --chart-1: oklch(0.85 0 0);          /* HSL: 0 0% 82.75% (Gray) */
+  --chart-2: oklch(0.77 0.152 259.5); /* HSL: 225.45 71.22% 72.75% */
+  --chart-3: oklch(0.17 0.025 268.3);  /* HSL: 234.55 17.83% 9.47% */
+  --chart-4: oklch(0.8 0.151 259.5);  /* HSL: 225.45 71.22% 75.75% */
+  --chart-5: oklch(0.85 0.003 25.3); /* HSL: 0 3% 82.75% (Near Gray) */
+
     /* Sidebar variables for dark mode */
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;

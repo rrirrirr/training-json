@@ -122,6 +122,11 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
 
   return (
     <Sidebar className={cn("border-none flex flex-col h-full", !isOpen && "items-center")}>
+      {/* T-JSON Logo/Title */}
+      <div className={cn("p-4 border-b", !isOpen && "p-2 flex justify-center")}>
+        <h1 className="text-xl font-bold text-primary">T-JSON</h1>
+      </div>
+      
       <SidebarHeader className={cn(!isOpen && "p-2")}>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -306,7 +311,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Training Plan</DialogTitle>
+            <DialogTitle>Delete JSON Plan</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete "{planToDelete?.name}"? This action cannot be
               undone.

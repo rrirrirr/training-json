@@ -65,12 +65,12 @@ export type ExerciseInstance = {
   return (
     <div className="container mx-auto p-4 md:p-8">
       <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mb-6">
-        Training Plan Manager Documentation
+        T-JSON Documentation
       </h1>
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Training Plan JSON Format</CardTitle>
+          <CardTitle>JSON Format</CardTitle>
           <CardDescription>
             The application uses a specific JSON structure to define and manage training plans. This
             format is used when importing/exporting plans. The core structure is defined by

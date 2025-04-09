@@ -89,8 +89,8 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
     // Open the upload modal with a callback that dispatches the plan-created-from-json event
     uploadModalStore.open((data) => {
       // Create and dispatch a custom event with the imported JSON data
-      const event = new CustomEvent('plan-created-from-json', { 
-        detail: { data } 
+      const event = new CustomEvent("plan-created-from-json", {
+        detail: { data },
       })
       window.dispatchEvent(event)
     })
@@ -127,7 +127,7 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
             <div className="flex flex-col h-full overflow-auto">
               {/* App Title/Logo and Theme Toggle in same row */}
               <div className="py-5 px-4 flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Training Plan Manager</h2>
+                <h2 className="text-lg font-semibold text-primary">T-JSON</h2>
                 <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
                   <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                   <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -188,11 +188,7 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
                 </div>
 
                 {/* New Plan Button - Now opens JSON Upload */}
-                <Button
-                  onClick={handleCreateNewPlan}
-                  variant="outline"
-                  className="w-full mt-3"
-                >
+                <Button onClick={handleCreateNewPlan} variant="outline" className="w-full mt-3">
                   <Plus className="h-4 w-4 mr-2" />
                   Import JSON Plan
                 </Button>
@@ -201,9 +197,7 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
               {/* Bottom spacing */}
               <div className="flex-1"></div>
 
-              <div className="p-4 text-xs text-center text-muted-foreground">
-                Training Plan Manager v1.0
-              </div>
+              <div className="p-4 text-xs text-center text-muted-foreground">T-JSON v1.0</div>
             </div>
           </SheetContent>
         </Sheet>
@@ -251,8 +245,10 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
         onClick={toggleTheme}
         aria-label="Toggle theme"
       >
-        <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-        <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+        <div className="grid place-items-center">
+          <Sun className="h-5 w-5 dark:hidden [grid-area:1/1]" />
+          <Moon className="h-5 w-5 hidden dark:block [grid-area:1/1]" />
+        </div>
       </Button>
 
       {/* Dialogs for plan management */}
@@ -276,7 +272,7 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Training Plan</DialogTitle>
+            <DialogTitle>Delete JSON Plan</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete "{planToDelete?.name}"? This action cannot be undone.
             </DialogDescription>

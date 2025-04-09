@@ -1,8 +1,8 @@
-# Training Plan Manager
+# T-JSON
 
 A comprehensive web application for managing and tracking personalized training plans. Built with Next.js, React, Typescript, Tailwind CSS, and Shadcn UI.
 
-![Training Plan Manager Screenshot](public/placeholder.jpg)
+![T-JSON Screenshot](public/placeholder.jpg)
 
 ## Features
 
@@ -27,8 +27,8 @@ A comprehensive web application for managing and tracking personalized training 
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/rrirrirr/training-json.git
-   cd training-plan-manager
+   git clone https://github.com/yourusername/t-json.git
+   cd t-json
    ```
 
 2. Install dependencies:
@@ -134,7 +134,7 @@ For detailed documentation on the JSON structure, see [docs/json-structure.md](d
 ## Project Structure
 
 ```
-training-plan-manager/
+t-json/
 ├── app/                  # Next.js app structure
 ├── components/           # React components
 │   ├── ui/               # Shadcn UI components

@@ -118,9 +118,9 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
         <DialogHeader className="flex-row justify-between items-center sm:flex-col sm:items-start">
           <div>
-            <DialogTitle>Edit Training Plan JSON</DialogTitle>
+            <DialogTitle>Edit JSON Plan</DialogTitle>
             <DialogDescription>
-              Make changes to the raw JSON data of your training plan. To rename your plan, 
+              Make changes to the raw JSON data of your plan. To rename your plan, 
               edit the "planName" field inside the "metadata" object.
             </DialogDescription>
           </div>

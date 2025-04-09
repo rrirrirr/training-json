@@ -27,11 +27,11 @@ export default function WelcomeScreen({
           {/* Main Header */}
           <div className="text-center mb-10">
             <h1 className="text-4xl font-bold text-primary sm:text-5xl md:text-6xl mb-4">
-              AI Träningsplan Visualiserare
+              T-JSON
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Det här verktyget hjälper dig att visualisera och hantera träningsplaner, särskilt de
-              som skapats med AI.
+              JSON-based training plan visualization tool. Create, manage, and visualize your training 
+              plans easily with T-JSON.
             </p>
           </div>
 
@@ -47,7 +47,7 @@ export default function WelcomeScreen({
             >
               <div className="flex items-center">
                 <Sparkles className="h-6 w-6 mr-3" />
-                <span>Skapa AI Träningsplan</span>
+                <span>Create AI-Powered Plan</span>
               </div>
               <ChevronRight className="h-5 w-5 opacity-80" />
             </Button>
@@ -65,7 +65,7 @@ export default function WelcomeScreen({
           {/* Secondary Options */}
           <div className="text-center mb-6">
             <p className="text-base text-muted-foreground mb-4">
-              Eller börja med en färdig JSON plan:
+              Or start with a ready-made JSON plan:
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto">
@@ -78,7 +78,7 @@ export default function WelcomeScreen({
               >
                 <div className="flex items-center">
                   <Upload className="h-5 w-5 mr-2" />
-                  <span>Importera JSON Plan</span>
+                  <span>Import JSON Plan</span>
                 </div>
                 <ChevronRight className="h-4 w-4 opacity-70" />
               </Button>
@@ -90,7 +90,7 @@ export default function WelcomeScreen({
               >
                 <div className="flex items-center">
                   <BookOpen className="h-5 w-5 mr-2" />
-                  <span>Ladda Exempelplan</span>
+                  <span>Load Example Plan</span>
                 </div>
                 <ChevronRight className="h-4 w-4 opacity-70" />
               </Button>
@@ -100,8 +100,8 @@ export default function WelcomeScreen({
           {/* Info Text Footer */}
           <div className="mt-12 text-center">
             <p className="text-sm text-muted-foreground">
-              Använd detta verktyg för att enkelt organisera, visualisera och följa din träningsplan
-              oavsett om den skapas manuellt eller genereras med AI.
+              Use this tool to easily organize, visualize, and track your training plan
+              whether it's created manually or generated with AI.
             </p>
           </div>
         </div>
