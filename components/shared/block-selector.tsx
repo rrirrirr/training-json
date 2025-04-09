@@ -22,25 +22,26 @@ export default function BlockSelector({
   const { theme } = useTheme()
 
   return (
-    <div className="p-4">
-      <h2 className="justify-self-center text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+    <div className="py-4">
+      <h2 className="justify-self-start text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
         Block
       </h2>
       <div className="space-y-1">
         {blocks.map((block) => {
           // Get theme-aware color classes if block has style with colorName
-          const colorClasses = block.style?.colorName 
+          const colorClasses = block.style?.colorName
             ? getThemeAwareColorClasses(block.style.colorName, theme)
-            : null;
-          
+            : null
+
           // Apply colorClasses only when not selected, otherwise use default styling
-          const customColorStyle = (selectedBlockId !== block.id && colorClasses) 
-            ? {
-                className: colorClasses.bg,
-                textClassName: colorClasses.text
-              } 
-            : null;
-            
+          const customColorStyle =
+            selectedBlockId !== block.id && colorClasses
+              ? {
+                  className: colorClasses.bg,
+                  textClassName: colorClasses.text,
+                }
+              : null
+
           return (
             <Button
               key={block.id}
@@ -54,12 +55,14 @@ export default function BlockSelector({
                 selectedBlockId !== block.id && customColorStyle?.className,
                 selectedBlockId !== block.id && customColorStyle?.textClassName,
                 // Default hover/focus behavior when no custom color
-                selectedBlockId !== block.id && !customColorStyle && "text-foreground hover:bg-muted"
+                selectedBlockId !== block.id &&
+                  !customColorStyle &&
+                  "text-foreground hover:bg-muted"
               )}
             >
               {block.name}
             </Button>
-          );
+          )
         })}
       </div>
     </div>

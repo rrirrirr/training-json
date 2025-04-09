@@ -10,7 +10,7 @@ A comprehensive web application for managing and tracking personalized training 
 - **Multiple Training Plans**: Create, edit, and manage multiple training plans
 - **Detailed Exercise Tracking**: View complete exercise details including sets, reps, load, and comments
 - **Session Management**: Group exercises into logical training sessions
-- **Custom Styling**: Special visual indicators for deload weeks, test weeks, and different session types
+- **Theme-Aware Styling**: Consistent visual styling that automatically adapts to light and dark themes
 - **Data Import/Export**: Import and export training plans as JSON
 - **Mobile Responsive**: Fully responsive design that works on all devices
 - **Local Storage**: Plans are saved in the browser's local storage
@@ -100,8 +100,7 @@ Example snippet:
       "id": "gym",
       "name": "Gym",
       "defaultStyle": {
-        "backgroundColor": "blue-50",
-        "borderColor": "blue-200"
+        "colorName": "blue" // Theme-aware styling!
       }
     }
   ],
@@ -110,13 +109,19 @@ Example snippet:
       "id": "block-1",
       "name": "Foundation Phase",
       "focus": "Grund & Volym",
-      "durationWeeks": 4
+      "durationWeeks": 4,
+      "style": {
+        "colorName": "violet" // Theme-aware styling!
+      }
     }
   ],
   "weeks": [
     {
       "weekNumber": 1,
       "blockId": "block-1",
+      "weekStyle": {
+        "colorName": "violet" // Theme-aware styling!
+      },
       "sessions": [
         {
           "sessionName": "Gympass 1",
@@ -130,6 +135,30 @@ Example snippet:
 ```
 
 For detailed documentation on the JSON structure, see [docs/json-structure.md](docs/json-structure.md).
+
+### Theme-Aware Styling
+
+T-JSON now features a theme-aware styling system that automatically adapts colors to both light and dark themes:
+
+- Use a simple `colorName` property instead of specifying individual colors for background, text, and borders
+- Choose from standard Tailwind color names: `blue`, `green`, `violet`, `amber`, etc.
+- The application automatically selects appropriate shades for each theme
+- All styles are consistently applied across the application
+
+Example:
+```json
+// Theme-aware styling (recommended)
+"style": {
+  "colorName": "blue" // App selects appropriate shades for light/dark theme
+}
+
+// Legacy styling (still supported)
+"style": {
+  "backgroundColor": "blue-50",
+  "borderColor": "blue-200", 
+  "textColor": "blue-800"
+}
+```
 
 ## Project Structure
 
@@ -146,6 +175,8 @@ t-json/
 ├── public/               # Static assets
 ├── types/                # TypeScript type definitions
 └── utils/                # Helper functions
+    ├── color-utils.ts    # Theme-aware color utilities
+    └── ...               # Other utility functions
 ```
 
 ## Local Development
@@ -156,6 +187,7 @@ This project uses:
 - **Tailwind CSS**: For styling
 - **Shadcn UI**: For component library
 - **Context API**: For state management
+- **next-themes**: For theme switching and detection
 
 ### Commands
 
@@ -174,3 +206,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [TypeScript](https://www.typescriptlang.org/)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [Shadcn UI](https://ui.shadcn.com/)
+- [next-themes](https://github.com/pacocoursey/next-themes)

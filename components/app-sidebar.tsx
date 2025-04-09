@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
 import { useTrainingPlans } from "@/contexts/training-plan-context"
 import JsonEditor from "./json-editor"
 import { useInfoModal } from "@/components/modals/info-modal"
@@ -43,13 +44,9 @@ import {
   SidebarFooter,
   SidebarGroupLabel,
   SidebarHeader,
+  SidebarGroup,
   useSidebar,
-  // Assuming SidebarMenu, SidebarMenuItem, SidebarMenuButton are exported
 } from "@/components/ui/sidebar"
-// Remove Tooltip imports if only used in PlanSwitcher
-// import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-
-// Import the new component
 import { PlanSwitcher } from "./plan-switcher" // Adjust path if needed
 
 export default function AppSidebar() {
@@ -139,80 +136,79 @@ export default function AppSidebar() {
           <h1 className="text-4xl font-bold text-primary">T-JSON</h1>
         </SidebarGroupLabel>
       </SidebarHeader>
-
-      {/* Replace the old DropdownMenu with the PlanSwitcher component */}
-      <div className="px-3 py-2">
-        <PlanSwitcher
-          plans={plans}
-          currentPlan={currentPlan}
-          isOpen={isOpen}
-          onSelectPlan={handleSelectPlan}
-          onEditPlan={handleViewJson}
-          onDeletePlan={handleDeletePlan}
-          onCreatePlan={handleCreateNewPlan}
-        />
-      </div>
-
-      <div className={cn("px-3 py-2 flex gap-2", isOpen ? "flex-col" : "flex-col items-center")}>
-        <Button
-          variant={viewMode === "month" ? "default" : "outline"}
-          size={isOpen ? "sm" : "icon"}
-          onClick={() =>
-            typeof changeViewMode === "function"
-              ? changeViewMode("month")
-              : console.error("'changeViewMode' is not a function")
-          }
-          className={cn("w-full", isOpen && "justify-start")}
-          aria-label="Block View"
-        >
-          <Calendar className={cn("h-4 w-4", isOpen && "mr-2")} /> {isOpen && "Block View"}
-        </Button>
-        <Button
-          variant={viewMode === "week" ? "default" : "outline"}
-          size={isOpen ? "sm" : "icon"}
-          onClick={() =>
-            typeof changeViewMode === "function"
-              ? changeViewMode("week")
-              : console.error("'changeViewMode' is not a function")
-          }
-          className={cn("w-full", isOpen && "justify-start")}
-          aria-label="Weekly View"
-        >
-          <List className={cn("h-4 w-4", isOpen && "mr-2")} /> {isOpen && "Weekly View"}
-        </Button>
-      </div>
-
       <SidebarContent>
-        {isOpen ? (
-          <>
-            {viewMode === "month" ? (
-              <BlockSelector
-                blocks={monthsForSidebar}
-                selectedBlockId={selectedMonth}
-                onSelectBlock={(id) =>
-                  typeof selectMonth === "function"
-                    ? selectMonth(id)
-                    : console.error("'selectMonth' is not a function")
-                }
-                variant="sidebar"
-              />
-            ) : (
-              <WeekSelector
-                weeks={weeksForSidebar}
-                selectedWeek={selectedWeek}
-                onSelectWeek={(num) =>
-                  typeof selectWeek === "function"
-                    ? selectWeek(num)
-                    : console.error("'selectWeek' is not a function")
-                }
-                variant="sidebar"
-                getWeekInfo={getWeekInfo}
-              />
-            )}
-          </>
-        ) : (
-          <div className="p-4 text-center text-muted-foreground text-xs"></div>
-        )}
+        <SidebarGroup className="px-3 py-2">
+          <PlanSwitcher
+            plans={plans}
+            currentPlan={currentPlan}
+            isOpen={isOpen}
+            onSelectPlan={handleSelectPlan}
+            onEditPlan={handleViewJson}
+            onDeletePlan={handleDeletePlan}
+            onCreatePlan={handleCreateNewPlan}
+          />
+        </SidebarGroup>
+        <SidebarGroup
+          className={cn("px-3 py-2 flex gap-2", isOpen ? "flex-col" : "flex-col items-center")}
+        >
+          <Button
+            variant={viewMode === "month" ? "default" : "outline"}
+            size={isOpen ? "sm" : "icon"}
+            onClick={() =>
+              typeof changeViewMode === "function"
+                ? changeViewMode("month")
+                : console.error("'changeViewMode' is not a function")
+            }
+            className={cn("w-full", isOpen && "justify-start")}
+            aria-label="Block View"
+          >
+            <Calendar className={cn("h-4 w-4", isOpen && "mr-2")} /> {isOpen && "Block View"}
+          </Button>
+          <Button
+            variant={viewMode === "week" ? "default" : "outline"}
+            size={isOpen ? "sm" : "icon"}
+            onClick={() =>
+              typeof changeViewMode === "function"
+                ? changeViewMode("week")
+                : console.error("'changeViewMode' is not a function")
+            }
+            className={cn("w-full", isOpen && "justify-start")}
+            aria-label="Weekly View"
+          >
+            <List className={cn("h-4 w-4", isOpen && "mr-2")} /> {isOpen && "Weekly View"}
+          </Button>
+
+          {isOpen ? (
+            <>
+              {viewMode === "month" ? (
+                <BlockSelector
+                  blocks={monthsForSidebar}
+                  selectedBlockId={selectedMonth}
+                  onSelectBlock={(id) =>
+                    typeof selectMonth === "function"
+                      ? selectMonth(id)
+                      : console.error("'selectMonth' is not a function")
+                  }
+                  variant="sidebar"
+                />
+              ) : (
+                <WeekSelector
+                  weeks={weeksForSidebar}
+                  selectedWeek={selectedWeek}
+                  onSelectWeek={(num) =>
+                    typeof selectWeek === "function"
+                      ? selectWeek(num)
+                      : console.error("'selectWeek' is not a function")
+                  }
+                  variant="sidebar"
+                  getWeekInfo={getWeekInfo}
+                />
+              )}
+            </>
+          ) : (
+            <div className="p-4 text-center text-muted-foreground text-xs"></div>
+          )}
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className={cn(!isOpen && "items-center")}>

@@ -8,6 +8,7 @@ import { combineExerciseData } from "@/utils/exercise-utils"
 import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
 import { getSessionStyling } from "@/utils/session-utils"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 
 // Function to handle color values (for backward compatibility)
 const getColorValue = (
@@ -76,11 +77,11 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
   const [showDetails, setShowDetails] = useState(false)
   const { sessionName, exercises } = session
   const { theme } = useTheme() // Get current theme
-  
+
   // Get styling information using the new utility
   const sessionStyling = getSessionStyling(session, trainingPlan, theme)
   const displaySessionType = sessionStyling.sessionTypeName
-  
+
   // Toggle function remains the same
   const toggleDetails = (e?: React.MouseEvent) => {
     e?.stopPropagation()
@@ -97,18 +98,30 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
         sessionStyling.colorClasses?.border,
         session.sessionStyle?.styleClass,
         // For backward compatibility, include the old styling approach
-        !sessionStyling.colorName && sessionStyling.backgroundColor ? 
-          getColorValue(sessionStyling.backgroundColor, "bg-", "bg-card").className : "",
-        !sessionStyling.colorName && sessionStyling.borderColor ? 
-          getColorValue(sessionStyling.borderColor, "border-", "border-border").className : ""
+        !sessionStyling.colorName && sessionStyling.backgroundColor
+          ? getColorValue(sessionStyling.backgroundColor, "bg-", "bg-card").className
+          : "",
+        !sessionStyling.colorName && sessionStyling.borderColor
+          ? getColorValue(sessionStyling.borderColor, "border-", "border-border").className
+          : ""
       )}
       // Include inline styles for older styling method (only if not using colorName)
-      style={!sessionStyling.colorName ? {
-        backgroundColor: sessionStyling.backgroundColor?.startsWith('#') || sessionStyling.backgroundColor?.startsWith('rgb') 
-          ? sessionStyling.backgroundColor : undefined,
-        borderColor: sessionStyling.borderColor?.startsWith('#') || sessionStyling.borderColor?.startsWith('rgb') 
-          ? sessionStyling.borderColor : undefined,
-      } : undefined}
+      style={
+        !sessionStyling.colorName
+          ? {
+              backgroundColor:
+                sessionStyling.backgroundColor?.startsWith("#") ||
+                sessionStyling.backgroundColor?.startsWith("rgb")
+                  ? sessionStyling.backgroundColor
+                  : undefined,
+              borderColor:
+                sessionStyling.borderColor?.startsWith("#") ||
+                sessionStyling.borderColor?.startsWith("rgb")
+                  ? sessionStyling.borderColor
+                  : undefined,
+            }
+          : undefined
+      }
     >
       <CardHeader className="relative flex flex-row justify-between items-start pb-4 border-b pr-10 pt-4">
         {/* Title and Description */}
@@ -116,13 +129,24 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
           <CardTitle>{sessionName}</CardTitle>
           <CardDescription className="mt-1">
             {displaySessionType}
-            {session.sessionStyle?.note && <span className="ml-2 italic">{session.sessionStyle.note}</span>}
+            {session.sessionStyle?.note && (
+              <span className="ml-2 italic">{session.sessionStyle.note}</span>
+            )}
           </CardDescription>
         </div>
         {/* Absolutely positioned icon container */}
-        <div className="absolute top-3 right-3 text-muted-foreground">
-          {showDetails ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
-        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="absolute top-3 right-3 text-muted-foreground">
+                {showDetails ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {showDetails ? "Details Visible" : "Details Hidden"}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </CardHeader>
       {/* CardContent is ALWAYS rendered */}
       <CardContent className="p-4" id={`session-details-${sessionName.replace(/\s+/g, "-")}`}>

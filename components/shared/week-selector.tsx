@@ -36,9 +36,9 @@ export default function WeekSelector({
       type: weekData?.weekType || "",
       isDeload: weekData?.isDeload || false,
       isTest: weekData?.isTest || false,
-      colorName: weekData?.weekStyle?.colorName || 
-                 (weekData?.isDeload ? "yellow" : 
-                  weekData?.isTest ? "green" : undefined)
+      colorName:
+        weekData?.weekStyle?.colorName ||
+        (weekData?.isDeload ? "yellow" : weekData?.isTest ? "green" : undefined),
     }
   }
 
@@ -55,16 +55,18 @@ export default function WeekSelector({
     const isSelected = selectedWeek === weekNumber
 
     // Get theme-aware color classes if colorName is specified
-    const colorClasses = colorName && !isSelected 
-      ? getThemeAwareColorClasses(colorName, theme)
-      : null;
+    const colorClasses =
+      colorName && !isSelected ? getThemeAwareColorClasses(colorName, theme) : null
 
     return cn(
       "p-2 rounded text-center text-sm transition-colors",
       // If selected, use primary styles
-      isSelected ? "bg-primary text-primary-foreground" : 
-      // If not selected but has colorName, use theme-aware styling
-      (colorClasses ? cn(colorClasses.bg, colorClasses.text) : "hover:bg-muted text-foreground"),
+      isSelected
+        ? "bg-primary text-primary-foreground"
+        : // If not selected but has colorName, use theme-aware styling
+          colorClasses
+          ? cn(colorClasses.bg, colorClasses.text)
+          : "hover:bg-muted text-foreground",
       // Always add indicators for special weeks
       isDeload ? "border-l-4 border-yellow-500" : "",
       isTest ? "border-l-4 border-green-500" : ""
@@ -72,7 +74,7 @@ export default function WeekSelector({
   }
 
   return (
-    <nav className="p-4">
+    <nav className="py-4">
       <h2 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
         Veckor
       </h2>
