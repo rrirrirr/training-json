@@ -10,16 +10,12 @@ import {
   Sun,
   ChevronDown,
   Plus,
-  Edit,
   Trash2,
   FileText,
-  Calendar,
-  List,
   PanelLeftClose,
   Menu,
 } from "lucide-react"
 import { useTrainingPlans, type SavedTrainingPlan } from "@/contexts/training-plan-context"
-import PlanNameDialog from "@/components/plan-name-dialog"
 import JsonEditor from "@/components/json-editor"
 import {
   Dialog,
@@ -40,16 +36,14 @@ interface HeaderProps {
 
 export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
   const { setTheme, theme } = useTheme()
-  const { plans, currentPlan, setCurrentPlan, deletePlan, updatePlan, viewMode, changeViewMode } =
+  const { plans, currentPlan, setCurrentPlan, deletePlan, viewMode, changeViewMode } =
     useTrainingPlans()
   const uploadModalStore = useUploadModal()
 
-  // State for handling plan edit/delete/view
+  // State for handling plan delete/view
   const [isSheetOpen, setIsSheetOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isJsonEditorOpen, setIsJsonEditorOpen] = useState(false)
-  const [planToEdit, setPlanToEdit] = useState<SavedTrainingPlan | null>(null)
   const [planToDelete, setPlanToDelete] = useState<SavedTrainingPlan | null>(null)
   const [planToViewJson, setPlanToViewJson] = useState<SavedTrainingPlan | null>(null)
   const {
@@ -67,13 +61,6 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
     setIsSheetOpen(false)
   }
 
-  // Handle edit button click
-  const handleEditClick = (plan: SavedTrainingPlan, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setPlanToEdit(plan)
-    setIsEditDialogOpen(true)
-  }
-
   // Handle view JSON click
   const handleViewJsonClick = (plan: SavedTrainingPlan, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -86,15 +73,6 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
     e.stopPropagation()
     setPlanToDelete(plan)
     setIsDeleteDialogOpen(true)
-  }
-
-  // Handle save plan name
-  const handleSavePlanName = (name: string) => {
-    if (planToEdit) {
-      updatePlan(planToEdit.id, { name })
-    }
-    setPlanToEdit(null)
-    setIsEditDialogOpen(false)
   }
 
   // Handle confirm delete
@@ -198,15 +176,6 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
-                          onClick={(e) => handleEditClick(plan, e)}
-                          aria-label={`Edit ${plan.name}`}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
                           className="h-8 w-8 text-destructive"
                           onClick={(e) => handleDeleteClick(plan, e)}
                           aria-label={`Delete ${plan.name}`}
@@ -287,19 +256,6 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
       </Button>
 
       {/* Dialogs for plan management */}
-      <PlanNameDialog
-        isOpen={isEditDialogOpen}
-        onClose={() => {
-          setIsEditDialogOpen(false)
-          setPlanToEdit(null)
-        }}
-        onSave={handleSavePlanName}
-        initialName={planToEdit?.name || ""}
-        title="Rename Training Plan"
-        description="Update the name of your training plan."
-        saveButtonText="Update"
-      />
-
       <JsonEditor
         isOpen={isJsonEditorOpen}
         onClose={() => {

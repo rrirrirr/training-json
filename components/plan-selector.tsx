@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown, Plus, Edit, Trash2, MoreVertical, FileText } from "lucide-react"
+import { ChevronDown, Plus, Trash2, MoreVertical, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -21,30 +21,19 @@ import {
 } from "@/components/ui/dialog"
 
 import { useTrainingPlans, type SavedTrainingPlan } from "@/contexts/training-plan-context"
-import PlanNameDialog from "@/components/plan-name-dialog"
 import JsonEditor from "./json-editor" // Import the new JSON editor component
 
 export default function PlanSelector() {
-  const { plans, currentPlan, setCurrentPlan, deletePlan, updatePlan } = useTrainingPlans()
+  const { plans, currentPlan, setCurrentPlan, deletePlan } = useTrainingPlans()
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isJsonEditorOpen, setIsJsonEditorOpen] = useState(false) // New state for JSON editor
-  const [planToEdit, setPlanToEdit] = useState<SavedTrainingPlan | null>(null)
   const [planToDelete, setPlanToDelete] = useState<SavedTrainingPlan | null>(null)
   const [planToViewJson, setPlanToViewJson] = useState<SavedTrainingPlan | null>(null) // New state for JSON viewing
 
   // Handle plan selection
   const handleSelectPlan = (plan: SavedTrainingPlan) => {
     setCurrentPlan(plan)
-    setIsPopoverOpen(false)
-  }
-
-  // Handle edit button click
-  const handleEditClick = (plan: SavedTrainingPlan, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setPlanToEdit(plan)
-    setIsEditDialogOpen(true)
     setIsPopoverOpen(false)
   }
 
@@ -62,14 +51,6 @@ export default function PlanSelector() {
     setPlanToDelete(plan)
     setIsDeleteDialogOpen(true)
     setIsPopoverOpen(false)
-  }
-
-  // Handle save plan name
-  const handleSavePlanName = (name: string) => {
-    if (planToEdit) {
-      updatePlan(planToEdit.id, { name })
-    }
-    setPlanToEdit(null)
   }
 
   // Handle confirm delete
@@ -131,17 +112,6 @@ export default function PlanSelector() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
-                    onClick={(e) => handleEditClick(plan, e)}
-                    title="Rename Plan"
-                    aria-label="Rename Plan"
-                  >
-                    <Edit className="h-4 w-4" />
-                    <span className="sr-only">Rename Plan</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
                     className="h-8 w-8 text-red-500"
                     onClick={(e) => handleDeleteClick(plan, e)}
                     title="Delete Plan"
@@ -156,20 +126,6 @@ export default function PlanSelector() {
           </div>
         </PopoverContent>
       </Popover>
-
-      {/* Edit Plan Name Dialog */}
-      <PlanNameDialog
-        isOpen={isEditDialogOpen}
-        onClose={() => {
-          setIsEditDialogOpen(false)
-          setPlanToEdit(null)
-        }}
-        onSave={handleSavePlanName}
-        initialName={planToEdit?.name || ""}
-        title="Rename Training Plan"
-        description="Update the name of your training plan."
-        saveButtonText="Update"
-      />
 
       {/* JSON Editor Dialog */}
       <JsonEditor

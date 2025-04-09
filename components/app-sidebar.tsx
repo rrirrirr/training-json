@@ -2,11 +2,10 @@
 "use client"
 
 import { useState } from "react"
-import { Calendar, List, FilePlus, ChevronDown, Pencil, Trash2, Plus, FileText, Info } from "lucide-react"
+import { Calendar, List, FilePlus, ChevronDown, Trash2, Plus, FileText, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useTrainingPlans } from "@/contexts/training-plan-context"
-import PlanNameDialog from "./plan-name-dialog"
 import JsonEditor from "./json-editor"
 import { useInfoModal } from "@/components/modals/info-modal"
 import { useUploadModal } from "@/components/modals/upload-modal"
@@ -51,7 +50,6 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
     currentPlan,
     setCurrentPlan,
     deletePlan,
-    updatePlan,
     selectedWeek,
     selectWeek,
     selectedMonth,
@@ -67,10 +65,8 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
   const uploadModalStore = useUploadModal()
 
   // Internal state for dialogs
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isJsonEditorOpen, setIsJsonEditorOpen] = useState(false)
-  const [planToEdit, setPlanToEdit] = useState<any | null>(null)
   const [planToDelete, setPlanToDelete] = useState<any | null>(null)
   const [planToViewJson, setPlanToViewJson] = useState<any | null>(null)
 
@@ -88,12 +84,6 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
   }
 
   // Event handlers for dialogs
-  const handleEditPlan = (plan: any, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setPlanToEdit(plan)
-    setIsEditDialogOpen(true)
-  }
-
   const handleViewJson = (plan: any, e: React.MouseEvent) => {
     e.stopPropagation()
     setPlanToViewJson(plan)
@@ -104,14 +94,6 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
     e.stopPropagation()
     setPlanToDelete(plan)
     setIsDeleteDialogOpen(true)
-  }
-
-  const handleSavePlanName = (name: string) => {
-    if (planToEdit) {
-      updatePlan(planToEdit.id, { name })
-    }
-    setPlanToEdit(null)
-    setIsEditDialogOpen(false)
   }
 
   const handleConfirmDelete = () => {
@@ -184,18 +166,9 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
                           size="icon"
                           className="h-8 w-8 text-blue-500"
                           onClick={(e) => handleViewJson(plan, e)}
-                          aria-label={`View JSON for ${plan.name}`}
+                          aria-label={`Edit JSON for ${plan.name}`}
                         >
                           <FileText className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={(e) => handleEditPlan(plan, e)}
-                          aria-label={`Edit ${plan.name}`}
-                        >
-                          <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -291,7 +264,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
           </div>
         )}
         
-        {/* Documentation Link - NEW */}
+        {/* Documentation Link */}
         <div className="p-4 border-t border-border">
           <Link href="/documentation" passHref>
             <Button
@@ -322,18 +295,6 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
       </SidebarFooter>
 
       {/* Dialogs */}
-      <PlanNameDialog
-        isOpen={isEditDialogOpen}
-        onClose={() => {
-          setIsEditDialogOpen(false)
-          setPlanToEdit(null)
-        }}
-        onSave={handleSavePlanName}
-        initialName={planToEdit?.name || ""}
-        title="Rename Training Plan"
-        description="Update the name of your training plan."
-        saveButtonText="Update"
-      />
       <Dialog
         open={isDeleteDialogOpen}
         onOpenChange={(open) => {
