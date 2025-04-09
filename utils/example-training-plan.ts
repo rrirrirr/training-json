@@ -14,30 +14,21 @@ export const exampleTrainingPlan: TrainingPlanData = {
       id: "gym",
       name: "Gym",
       defaultStyle: {
-        colorName: "blue", // Added colorName instead of separate color properties
-        backgroundColor: "blue-50", // Kept for backward compatibility
-        borderColor: "blue-200", // Kept for backward compatibility
-        textColor: "blue-800" // Kept for backward compatibility
+        colorName: "blue"
       }
     },
     {
       id: "barmark",
       name: "Barmark",
       defaultStyle: {
-        colorName: "green", // Added colorName instead of separate color properties
-        backgroundColor: "green-50", // Kept for backward compatibility
-        borderColor: "green-200", // Kept for backward compatibility
-        textColor: "green-800" // Kept for backward compatibility
+        colorName: "green"
       }
     },
     {
       id: "rest",
       name: "Eget/Vila",
       defaultStyle: {
-        colorName: "gray", // Added colorName instead of separate color properties
-        backgroundColor: "gray-50", // Kept for backward compatibility
-        borderColor: "gray-200", // Kept for backward compatibility
-        textColor: "gray-800" // Kept for backward compatibility
+        colorName: "gray"
       }
     }
   ],
@@ -50,10 +41,7 @@ export const exampleTrainingPlan: TrainingPlanData = {
       durationWeeks: 4,
       description: "Månad 1 (Vecka 1-4): 3 Gympass/vecka - Block 1: Grund & Volym",
       style: {
-        colorName: "violet", // Added colorName instead of separate color properties
-        backgroundColor: "violet-50", // Kept for backward compatibility
-        borderColor: "violet-200", // Kept for backward compatibility
-        textColor: "violet-900" // Kept for backward compatibility
+        colorName: "violet"
       }
     },
     {
@@ -63,10 +51,7 @@ export const exampleTrainingPlan: TrainingPlanData = {
       durationWeeks: 4,
       description: "Månad 2 (Vecka 5-8): 3 Gympass/vecka - Block 2: Styrkeuppbyggnad",
       style: {
-        colorName: "blue", // Added colorName instead of separate color properties
-        backgroundColor: "blue-50", // Kept for backward compatibility
-        borderColor: "blue-200", // Kept for backward compatibility
-        textColor: "blue-800" // Kept for backward compatibility
+        colorName: "blue"
       }
     },
     {
@@ -76,10 +61,7 @@ export const exampleTrainingPlan: TrainingPlanData = {
       durationWeeks: 4,
       description: "Månad 3 (Vecka 9-12): 4 Gympass/vecka - Block 3: Styrka & Kraft",
       style: {
-        colorName: "indigo", // Added colorName instead of separate color properties
-        backgroundColor: "indigo-50", // Kept for backward compatibility
-        borderColor: "indigo-200", // Kept for backward compatibility
-        textColor: "indigo-800" // Kept for backward compatibility
+        colorName: "indigo"
       }
     },
     {
@@ -89,10 +71,7 @@ export const exampleTrainingPlan: TrainingPlanData = {
       durationWeeks: 4,
       description: "Månad 4 (Vecka 13-16): 4 Gympass/vecka - Block 3: Styrka & Kraft",
       style: {
-        colorName: "yellow", // Added colorName instead of separate color properties
-        backgroundColor: "yellow-50", // Kept for backward compatibility
-        borderColor: "yellow-200", // Kept for backward compatibility
-        textColor: "yellow-800" // Kept for backward compatibility
+        colorName: "yellow"
       }
     },
     {
@@ -102,10 +81,7 @@ export const exampleTrainingPlan: TrainingPlanData = {
       durationWeeks: 4,
       description: "Månad 5 (Vecka 17-20): 4 Gympass/vecka - Block 4: Maxstyrka & Test",
       style: {
-        colorName: "green", // Added colorName instead of separate color properties
-        backgroundColor: "green-50", // Kept for backward compatibility
-        borderColor: "green-200", // Kept for backward compatibility
-        textColor: "green-800" // Kept for backward compatibility
+        colorName: "green"
       }
     }
   ],
@@ -248,8 +224,7 @@ export const exampleTrainingPlan: TrainingPlanData = {
     {
       weekNumber: 1,
       weekType: "A",
-      blockId: "block-1", // Reference to block instead of blockInfo string
-      blockInfo: "Månad 1 (Vecka 1-4): 3 Gympass/vecka - Block 1: Grund & Volym", // For backward compatibility
+      blockId: "block-1", 
       gymDays: 3,
       tm: {
         SQ: 115,
@@ -258,15 +233,14 @@ export const exampleTrainingPlan: TrainingPlanData = {
         OHP: 50,
       },
       weekStyle: {
-        colorName: "violet" // Added colorName for consistent styling with block
+        colorName: "violet"
       },
       sessions: [
         {
           sessionName: "Gympass 1",
-          sessionTypeId: "gym", // Reference to session type
-          sessionType: "Gym", // For backward compatibility
+          sessionTypeId: "gym",
           sessionStyle: {
-            colorName: "blue" // Added colorName for theme-aware styling
+            colorName: "blue"
           },
           exercises: [
             {
@@ -275,43 +249,46 @@ export const exampleTrainingPlan: TrainingPlanData = {
               reps: "8",
               load: "90 kg (~78%)",
               comment: "Startvikt. Teknik!",
+              loadStyle: {
+                strong: true,
+                color: "blue"
+              }
             },
             {
               exerciseId: "bp",
               sets: 3,
               reps: "8",
               load: "60 kg (75%)",
-              comment: "Öka mot 65kg snabbt om lätt.",
+              comment: "Öka mot 65kg snabbt om lätt."
             },
             {
               exerciseId: "db_row",
               sets: 3,
               reps: "8-10 /arm",
               load: "Tungt, RPE 8-9",
-              comment: "",
+              comment: ""
             },
             {
               exerciseId: "face_pulls",
               sets: 3,
               reps: "15",
               load: "Lätt",
-              comment: "Axel Hälsa",
+              comment: "Axel Hälsa"
             },
             {
               exerciseId: "farmers_walk",
               sets: 3,
               reps: "30-40m",
               load: "Tungt grepp",
-              comment: "",
+              comment: ""
             },
           ],
         },
         {
           sessionName: "Eget Pass / Övrigt",
           sessionTypeId: "rest",
-          sessionType: "Eget/Vila", // For backward compatibility
           sessionStyle: {
-            colorName: "gray" // Added colorName for theme-aware styling
+            colorName: "gray"
           },
           exercises: [
             {
@@ -319,16 +296,15 @@ export const exampleTrainingPlan: TrainingPlanData = {
               sets: "-",
               reps: "-",
               load: "-",
-              comment: "Du planerar",
+              comment: "Du planerar"
             },
           ],
         },
         {
           sessionName: "Gympass 2",
           sessionTypeId: "gym",
-          sessionType: "Gym", // For backward compatibility
           sessionStyle: {
-            colorName: "blue" // Added colorName for theme-aware styling
+            colorName: "blue"
           },
           exercises: [
             {
@@ -336,44 +312,43 @@ export const exampleTrainingPlan: TrainingPlanData = {
               sets: 3,
               reps: "5",
               load: "Teknik, lätt",
-              comment: "Fokus på teknik",
+              comment: "Fokus på teknik"
             },
             {
               exerciseId: "ohp",
               sets: 3,
               reps: "8",
               load: "40 kg (80%)",
-              comment: "",
+              comment: ""
             },
             {
               exerciseId: "lat_pulldown",
               sets: 3,
               reps: "10-12",
               load: "Medel",
-              comment: "",
+              comment: ""
             },
             {
               exerciseId: "bicep_curl",
               sets: 3,
               reps: "10-12",
               load: "Medel-Tungt",
-              comment: "",
+              comment: ""
             },
             {
               exerciseId: "plank",
               sets: 3,
               reps: "30-45s",
               load: "-",
-              comment: "Bålstabilitet",
+              comment: "Bålstabilitet"
             },
           ],
         },
         {
           sessionName: "Eget Pass / Övrigt",
           sessionTypeId: "rest",
-          sessionType: "Eget/Vila", // For backward compatibility
           sessionStyle: {
-            colorName: "gray" // Added colorName for theme-aware styling
+            colorName: "gray"
           },
           exercises: [
             {
@@ -381,16 +356,15 @@ export const exampleTrainingPlan: TrainingPlanData = {
               sets: "-",
               reps: "-",
               load: "-",
-              comment: "Du planerar",
+              comment: "Du planerar"
             },
           ],
         },
         {
           sessionName: "Gympass 3",
           sessionTypeId: "gym",
-          sessionType: "Gym", // For backward compatibility
           sessionStyle: {
-            colorName: "blue" // Added colorName for theme-aware styling
+            colorName: "blue"
           },
           exercises: [
             {
@@ -398,44 +372,43 @@ export const exampleTrainingPlan: TrainingPlanData = {
               sets: 3,
               reps: "3",
               load: "Lätt",
-              comment: "Teknikövning",
+              comment: "Teknikövning"
             },
             {
               exerciseId: "dl",
               sets: 3,
               reps: "8",
               load: "110 kg (~78%)",
-              comment: "Startvikt",
+              comment: "Startvikt"
             },
             {
               exerciseId: "bp_var",
               sets: 3,
               reps: "10",
               load: "50 kg (~62%)",
-              comment: "Bredare grepp",
+              comment: "Bredare grepp"
             },
             {
               exerciseId: "chins",
               sets: "3-4",
               reps: "AMRAP",
               load: "Kroppsvikt",
-              comment: "Så många som möjligt",
+              comment: "Så många som möjligt"
             },
             {
               exerciseId: "side_plank",
               sets: 2,
               reps: "30s /sida",
               load: "-",
-              comment: "",
+              comment: ""
             },
           ],
         },
         {
           sessionName: "Vila / Eget Pass",
           sessionTypeId: "rest",
-          sessionType: "Eget/Vila", // For backward compatibility
           sessionStyle: {
-            colorName: "gray" // Added colorName for theme-aware styling
+            colorName: "gray"
           },
           exercises: [
             {
@@ -443,7 +416,7 @@ export const exampleTrainingPlan: TrainingPlanData = {
               sets: "-",
               reps: "-",
               load: "-",
-              comment: "Du planerar",
+              comment: "Du planerar"
             },
           ],
         },
@@ -452,8 +425,7 @@ export const exampleTrainingPlan: TrainingPlanData = {
     {
       weekNumber: 2,
       weekType: "B",
-      blockId: "block-1", // Same block as week 1
-      blockInfo: "Månad 1 (Vecka 1-4): 3 Gympass/vecka - Block 1: Grund & Volym", // For backward compatibility
+      blockId: "block-1",
       gymDays: 3,
       tm: {
         SQ: 120,
@@ -462,15 +434,14 @@ export const exampleTrainingPlan: TrainingPlanData = {
         OHP: 52.5,
       },
       weekStyle: {
-        colorName: "violet" // Added colorName for consistent styling with block
+        colorName: "violet"
       },
       sessions: [
         {
           sessionName: "Gympass 1",
           sessionTypeId: "gym",
-          sessionType: "Gym", // For backward compatibility
           sessionStyle: {
-            colorName: "blue" // Added colorName for theme-aware styling
+            colorName: "blue"
           },
           exercises: [
             {
@@ -478,44 +449,43 @@ export const exampleTrainingPlan: TrainingPlanData = {
               sets: 3,
               reps: "8",
               load: "95 kg (~79%)",
-              comment: "Öka från förra veckan",
+              comment: "Öka från förra veckan"
             },
             {
               exerciseId: "bp",
               sets: 3,
               reps: "8",
               load: "65 kg (~79%)",
-              comment: "",
+              comment: ""
             },
             {
               exerciseId: "db_row",
               sets: 3,
               reps: "8-10 /arm",
               load: "Tungt, RPE 8-9",
-              comment: "Öka från förra veckan",
+              comment: "Öka från förra veckan"
             },
             {
               exerciseId: "face_pulls",
               sets: 3,
               reps: "15",
               load: "Lätt",
-              comment: "Axel Hälsa",
+              comment: "Axel Hälsa"
             },
             {
               exerciseId: "farmers_walk",
               sets: 3,
               reps: "30-40m",
               load: "Tungt grepp",
-              comment: "Öka från förra veckan",
+              comment: "Öka från förra veckan"
             },
           ],
         },
         {
           sessionName: "Eget Pass / Övrigt",
           sessionTypeId: "rest",
-          sessionType: "Eget/Vila", // For backward compatibility
           sessionStyle: {
-            colorName: "gray" // Added colorName for theme-aware styling
+            colorName: "gray"
           },
           exercises: [
             {
@@ -523,16 +493,15 @@ export const exampleTrainingPlan: TrainingPlanData = {
               sets: "-",
               reps: "-",
               load: "-",
-              comment: "Du planerar",
+              comment: "Du planerar"
             },
           ],
         },
         {
           sessionName: "Gympass 2",
           sessionTypeId: "gym",
-          sessionType: "Gym", // For backward compatibility
           sessionStyle: {
-            colorName: "blue" // Added colorName for theme-aware styling
+            colorName: "blue"
           },
           exercises: [
             {
@@ -540,44 +509,43 @@ export const exampleTrainingPlan: TrainingPlanData = {
               sets: 3,
               reps: "5",
               load: "Teknik, lätt",
-              comment: "Fokus på teknik",
+              comment: "Fokus på teknik"
             },
             {
               exerciseId: "ohp",
               sets: 3,
               reps: "8",
               load: "42.5 kg (~81%)",
-              comment: "Öka från förra veckan",
+              comment: "Öka från förra veckan"
             },
             {
               exerciseId: "lat_pulldown",
               sets: 3,
               reps: "10-12",
               load: "Medel",
-              comment: "Öka från förra veckan",
+              comment: "Öka från förra veckan"
             },
             {
               exerciseId: "bicep_curl",
               sets: 3,
               reps: "10-12",
               load: "Medel-Tungt",
-              comment: "Öka från förra veckan",
+              comment: "Öka från förra veckan"
             },
             {
               exerciseId: "plank",
               sets: 3,
               reps: "30-45s",
               load: "-",
-              comment: "Bålstabilitet",
+              comment: "Bålstabilitet"
             },
           ],
         },
         {
           sessionName: "Eget Pass / Övrigt",
           sessionTypeId: "rest",
-          sessionType: "Eget/Vila", // For backward compatibility
           sessionStyle: {
-            colorName: "gray" // Added colorName for theme-aware styling
+            colorName: "gray"
           },
           exercises: [
             {
@@ -585,16 +553,15 @@ export const exampleTrainingPlan: TrainingPlanData = {
               sets: "-",
               reps: "-",
               load: "-",
-              comment: "Du planerar",
+              comment: "Du planerar"
             },
           ],
         },
         {
           sessionName: "Gympass 3",
           sessionTypeId: "gym",
-          sessionType: "Gym", // For backward compatibility
           sessionStyle: {
-            colorName: "blue" // Added colorName for theme-aware styling
+            colorName: "blue"
           },
           exercises: [
             {
@@ -602,44 +569,43 @@ export const exampleTrainingPlan: TrainingPlanData = {
               sets: 3,
               reps: "3",
               load: "Lätt",
-              comment: "Teknikövning",
+              comment: "Teknikövning"
             },
             {
               exerciseId: "rdl",
               sets: 3,
               reps: "8",
               load: "100 kg (~69%)",
-              comment: "Fokus på hamstrings",
+              comment: "Fokus på hamstrings"
             },
             {
               exerciseId: "bp_var",
               sets: 3,
               reps: "10",
               load: "52.5 kg (~64%)",
-              comment: "Bredare grepp",
+              comment: "Bredare grepp"
             },
             {
               exerciseId: "chins",
               sets: "3-4",
               reps: "AMRAP",
               load: "Kroppsvikt",
-              comment: "Försök öka från förra veckan",
+              comment: "Försök öka från förra veckan"
             },
             {
               exerciseId: "side_plank",
               sets: 2,
               reps: "30s /sida",
               load: "-",
-              comment: "",
+              comment: ""
             },
           ],
         },
         {
           sessionName: "Vila / Eget Pass",
           sessionTypeId: "rest",
-          sessionType: "Eget/Vila", // For backward compatibility
           sessionStyle: {
-            colorName: "gray" // Added colorName for theme-aware styling
+            colorName: "gray"
           },
           exercises: [
             {
@@ -647,7 +613,7 @@ export const exampleTrainingPlan: TrainingPlanData = {
               sets: "-",
               reps: "-",
               load: "-",
-              comment: "Du planerar",
+              comment: "Du planerar"
             },
           ],
         },
@@ -656,8 +622,7 @@ export const exampleTrainingPlan: TrainingPlanData = {
     {
       weekNumber: 16,
       weekType: "A",
-      blockId: "block-4", // Deload phase
-      blockInfo: "Månad 4 (Vecka 13-16): 4 Gympass/vecka - Block 3: Styrka & Kraft", // For backward compatibility
+      blockId: "block-4",
       gymDays: 4,
       isDeload: true,
       tm: {
@@ -667,15 +632,14 @@ export const exampleTrainingPlan: TrainingPlanData = {
         OHP: 65,
       },
       weekStyle: {
-        colorName: "yellow" // Added colorName for theme-aware styling - matches isDeload styling
+        colorName: "yellow"
       },
       sessions: [
         {
           sessionName: "Gympass 1 (DELOAD)",
           sessionTypeId: "gym",
-          sessionType: "Gym", // For backward compatibility
           sessionStyle: {
-            colorName: "blue" // Added colorName for theme-aware styling
+            colorName: "blue"
           },
           exercises: [
             {
@@ -683,37 +647,36 @@ export const exampleTrainingPlan: TrainingPlanData = {
               sets: 3,
               reps: "5",
               load: "105 kg (70%)",
-              comment: "Lätt deload",
+              comment: "Lätt deload"
             },
             {
               exerciseId: "bp",
               sets: 3,
               reps: "5",
               load: "70 kg (70%)",
-              comment: "Lätt deload",
+              comment: "Lätt deload"
             },
             {
               exerciseId: "db_row",
               sets: 2,
               reps: "8 /arm",
               load: "Medel",
-              comment: "Reducerad volym",
+              comment: "Reducerad volym"
             },
             {
               exerciseId: "face_pulls",
               sets: 2,
               reps: "15",
               load: "Lätt",
-              comment: "Axel Hälsa",
+              comment: "Axel Hälsa"
             },
           ],
         },
         {
           sessionName: "Barmark 1",
           sessionTypeId: "barmark",
-          sessionType: "Barmark", // For backward compatibility
           sessionStyle: {
-            colorName: "green" // Added colorName for theme-aware styling
+            colorName: "green"
           },
           exercises: [
             {
@@ -721,14 +684,14 @@ export const exampleTrainingPlan: TrainingPlanData = {
               sets: 1,
               reps: "15-20 min",
               load: "Låg intensitet",
-              comment: "Återhämtning",
+              comment: "Återhämtning"
             },
             {
               exerciseId: "mobility",
               sets: 1,
               reps: "10 min",
               load: "-",
-              comment: "Fokus på höft och axlar",
+              comment: "Fokus på höft och axlar"
             },
           ],
         },
@@ -737,20 +700,18 @@ export const exampleTrainingPlan: TrainingPlanData = {
     {
       weekNumber: 20,
       weekType: "A",
-      blockId: "block-5", // Testing phase
-      blockInfo: "Månad 5 (Vecka 17-20): 4 Gympass/vecka - Block 4: Maxstyrka & Test", // For backward compatibility
+      blockId: "block-5",
       gymDays: 4,
       isTest: true,
       weekStyle: {
-        colorName: "green" // Added colorName for theme-aware styling - matches isTest styling
+        colorName: "green"
       },
       sessions: [
         {
           sessionName: "Gympass 1 (TEST)",
           sessionTypeId: "gym",
-          sessionType: "Gym", // For backward compatibility
           sessionStyle: {
-            colorName: "blue" // Added colorName for theme-aware styling
+            colorName: "blue"
           },
           exercises: [
             {
@@ -758,30 +719,29 @@ export const exampleTrainingPlan: TrainingPlanData = {
               sets: 1,
               reps: "1-3",
               load: "1RM Test",
-              comment: "Maxtest",
+              comment: "Maxtest"
             },
             {
               exerciseId: "bp",
               sets: 1,
               reps: "1-3",
               load: "1RM Test",
-              comment: "Maxtest",
+              comment: "Maxtest"
             },
             {
               exerciseId: "own_choice",
               sets: 2,
               reps: "10-15",
               load: "Lätt",
-              comment: "Valfria övningar",
+              comment: "Valfria övningar"
             },
           ],
         },
         {
           sessionName: "Vila",
           sessionTypeId: "rest",
-          sessionType: "Eget/Vila", // For backward compatibility
           sessionStyle: {
-            colorName: "gray" // Added colorName for theme-aware styling
+            colorName: "gray"
           },
           exercises: [
             {
@@ -789,7 +749,7 @@ export const exampleTrainingPlan: TrainingPlanData = {
               sets: "-",
               reps: "-",
               load: "-",
-              comment: "Återhämtning inför nästa test",
+              comment: "Återhämtning inför nästa test"
             },
           ],
         },
@@ -797,14 +757,13 @@ export const exampleTrainingPlan: TrainingPlanData = {
     },
   ],
   
-  // Keep monthBlocks for backward compatibility and add colorName to style
   monthBlocks: [
     { 
       id: 1, 
       name: "Månad 1 (Vecka 1-4)", 
       weeks: [1, 2, 3, 4],
       style: {
-        colorName: "violet" // Added colorName for month block style
+        colorName: "violet"
       }
     },
     { 
@@ -812,7 +771,7 @@ export const exampleTrainingPlan: TrainingPlanData = {
       name: "Månad 2 (Vecka 5-8)", 
       weeks: [5, 6, 7, 8],
       style: {
-        colorName: "blue" // Added colorName for month block style
+        colorName: "blue"
       }
     },
     { 
@@ -820,7 +779,7 @@ export const exampleTrainingPlan: TrainingPlanData = {
       name: "Månad 3 (Vecka 9-12)", 
       weeks: [9, 10, 11, 12],
       style: {
-        colorName: "indigo" // Added colorName for month block style
+        colorName: "indigo"
       }
     },
     { 
@@ -828,7 +787,7 @@ export const exampleTrainingPlan: TrainingPlanData = {
       name: "Månad 4 (Vecka 13-16)", 
       weeks: [13, 14, 15, 16],
       style: {
-        colorName: "yellow" // Added colorName for month block style
+        colorName: "yellow"
       }
     },
     { 
@@ -836,7 +795,7 @@ export const exampleTrainingPlan: TrainingPlanData = {
       name: "Månad 5 (Vecka 17-20)", 
       weeks: [17, 18, 19, 20],
       style: {
-        colorName: "green" // Added colorName for month block style
+        colorName: "green"
       }
     },
   ],
