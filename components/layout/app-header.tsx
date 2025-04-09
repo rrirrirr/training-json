@@ -14,6 +14,7 @@ import {
   FileText,
   PanelLeftClose,
   Menu,
+  Download,
 } from "lucide-react"
 import { useTrainingPlans, type SavedTrainingPlan } from "@/contexts/training-plan-context"
 import JsonEditor from "@/components/json-editor"
@@ -28,6 +29,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { MobileNavBar } from "@/components/mobile-navbar"
 import { useUploadModal } from "@/components/modals/upload-modal"
+import { useExportModal } from "@/components/modals/export-modal"
 
 interface HeaderProps {
   onToggleSidebar: () => void
@@ -39,6 +41,7 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
   const { plans, currentPlan, setCurrentPlan, deletePlan, viewMode, changeViewMode } =
     useTrainingPlans()
   const uploadModalStore = useUploadModal()
+  const exportModalStore = useExportModal()
 
   // State for handling plan delete/view
   const [isSheetOpen, setIsSheetOpen] = useState(false)
@@ -191,6 +194,20 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
                 <Button onClick={handleCreateNewPlan} variant="outline" className="w-full mt-3">
                   <Plus className="h-4 w-4 mr-2" />
                   Import JSON Plan
+                </Button>
+                
+                {/* Export JSON Button */}
+                <Button 
+                  onClick={() => {
+                    setIsSheetOpen(false)
+                    exportModalStore.open()
+                  }} 
+                  variant="outline" 
+                  className="w-full mt-2"
+                  disabled={!currentPlan}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export JSON
                 </Button>
               </div>
 

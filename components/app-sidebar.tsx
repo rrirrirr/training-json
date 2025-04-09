@@ -2,13 +2,14 @@
 "use client"
 
 import { useState } from "react"
-import { Calendar, List, FilePlus, ChevronDown, Trash2, Plus, FileText, Info } from "lucide-react"
+import { Calendar, List, FilePlus, ChevronDown, Trash2, Plus, FileText, Info, Download } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useTrainingPlans } from "@/contexts/training-plan-context"
 import JsonEditor from "./json-editor"
 import { useInfoModal } from "@/components/modals/info-modal"
 import { useUploadModal } from "@/components/modals/upload-modal"
+import { useExportModal } from "@/components/modals/export-modal"
 import BlockSelector from "./shared/block-selector"
 import WeekSelector from "./shared/week-selector"
 import Link from "next/link"
@@ -72,6 +73,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
 
   // Get access to info modal
   const infoModalStore = useInfoModal()
+  const exportModalStore = useExportModal()
 
   // Function to get week type (uses trainingData from context)
   const getWeekInfo = (weekNumber: number) => {
@@ -282,6 +284,21 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
               {isOpen && "Documentation"}
             </Button>
           </Link>
+        </div>
+        
+        {/* Export Button in Footer */}
+        <div className="p-4 border-t border-border">
+          <Button
+            variant="ghost"
+            size={isOpen ? "default" : "icon"}
+            onClick={() => exportModalStore.open()}
+            className={cn("w-full", isOpen && "justify-start")}
+            disabled={!currentPlan}
+            aria-label="Export JSON"
+          >
+            <Download className={cn("h-4 w-4", isOpen && "mr-2")} />
+            {isOpen && "Export JSON"}
+          </Button>
         </div>
         
         {/* Info Button in Footer */}
