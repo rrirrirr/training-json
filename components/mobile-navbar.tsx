@@ -54,9 +54,9 @@ export function MobileNavBar({
   }
 
   return (
-    <SheetContent side="bottom" className="h-[80vh] flex flex-col p-0">
+    <SheetContent side="bottom" className="h-[80vh] flex flex-col p-0 pb-safe" hideCloseButton>
       <Tabs defaultValue="blocks" className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="mx-4 my-2 w-auto">
+        <TabsList className="mx-6 my-4 w-auto">
           <TabsTrigger className="flex-grow" value="blocks">
             Block
           </TabsTrigger>
@@ -66,7 +66,7 @@ export function MobileNavBar({
         </TabsList>
 
         {/* Block Selection Tab */}
-        <TabsContent value="blocks" className="flex-1 overflow-y-auto pt-0">
+        <TabsContent value="blocks" className="flex-1 overflow-y-auto px-4 pt-2">
           <BlockSelector
             blocks={months}
             selectedBlockId={selectedMonth}
@@ -76,7 +76,7 @@ export function MobileNavBar({
         </TabsContent>
 
         {/* Week Selection Tab */}
-        <TabsContent value="weeks" className="flex-1 overflow-y-auto pt-0">
+        <TabsContent value="weeks" className="flex-1 overflow-y-auto px-4 pt-2">
           <WeekSelector
             weeks={weeks}
             selectedWeek={selectedWeek}
@@ -88,7 +88,7 @@ export function MobileNavBar({
       </Tabs>
 
       {/* Legend for week colors */}
-      <SheetFooter className="p-4 border-t flex-row justify-start gap-4 text-xs text-muted-foreground">
+      <SheetFooter className="p-6 border-t flex-row justify-start gap-4 text-xs text-muted-foreground">
         <div className="flex items-center">
           <div className="w-4 h-4 border-l-4 border-yellow-500 mr-2"></div>
           <span>DELOAD week</span>
