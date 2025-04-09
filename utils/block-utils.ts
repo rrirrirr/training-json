@@ -1,4 +1,5 @@
-import type { Week, BlockDefinition, TrainingPlanData } from "@/types/training-plan"
+import type { Week, BlockDefinition, TrainingPlanData, ColorName } from "@/types/training-plan"
+import { getThemeAwareColorClasses } from "@/utils/color-utils"
 
 /**
  * Gets the block definition for a week based on its blockId
@@ -19,7 +20,7 @@ export function getBlock(
 /**
  * Gets the block info details combining both new and legacy data
  */
-export function getBlockInfo(week: Week, trainingPlan: TrainingPlanData) {
+export function getBlockInfo(week: Week, trainingPlan: TrainingPlanData, theme?: string) {
   const block = getBlock(week, trainingPlan);
   
   // Start with defaults
@@ -27,6 +28,7 @@ export function getBlockInfo(week: Week, trainingPlan: TrainingPlanData) {
     name: "",
     description: week.blockInfo || "", // Use legacy blockInfo if available
     focus: "",
+    colorName: undefined as ColorName | undefined,
     style: {
       backgroundColor: "",
       borderColor: "",
@@ -41,11 +43,29 @@ export function getBlockInfo(week: Week, trainingPlan: TrainingPlanData) {
       name: block.name,
       description: block.description || blockInfo.description,
       focus: block.focus,
+      colorName: block.style?.colorName,
       style: block.style || blockInfo.style
     };
   }
   
+  // Special cases for deload and test weeks
+  let specialColorName: ColorName | undefined;
+  
   // Apply week-specific style overrides if the week has deload or test flags
+  if (week.isDeload) {
+    specialColorName = "yellow";
+  } else if (week.isTest) {
+    specialColorName = "green";
+  }
+  
+  // If the week has its own style, it overrides the block style
+  if (week.weekStyle?.colorName) {
+    blockInfo.colorName = week.weekStyle.colorName;
+  } else if (specialColorName) {
+    blockInfo.colorName = specialColorName;
+  }
+  
+  // For backward compatibility, also set the direct style properties
   if (week.isDeload) {
     blockInfo.style = {
       ...blockInfo.style,
@@ -62,5 +82,11 @@ export function getBlockInfo(week: Week, trainingPlan: TrainingPlanData) {
     };
   }
   
-  return blockInfo;
+  // Get theme-aware color classes
+  const colorClasses = getThemeAwareColorClasses(blockInfo.colorName, theme);
+  
+  return {
+    ...blockInfo,
+    colorClasses
+  };
 }

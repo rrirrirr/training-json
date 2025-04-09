@@ -1,6 +1,10 @@
+"use client"
+
 import type { Week, TrainingPlanData, BlockDefinition } from "@/types/training-plan"
 import SessionCard from "./session-card"
 import { cn } from "@/lib/utils"
+import { useTheme } from "next-themes"
+import { getBlockInfo } from "@/utils/block-utils"
 
 interface WeeklyViewProps {
   week: Week
@@ -8,7 +12,7 @@ interface WeeklyViewProps {
   compact?: boolean
 }
 
-// Function to handle color values, returning both class and inline style
+// Function to handle color values for backward compatibility
 const getColorValue = (
   color: string | undefined,
   prefix: string,
@@ -42,61 +46,37 @@ const getColorValue = (
 }
 
 export default function WeeklyView({ week, trainingPlan, compact = false }: WeeklyViewProps) {
+  const { theme } = useTheme()
+  
   const {
     weekNumber,
     weekType,
-    blockId,
-    blockInfo, // Keep for backward compatibility
     gymDays,
     barmarkDays,
     isDeload,
     isTest,
     sessions,
-    weekStyle,
+    weekStyle
   } = week
 
-  // Find the associated block from the blockId
-  const block: BlockDefinition | undefined = trainingPlan.blocks?.find(b => b.id === blockId);
-  const blockDescription = block?.description || blockInfo || "";
-  const blockFocus = block?.focus || "";
+  // Get block information using our enhanced utility
+  const blockInfo = getBlockInfo(week, trainingPlan, theme)
+  const blockDescription = blockInfo.description || ""
+  const blockFocus = blockInfo.focus || ""
 
-  // Get default background based on week type
-  const getDefaultBg = () => {
-    if (isDeload) return "bg-yellow-50"
-    if (isTest) return "bg-green-50"
-    // If we have a block with a style, use its background
-    if (block?.style?.backgroundColor) {
-      return `bg-${block.style.backgroundColor}`
-    }
-    return "bg-white"
-  }
+  // For backward compatibility, handle direct styles if colorName isn't used
+  const { className: bgClass, style: bgStyle } = !blockInfo.colorName && blockInfo.style?.backgroundColor
+    ? getColorValue(blockInfo.style.backgroundColor, "bg-", "bg-card")
+    : { className: "bg-card", style: {} }
 
-  // Get default border based on week type
-  const getDefaultBorder = () => {
-    if (isDeload) return "border-yellow-200"
-    if (isTest) return "border-green-200"
-    // If we have a block with a style, use its border
-    if (block?.style?.borderColor) {
-      return `border-${block.style.borderColor}`
-    }
-    return "border-gray-200"
-  }
+  const { className: borderClass, style: borderStyle } = !blockInfo.colorName && blockInfo.style?.borderColor
+    ? getColorValue(blockInfo.style.borderColor, "border-", "border-border")
+    : { className: "border-border", style: {} }
 
-  // Get background style and class
-  const { className: bgClass, style: bgStyle } = weekStyle?.backgroundColor
-    ? getColorValue(weekStyle.backgroundColor, "bg-", getDefaultBg())
-    : { className: getDefaultBg(), style: {} }
-
-  // Get border style and class
-  const { className: borderClass, style: borderStyle } = weekStyle?.borderColor
-    ? getColorValue(weekStyle.borderColor, "border-", getDefaultBorder())
-    : { className: getDefaultBorder(), style: {} }
-
-  // Combine styles
-  const combinedStyle = {
-    ...bgStyle,
-    ...borderStyle,
-  }
+  // Combine styles for backward compatibility
+  const combinedStyle = !blockInfo.colorName
+    ? { ...bgStyle, ...borderStyle }
+    : {}
 
   return (
     <div className="max-w-4xl mx-auto mb-8">
@@ -104,8 +84,12 @@ export default function WeeklyView({ week, trainingPlan, compact = false }: Week
       <div
         className={cn(
           "mb-6 p-4 rounded-lg shadow-md border",
-          bgClass,
-          borderClass,
+          // If using the new colorName system, apply the theme-aware classes
+          blockInfo.colorName && blockInfo.colorClasses?.bg,
+          blockInfo.colorName && blockInfo.colorClasses?.border,
+          // For backward compatibility
+          !blockInfo.colorName && bgClass,
+          !blockInfo.colorName && borderClass,
           weekStyle?.styleClass || ""
         )}
         style={combinedStyle}
@@ -130,9 +114,19 @@ export default function WeeklyView({ week, trainingPlan, compact = false }: Week
                 </span>
               )}
             </h1>
-            {blockDescription && <p className="text-gray-600 mt-1">{blockDescription}</p>}
-            {block && blockFocus && (
-              <div className="text-sm text-gray-600 mt-1">
+            {blockDescription && (
+              <p className={cn(
+                "mt-1", 
+                blockInfo.colorName ? blockInfo.colorClasses?.text : "text-gray-600"
+              )}>
+                {blockDescription}
+              </p>
+            )}
+            {blockFocus && (
+              <div className={cn(
+                "text-sm mt-1", 
+                blockInfo.colorName ? blockInfo.colorClasses?.text : "text-gray-600"
+              )}>
                 <span className="font-medium">Focus: </span>{blockFocus}
               </div>
             )}

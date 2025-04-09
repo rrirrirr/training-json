@@ -7,18 +7,27 @@ export type Metadata = {
   version?: string;
 }
 
-// New SessionTypeDefinition type
+// Available color names for styling
+export type ColorName = 
+  | "slate" | "gray" | "zinc" | "neutral" | "stone" 
+  | "red" | "orange" | "amber" | "yellow" | "lime" 
+  | "green" | "emerald" | "teal" | "cyan" | "sky" 
+  | "blue" | "indigo" | "violet" | "purple" | "fuchsia" 
+  | "pink" | "rose";
+
+// New SessionTypeDefinition type with colorName
 export type SessionTypeDefinition = {
   id: string;
   name: string;
   defaultStyle: {
-    backgroundColor?: string;
-    borderColor?: string;
-    textColor?: string;
+    colorName?: ColorName; // New property for theme-aware styling
+    backgroundColor?: string; // Kept for backward compatibility
+    borderColor?: string; // Kept for backward compatibility
+    textColor?: string; // Kept for backward compatibility
   }
 }
 
-// New BlockDefinition type
+// New BlockDefinition type with colorName
 export type BlockDefinition = {
   id: string | number;
   name: string;
@@ -26,9 +35,10 @@ export type BlockDefinition = {
   durationWeeks: number;
   description?: string;
   style?: {
-    backgroundColor?: string;
-    textColor?: string;
-    borderColor?: string;
+    colorName?: ColorName; // New property for theme-aware styling
+    backgroundColor?: string; // Kept for backward compatibility
+    textColor?: string; // Kept for backward compatibility
+    borderColor?: string; // Kept for backward compatibility
   }
 }
 
@@ -62,13 +72,15 @@ export type ExerciseInstance = {
   tips?: string
 }
 
+// Session style with colorName
 export type SessionStyle = {
   styleClass?: string
   icon?: string
   note?: string
-  backgroundColor?: string // Can be Tailwind color like "blue-50" or hex/rgb
-  borderColor?: string // Can be Tailwind color like "blue-200" or hex/rgb
-  textColor?: string // Can be Tailwind color like "blue-800" or hex/rgb
+  colorName?: ColorName; // New property for theme-aware styling
+  backgroundColor?: string // Kept for backward compatibility
+  borderColor?: string // Kept for backward compatibility
+  textColor?: string // Kept for backward compatibility
 }
 
 // Session is modified to use sessionTypeId
@@ -78,6 +90,16 @@ export type Session = {
   sessionType?: "Gym" | "Barmark" | "Eget/Vila" // Keep for backward compatibility
   sessionStyle?: SessionStyle
   exercises: ExerciseInstance[]
+}
+
+// Week style with colorName
+export type WeekStyle = {
+  styleClass?: string
+  note?: string
+  colorName?: ColorName; // New property for theme-aware styling
+  backgroundColor?: string // Kept for backward compatibility
+  borderColor?: string // Kept for backward compatibility
+  textColor?: string // Kept for backward compatibility
 }
 
 // Week is modified to use blockId
@@ -90,26 +112,21 @@ export type Week = {
   barmarkDays?: number
   isDeload?: boolean
   isTest?: boolean
-  weekStyle?: {
-    styleClass?: string
-    note?: string
-    backgroundColor?: string
-    borderColor?: string
-    textColor?: string
-  }
+  weekStyle?: WeekStyle
   tm?: Record<string, number>
   sessions: Session[]
 }
 
-// MonthBlock - remain for backward compatibility
+// MonthBlock with colorName
 export type MonthBlock = {
   id: number
   name: string
   weeks: number[]
   style?: {
-    backgroundColor?: string
-    textColor?: string
-    borderColor?: string
+    colorName?: ColorName; // New property for theme-aware styling
+    backgroundColor?: string // Kept for backward compatibility
+    textColor?: string // Kept for backward compatibility
+    borderColor?: string // Kept for backward compatibility
   }
 }
 

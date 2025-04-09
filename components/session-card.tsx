@@ -1,13 +1,15 @@
 "use client"
 
 import React, { useState } from "react"
-import type { Session, TrainingPlanData, SessionTypeDefinition } from "@/types/training-plan" // Adjust path if needed
+import type { Session, TrainingPlanData, SessionTypeDefinition } from "@/types/training-plan"
 import { Eye, EyeOff } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card" // Adjust path if needed
-import { combineExerciseData } from "@/utils/exercise-utils" // Adjust path if needed
-import { cn } from "@/lib/utils" // Adjust path if needed
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { combineExerciseData } from "@/utils/exercise-utils"
+import { cn } from "@/lib/utils"
+import { useTheme } from "next-themes"
+import { getSessionStyling } from "@/utils/session-utils"
 
-// Function to handle color values (Keep as is)
+// Function to handle color values (for backward compatibility)
 const getColorValue = (
   color: string | undefined,
   prefix: string,
@@ -71,35 +73,14 @@ interface SessionCardProps {
 }
 
 export default function SessionCard({ session, trainingPlan, compact = false }: SessionCardProps) {
-  const [showDetails, setShowDetails] = useState(false) // State remains the same
-  const { sessionName, sessionTypeId, sessionType, sessionStyle, exercises } = session
-
-  // Keep the logic for determining session type and styles
-  const sessionTypeObj: SessionTypeDefinition | undefined = trainingPlan.sessionTypes?.find(
-    (type) => type.id === sessionTypeId
-  )
-  const displaySessionType = sessionTypeObj?.name || sessionType || "Unknown"
-  const getDefaultBg = () => {
-    /* ... as before ... */
-    if (sessionTypeObj?.defaultStyle?.backgroundColor)
-      return `bg-${sessionTypeObj.defaultStyle.backgroundColor}`
-
-    return "bg-card"
-  }
-  const { className: bgClass, style: bgStyle } = sessionStyle?.backgroundColor
-    ? getColorValue(sessionStyle.backgroundColor, "bg-", getDefaultBg())
-    : { className: getDefaultBg(), style: {} }
-  const getDefaultBorder = () => {
-    if (sessionTypeObj?.defaultStyle?.borderColor)
-      return `border-${sessionTypeObj.defaultStyle.borderColor}`
-
-    return "border-border"
-  }
-  const { className: borderClass, style: borderStyle } = sessionStyle?.borderColor
-    ? getColorValue(sessionStyle.borderColor, "border-", getDefaultBorder())
-    : { className: getDefaultBorder(), style: {} }
-  const combinedStyle = { ...bgStyle, ...borderStyle }
-
+  const [showDetails, setShowDetails] = useState(false)
+  const { sessionName, exercises } = session
+  const { theme } = useTheme() // Get current theme
+  
+  // Get styling information using the new utility
+  const sessionStyling = getSessionStyling(session, trainingPlan, theme)
+  const displaySessionType = sessionStyling.sessionTypeName
+  
   // Toggle function remains the same
   const toggleDetails = (e?: React.MouseEvent) => {
     e?.stopPropagation()
@@ -108,15 +89,26 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
 
   return (
     <Card
-      // *** onClick and cursor-pointer remain on the Card ***
       onClick={() => toggleDetails()}
       className={cn(
-        "transition-colors duration-200 hover:shadow-lg max-w-full overflow-hidden border cursor-pointer", // Added cursor-pointer
-        bgClass,
-        borderClass,
-        sessionStyle?.styleClass
+        "transition-colors duration-200 hover:shadow-lg max-w-full overflow-hidden border cursor-pointer",
+        // Use the theme-aware color classes
+        sessionStyling.colorClasses?.bg,
+        sessionStyling.colorClasses?.border,
+        session.sessionStyle?.styleClass,
+        // For backward compatibility, include the old styling approach
+        !sessionStyling.colorName && sessionStyling.backgroundColor ? 
+          getColorValue(sessionStyling.backgroundColor, "bg-", "bg-card").className : "",
+        !sessionStyling.colorName && sessionStyling.borderColor ? 
+          getColorValue(sessionStyling.borderColor, "border-", "border-border").className : ""
       )}
-      style={combinedStyle}
+      // Include inline styles for older styling method (only if not using colorName)
+      style={!sessionStyling.colorName ? {
+        backgroundColor: sessionStyling.backgroundColor?.startsWith('#') || sessionStyling.backgroundColor?.startsWith('rgb') 
+          ? sessionStyling.backgroundColor : undefined,
+        borderColor: sessionStyling.borderColor?.startsWith('#') || sessionStyling.borderColor?.startsWith('rgb') 
+          ? sessionStyling.borderColor : undefined,
+      } : undefined}
     >
       <CardHeader className="relative flex flex-row justify-between items-start pb-4 border-b pr-10 pt-4">
         {/* Title and Description */}
@@ -124,7 +116,7 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
           <CardTitle>{sessionName}</CardTitle>
           <CardDescription className="mt-1">
             {displaySessionType}
-            {sessionStyle?.note && <span className="ml-2 italic">{sessionStyle.note}</span>}
+            {session.sessionStyle?.note && <span className="ml-2 italic">{session.sessionStyle.note}</span>}
           </CardDescription>
         </div>
         {/* Absolutely positioned icon container */}
@@ -132,7 +124,7 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
           {showDetails ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
         </div>
       </CardHeader>
-      {/* *** CardContent is ALWAYS rendered *** */}
+      {/* CardContent is ALWAYS rendered */}
       <CardContent className="p-4" id={`session-details-${sessionName.replace(/\s+/g, "-")}`}>
         <div className="space-y-4">
           {exercises.map((exercise, index) => {
@@ -226,15 +218,11 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
                     )}
                   </div>
                 )}
-                {/* *** End of conditional rendering for Details Section *** */}
-              </div> // End of exercise item div
+              </div>
             )
           })}
-          {/* End of exercises.map */}
         </div>
-        {/* End of space-y-4 div */}
       </CardContent>
-      {/* End of CardContent */}
-    </Card> // End of Card
+    </Card>
   )
 }
