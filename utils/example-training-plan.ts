@@ -238,10 +238,10 @@ export const exampleTrainingPlan: TrainingPlanData = {
       },
       sessions: [
         {
-          sessionName: "Gympass 1",
+          sessionName: "Gympass 1 yea",
           sessionTypeId: "gym",
           sessionStyle: {
-            colorName: "blue",
+            colorName: "green",
           },
           exercises: [
             {
