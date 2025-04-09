@@ -28,28 +28,8 @@ export function LayoutClient({ children }: { children: React.ReactNode }) {
 
       {/* Main content Area */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        {/* Header */}
+        {/* Header - includes the sidebar toggle and mobile navigation */}
         <AppHeader onToggleSidebar={toggleSidebar} isSidebarOpen={state === "expanded"} />
-
-        {/* Mobile Navigation Bar - only shown on mobile */}
-        {isMobile && (
-          <div className="md:hidden sticky top-0 z-20 bg-background border-b">
-            <MobileNavBar
-              months={monthsForSidebar}
-              weeks={weeksForSidebar}
-              selectedMonth={selectedMonth}
-              selectedWeek={selectedWeek}
-              onWeekChange={selectWeek}
-              onJumpToSelection={(monthId, weekId) => {
-                if (weekId !== null) {
-                  selectWeek(weekId)
-                } else {
-                  selectMonth(monthId)
-                }
-              }}
-            />
-          </div>
-        )}
 
         {/* Page Content Rendered Here */}
         <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
