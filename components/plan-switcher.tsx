@@ -76,8 +76,8 @@ export function PlanSwitcher({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               data-sidebar="menu-button"
-              data-size="lg"
-              className="h-14 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              size="lg"
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               data-active={currentPlan ? "true" : "false"}
               aria-label="Select Plan"
             >
