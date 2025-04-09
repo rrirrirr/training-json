@@ -1,7 +1,17 @@
 "use client"
 
 import { useState } from "react"
-import { Calendar, List, FilePlus, ChevronDown, Trash2, Plus, FileText, Info, Download } from "lucide-react"
+import {
+  Calendar,
+  List,
+  FilePlus,
+  ChevronDown,
+  Trash2,
+  Plus,
+  FileText,
+  Info,
+  Download,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useTrainingPlans } from "@/contexts/training-plan-context"
@@ -29,27 +39,15 @@ import {
 } from "@/components/ui/dialog"
 import {
   Sidebar,
-  SidebarHeader,
   SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarTrigger,
   SidebarFooter,
+  SidebarGroupLabel,
+  SidebarHeader,
+  useSidebar,
 } from "@/components/ui/sidebar"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
-// Removed props related to data/state/callbacks
-interface AppSidebarProps {
-  isOpen: boolean // Prop to control collapsed/expanded style
-}
-
-export default function AppSidebar({ isOpen }: AppSidebarProps) {
+export default function AppSidebar() {
   // Get data, UI state, and actions from context
   const {
     plans,
@@ -67,6 +65,10 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
     trainingData,
   } = useTrainingPlans()
 
+  // Use sidebar hook for controlling sidebar state
+  const { state } = useSidebar()
+  const isOpen = state === "expanded"
+
   // Get upload modal (for creating new plans via JSON upload)
   const uploadModalStore = useUploadModal()
 
@@ -82,7 +84,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
 
   // Function to get week type (uses trainingData from context)
   const getWeekInfo = (weekNumber: number) => {
-    const weekData = trainingData?.find((w) => w.weekNumber === weekNumber)
+    const weekData = trainingData.find((w) => w.weekNumber === weekNumber)
     return {
       type: weekData?.weekType || "",
       isDeload: weekData?.isDeload || false,
@@ -120,118 +122,116 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
     // Open the upload modal with a callback that dispatches the plan-created-from-json event
     uploadModalStore.open((data) => {
       // Create and dispatch a custom event with the imported JSON data
-      const event = new CustomEvent('plan-created-from-json', { 
-        detail: { data } 
+      const event = new CustomEvent("plan-created-from-json", {
+        detail: { data },
       })
       window.dispatchEvent(event)
     })
   }
 
   return (
-    <Sidebar className={cn("border-none flex flex-col h-full", !isOpen && "items-center")}>
+    <>
       {/* T-JSON Logo/Title */}
-      <div className={cn("p-4 border-b", !isOpen && "p-2 flex justify-center")}>
-        <h1 className="text-xl font-bold text-primary">T-JSON</h1>
-      </div>
-      
-      <SidebarHeader className={cn(!isOpen && "p-2")}>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            {/* Plan Selection Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton
-                  aria-label="Select Plan"
-                  className={cn(!isOpen && "justify-center")}
-                >
-                  {/* Icon for collapsed view */}
-                  <FilePlus className={cn("h-5 w-5", isOpen && "mr-2")} />
-                  {isOpen && (
-                    <>
-                      <span className="truncate flex-1 text-left">
-                        {currentPlan ? currentPlan.name : "Select Plan"}
-                      </span>
-                      <ChevronDown className="ml-auto h-4 w-4" />
-                    </>
-                  )}
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              {/* Dropdown Content */}
-              <DropdownMenuContent className="w-[--radix-popper-anchor-width]">
-                {plans.map((plan) => (
-                  <DropdownMenuItem key={plan.id} asChild onSelect={(e) => e.preventDefault()}>
-                    <div
-                      className="flex items-center justify-between w-full cursor-pointer px-2 py-1.5 group relative overflow-hidden"
-                      onClick={() => setCurrentPlan(plan)}
-                    >
-                      {/* Plan name and date */}
-                      <div className="flex-1 truncate">
-                        {plan.name}
-                        <div className="text-xs text-muted-foreground">
-                          {formatDate(plan.updatedAt)}
-                        </div>
-                      </div>
-                      {/* Action buttons with improved animations and tooltips */}
-                      <div className="flex items-center space-x-1">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-blue-500 -translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200"
-                                onClick={(e) => handleViewJson(plan, e)}
-                                aria-label={`Edit JSON for ${plan.name}`}
-                              >
-                                <FileText className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom">
-                              <p>Edit JSON</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-destructive -translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 delay-75"
-                                onClick={(e) => handleDeletePlan(plan, e)}
-                                aria-label={`Delete ${plan.name}`}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom">
-                              <p>Delete Plan</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    </div>
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => handleCreateNewPlan()}>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start px-2 text-muted-foreground"
-                    size="sm"
-                  >
-                    <Plus className="mr-2 h-4 w-4" /> New Plan (Import JSON)
-                  </Button>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarHeader className="my-4">
+        <SidebarGroupLabel className="w-full flex items-center justify-center">
+          <h1 className="text-4xl font-bold text-primary">T-JSON</h1>
+        </SidebarGroupLabel>
       </SidebarHeader>
 
+      {/* Plan Selection Dropdown */}
+      <div className="px-3 py-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn("w-full", !isOpen && "px-0")}
+              aria-label="Select Plan"
+            >
+              <FilePlus className={cn("h-5 w-5", isOpen && "mr-2")} />
+              {isOpen && (
+                <>
+                  <span className="truncate flex-1 text-left">
+                    {currentPlan ? currentPlan.name : "Select Plan"}
+                  </span>
+                  <ChevronDown className="ml-auto h-4 w-4" />
+                </>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          {/* Dropdown Content */}
+          <DropdownMenuContent align="start" className="w-[260px]">
+            {plans.map((plan) => (
+              <DropdownMenuItem key={plan.id} asChild onSelect={(e) => e.preventDefault()}>
+                <div
+                  className="flex items-center justify-between w-full cursor-pointer px-2 py-1.5 group relative overflow-hidden"
+                  onClick={() => setCurrentPlan(plan)}
+                >
+                  {/* Plan name and date */}
+                  <div className="flex-1 truncate">
+                    {plan.name}
+                    <div className="text-xs text-muted-foreground">
+                      {formatDate(plan.updatedAt)}
+                    </div>
+                  </div>
+                  {/* Action buttons with improved animations and tooltips */}
+                  <div className="flex items-center space-x-1">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-blue-500 -translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200"
+                            onClick={(e) => handleViewJson(plan, e)}
+                            aria-label={`Edit JSON for ${plan.name}`}
+                          >
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                          <p>Edit JSON</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive -translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 delay-75"
+                            onClick={(e) => handleDeletePlan(plan, e)}
+                            aria-label={`Delete ${plan.name}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                          <p>Delete Plan</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </div>
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => handleCreateNewPlan()}>
+              <Button
+                variant="ghost"
+                className="w-full justify-start px-2 text-muted-foreground"
+                size="sm"
+              >
+                <Plus className="mr-2 h-4 w-4" /> New Plan (Import JSON)
+              </Button>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       {/* View Mode Toggle */}
-      <div className={cn("p-4 flex gap-2", isOpen ? "flex-col" : "flex-col items-center")}>
+      <div className={cn("px-3 py-2 flex gap-2", isOpen ? "flex-col" : "flex-col items-center")}>
         <Button
           variant={viewMode === "month" ? "default" : "outline"}
           size={isOpen ? "sm" : "icon"}
@@ -253,7 +253,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
       </div>
 
       {/* Content: Month/Week Selection using shared components */}
-      <SidebarContent className="flex-1 overflow-auto">
+      <SidebarContent>
         {isOpen ? (
           <>
             {viewMode === "month" ? (
@@ -275,7 +275,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
           </>
         ) : (
           <div className="p-4 text-center text-muted-foreground text-xs">
-            Expand sidebar to view weeks/months
+            {/* Empty content for collapsed view */}
           </div>
         )}
       </SidebarContent>
@@ -294,9 +294,9 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
             </div>
           </div>
         )}
-        
+
         {/* Documentation Link */}
-        <div className="p-4 border-t border-border">
+        <div className="px-3 py-2">
           <Link href="/documentation" passHref>
             <Button
               variant="ghost"
@@ -309,9 +309,9 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
             </Button>
           </Link>
         </div>
-        
+
         {/* Export Button in Footer */}
-        <div className="p-4 border-t border-border">
+        <div className="px-3 py-2">
           <Button
             variant="ghost"
             size={isOpen ? "default" : "icon"}
@@ -324,9 +324,9 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
             {isOpen && "Export JSON"}
           </Button>
         </div>
-        
+
         {/* Info Button in Footer */}
-        <div className="p-4 border-t border-border">
+        <div className="px-3 py-2">
           <Button
             variant="ghost"
             size={isOpen ? "default" : "icon"}
@@ -354,8 +354,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
           <DialogHeader>
             <DialogTitle>Delete JSON Plan</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{planToDelete?.name}"? This action cannot be
-              undone.
+              Are you sure you want to delete "{planToDelete?.name}"? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -374,6 +373,7 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
       <JsonEditor
         isOpen={isJsonEditorOpen}
         onClose={() => {
@@ -382,6 +382,6 @@ export default function AppSidebar({ isOpen }: AppSidebarProps) {
         }}
         plan={planToViewJson}
       />
-    </Sidebar>
+    </>
   )
 }
