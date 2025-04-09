@@ -4,13 +4,12 @@ import { useState } from "react"
 import {
   Calendar,
   List,
-  FilePlus,
-  ChevronDown,
   Trash2,
   Plus,
   FileText,
   Info,
   Download,
+  // Remove GalleryVerticalEnd, ChevronsUpDown if only used in PlanSwitcher
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -22,13 +21,14 @@ import { useExportModal } from "@/components/modals/export-modal"
 import BlockSelector from "./shared/block-selector"
 import WeekSelector from "./shared/week-selector"
 import Link from "next/link"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+// Remove DropdownMenu imports if no longer used directly here
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuItem,
+//   DropdownMenuSeparator,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu"
 import {
   Dialog,
   DialogContent,
@@ -44,13 +44,17 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   useSidebar,
+  // Assuming SidebarMenu, SidebarMenuItem, SidebarMenuButton are exported
 } from "@/components/ui/sidebar"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+// Remove Tooltip imports if only used in PlanSwitcher
+// import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+
+// Import the new component
+import { PlanSwitcher } from "./plan-switcher" // Adjust path if needed
 
 export default function AppSidebar() {
-  // Get data, UI state, and actions from context
   const {
-    plans,
+    plans = [],
     currentPlan,
     setCurrentPlan,
     deletePlan,
@@ -60,31 +64,27 @@ export default function AppSidebar() {
     selectMonth,
     viewMode,
     changeViewMode,
-    weeksForSidebar,
-    monthsForSidebar,
-    trainingData,
+    weeksForSidebar = [],
+    monthsForSidebar = [],
+    trainingData = [],
   } = useTrainingPlans()
 
-  // Use sidebar hook for controlling sidebar state
   const { state } = useSidebar()
   const isOpen = state === "expanded"
 
-  // Get upload modal (for creating new plans via JSON upload)
   const uploadModalStore = useUploadModal()
+  const infoModalStore = useInfoModal()
+  const exportModalStore = useExportModal()
 
-  // Internal state for dialogs
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isJsonEditorOpen, setIsJsonEditorOpen] = useState(false)
   const [planToDelete, setPlanToDelete] = useState<any | null>(null)
   const [planToViewJson, setPlanToViewJson] = useState<any | null>(null)
 
-  // Get access to info modal
-  const infoModalStore = useInfoModal()
-  const exportModalStore = useExportModal()
-
-  // Function to get week type (uses trainingData from context)
   const getWeekInfo = (weekNumber: number) => {
-    const weekData = trainingData.find((w) => w.weekNumber === weekNumber)
+    const weekData = Array.isArray(trainingData)
+      ? trainingData.find((w: any) => w.weekNumber === weekNumber)
+      : undefined
     return {
       type: weekData?.weekType || "",
       isDeload: weekData?.isDeload || false,
@@ -92,7 +92,6 @@ export default function AppSidebar() {
     }
   }
 
-  // Event handlers for dialogs
   const handleViewJson = (plan: any, e: React.MouseEvent) => {
     e.stopPropagation()
     setPlanToViewJson(plan)
@@ -106,22 +105,17 @@ export default function AppSidebar() {
   }
 
   const handleConfirmDelete = () => {
-    if (planToDelete) {
+    if (planToDelete?.id && typeof deletePlan === "function") {
       deletePlan(planToDelete.id)
+    } else {
+      console.error("Cannot delete plan: 'deletePlan' function or 'planToDelete.id' is missing.")
     }
     setPlanToDelete(null)
     setIsDeleteDialogOpen(false)
   }
 
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString()
-  }
-
-  // Handle creating a new plan - now opens the upload modal
   const handleCreateNewPlan = () => {
-    // Open the upload modal with a callback that dispatches the plan-created-from-json event
     uploadModalStore.open((data) => {
-      // Create and dispatch a custom event with the imported JSON data
       const event = new CustomEvent("plan-created-from-json", {
         detail: { data },
       })
@@ -129,113 +123,45 @@ export default function AppSidebar() {
     })
   }
 
+  // Define the select plan handler
+  const handleSelectPlan = (plan: any) => {
+    if (typeof setCurrentPlan === "function") {
+      setCurrentPlan(plan)
+    } else {
+      console.error("'setCurrentPlan' is not a function")
+    }
+  }
+
   return (
     <>
-      {/* T-JSON Logo/Title */}
       <SidebarHeader className="my-4">
         <SidebarGroupLabel className="w-full flex items-center justify-center">
           <h1 className="text-4xl font-bold text-primary">T-JSON</h1>
         </SidebarGroupLabel>
       </SidebarHeader>
 
-      {/* Plan Selection Dropdown */}
+      {/* Replace the old DropdownMenu with the PlanSwitcher component */}
       <div className="px-3 py-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn("w-full", !isOpen && "px-0")}
-              aria-label="Select Plan"
-            >
-              <FilePlus className={cn("h-5 w-5", isOpen && "mr-2")} />
-              {isOpen && (
-                <>
-                  <span className="truncate flex-1 text-left">
-                    {currentPlan ? currentPlan.name : "Select Plan"}
-                  </span>
-                  <ChevronDown className="ml-auto h-4 w-4" />
-                </>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          {/* Dropdown Content */}
-          <DropdownMenuContent align="start" className="w-[260px]">
-            {plans.map((plan) => (
-              <DropdownMenuItem key={plan.id} asChild onSelect={(e) => e.preventDefault()}>
-                <div
-                  className="flex items-center justify-between w-full cursor-pointer px-2 py-1.5 group relative overflow-hidden"
-                  onClick={() => setCurrentPlan(plan)}
-                >
-                  {/* Plan name and date */}
-                  <div className="flex-1 truncate">
-                    {plan.name}
-                    <div className="text-xs text-muted-foreground">
-                      {formatDate(plan.updatedAt)}
-                    </div>
-                  </div>
-                  {/* Action buttons with improved animations and tooltips */}
-                  <div className="flex items-center space-x-1">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-blue-500 -translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200"
-                            onClick={(e) => handleViewJson(plan, e)}
-                            aria-label={`Edit JSON for ${plan.name}`}
-                          >
-                            <FileText className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom">
-                          <p>Edit JSON</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive -translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 delay-75"
-                            onClick={(e) => handleDeletePlan(plan, e)}
-                            aria-label={`Delete ${plan.name}`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom">
-                          <p>Delete Plan</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                </div>
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => handleCreateNewPlan()}>
-              <Button
-                variant="ghost"
-                className="w-full justify-start px-2 text-muted-foreground"
-                size="sm"
-              >
-                <Plus className="mr-2 h-4 w-4" /> New Plan (Import JSON)
-              </Button>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <PlanSwitcher
+          plans={plans}
+          currentPlan={currentPlan}
+          isOpen={isOpen}
+          onSelectPlan={handleSelectPlan}
+          onEditPlan={handleViewJson}
+          onDeletePlan={handleDeletePlan}
+          onCreatePlan={handleCreateNewPlan}
+        />
       </div>
 
-      {/* View Mode Toggle */}
       <div className={cn("px-3 py-2 flex gap-2", isOpen ? "flex-col" : "flex-col items-center")}>
         <Button
           variant={viewMode === "month" ? "default" : "outline"}
           size={isOpen ? "sm" : "icon"}
-          onClick={() => changeViewMode("month")}
+          onClick={() =>
+            typeof changeViewMode === "function"
+              ? changeViewMode("month")
+              : console.error("'changeViewMode' is not a function")
+          }
           className={cn("w-full", isOpen && "justify-start")}
           aria-label="Block View"
         >
@@ -244,7 +170,11 @@ export default function AppSidebar() {
         <Button
           variant={viewMode === "week" ? "default" : "outline"}
           size={isOpen ? "sm" : "icon"}
-          onClick={() => changeViewMode("week")}
+          onClick={() =>
+            typeof changeViewMode === "function"
+              ? changeViewMode("week")
+              : console.error("'changeViewMode' is not a function")
+          }
           className={cn("w-full", isOpen && "justify-start")}
           aria-label="Weekly View"
         >
@@ -252,7 +182,6 @@ export default function AppSidebar() {
         </Button>
       </div>
 
-      {/* Content: Month/Week Selection using shared components */}
       <SidebarContent>
         {isOpen ? (
           <>
@@ -260,27 +189,32 @@ export default function AppSidebar() {
               <BlockSelector
                 blocks={monthsForSidebar}
                 selectedBlockId={selectedMonth}
-                onSelectBlock={selectMonth}
+                onSelectBlock={(id) =>
+                  typeof selectMonth === "function"
+                    ? selectMonth(id)
+                    : console.error("'selectMonth' is not a function")
+                }
                 variant="sidebar"
               />
             ) : (
               <WeekSelector
                 weeks={weeksForSidebar}
                 selectedWeek={selectedWeek}
-                onSelectWeek={selectWeek}
+                onSelectWeek={(num) =>
+                  typeof selectWeek === "function"
+                    ? selectWeek(num)
+                    : console.error("'selectWeek' is not a function")
+                }
                 variant="sidebar"
                 getWeekInfo={getWeekInfo}
               />
             )}
           </>
         ) : (
-          <div className="p-4 text-center text-muted-foreground text-xs">
-            {/* Empty content for collapsed view */}
-          </div>
+          <div className="p-4 text-center text-muted-foreground text-xs"></div>
         )}
       </SidebarContent>
 
-      {/* Footer: Legend and Info Button */}
       <SidebarFooter className={cn(!isOpen && "items-center")}>
         {isOpen && (
           <div className="p-4 text-sm text-muted-foreground">
@@ -295,7 +229,6 @@ export default function AppSidebar() {
           </div>
         )}
 
-        {/* Documentation Link */}
         <div className="px-3 py-2">
           <Link href="/documentation" passHref>
             <Button
@@ -310,7 +243,6 @@ export default function AppSidebar() {
           </Link>
         </div>
 
-        {/* Export Button in Footer */}
         <div className="px-3 py-2">
           <Button
             variant="ghost"
@@ -325,7 +257,6 @@ export default function AppSidebar() {
           </Button>
         </div>
 
-        {/* Info Button in Footer */}
         <div className="px-3 py-2">
           <Button
             variant="ghost"
@@ -340,7 +271,6 @@ export default function AppSidebar() {
         </div>
       </SidebarFooter>
 
-      {/* Dialogs */}
       <Dialog
         open={isDeleteDialogOpen}
         onOpenChange={(open) => {
@@ -354,7 +284,9 @@ export default function AppSidebar() {
           <DialogHeader>
             <DialogTitle>Delete JSON Plan</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{planToDelete?.name}"? This action cannot be undone.
+              Are you sure you want to delete "
+              {planToDelete?.metadata?.planName || planToDelete?.name || "this plan"}"? This action
+              cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
