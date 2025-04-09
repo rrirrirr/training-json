@@ -5,8 +5,11 @@ import React from "react"
 import { useState } from "react"
 import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import type { ExerciseInstance, TrainingPlanData } from "@/types/training-plan"
+import type { ExerciseInstance, TrainingPlanData, ColorName } from "@/types/training-plan"
 import { combineExerciseData } from "@/utils/exercise-utils"
+import { cn } from "@/lib/utils"
+import { useTheme } from "next-themes"
+import { getThemeAwareColorClasses } from "@/utils/color-utils"
 
 interface ExerciseTableProps {
   exercises: ExerciseInstance[]
@@ -26,35 +29,35 @@ export default function ExerciseTable({
   }
 
   if (exercises.length === 0) {
-    return <p className="text-gray-500 text-center py-4">Inga övningar planerade</p>
+    return <p className="text-muted-foreground text-center py-4">Inga övningar planerade</p>
   }
 
   return (
     <div className="overflow-hidden">
-      <table className="min-w-full divide-y divide-gray-200">
+      <table className="min-w-full divide-y divide-border">
         <thead>
           <tr>
-            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Övning
             </th>
-            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Set
             </th>
-            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Reps
             </th>
-            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Intensitet
             </th>
             {!compact && (
-              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Kommentar
               </th>
             )}
-            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+            <th className="px-3 py-2 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider"></th>
           </tr>
         </thead>
-        <tbody className="bg-transparent divide-y divide-gray-200">
+        <tbody className="bg-transparent divide-y divide-border">
           {exercises.map((exercise, index) => {
             const combinedData = combineExerciseData(exercise, trainingPlan)
             // Use exerciseId if available, otherwise use index as fallback
@@ -65,7 +68,7 @@ export default function ExerciseTable({
               <React.Fragment key={`${exerciseIdentifier}-${index}`}>
                 <tr
                   className={
-                    index % 2 === 0 ? "bg-white bg-opacity-50" : "bg-gray-50 bg-opacity-50"
+                    index % 2 === 0 ? "bg-background" : "bg-muted/30"
                   }
                 >
                   <td className="px-3 py-2 whitespace-nowrap">
@@ -104,7 +107,7 @@ export default function ExerciseTable({
 
                 {/* Expanded details row */}
                 {isExpanded && (
-                  <tr className="bg-gray-50">
+                  <tr className="bg-muted/50">
                     <td colSpan={6} className="px-4 py-3">
                       <div className="text-sm">
                         {exercise.comment && (
@@ -139,7 +142,7 @@ export default function ExerciseTable({
                               href={combinedData.videoUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline flex items-center"
+                              className="text-primary hover:underline flex items-center"
                             >
                               Se video <ExternalLink className="h-3 w-3 ml-1" />
                             </a>
@@ -158,7 +161,7 @@ export default function ExerciseTable({
   )
 }
 
-// Helper component to format and highlight the load
+// Helper component to format and highlight the load using theme-aware colors
 function LoadDisplay({
   load,
   loadStyle,
@@ -166,13 +169,13 @@ function LoadDisplay({
   load: string
   loadStyle?: ExerciseInstance["loadStyle"]
 }) {
-  if (!load || load === "-") return <span>-</span>
+  const { theme } = useTheme()
+  if (!load || load === "-") return <span className="text-muted-foreground">-</span>
 
-  // Apply custom styling if provided
-  const style: React.CSSProperties = {}
-  if (loadStyle?.color) {
-    style.color = loadStyle.color
-  }
+  // Get theme-aware colors if color is specified
+  const colorClasses = loadStyle?.color
+    ? getThemeAwareColorClasses(loadStyle.color, theme)
+    : null
 
   // Check if the load contains a kg value
   const hasKg = typeof load === "string" && load.toLowerCase().includes("kg")
@@ -182,22 +185,22 @@ function LoadDisplay({
     const match = load.match(/(\d+(?:\.\d+)?\s*kg)(.*)/)
     if (match) {
       return (
-        <span style={style}>
-          <span className={loadStyle?.strong ? "font-bold" : ""}>{match[1]}</span>
-          <span className="text-gray-500">{match[2]}</span>
+        <span className={colorClasses?.text || ""}>
+          <span className={cn(loadStyle?.strong ? "font-bold" : "")}>{match[1]}</span>
+          <span className="text-muted-foreground">{match[2]}</span>
         </span>
       )
     }
   }
 
   return (
-    <span style={style} className={loadStyle?.strong ? "font-bold" : ""}>
+    <span className={cn(colorClasses?.text, loadStyle?.strong ? "font-bold" : "")}>
       {load}
     </span>
   )
 }
 
-// Helper component to format and style comments
+// Helper component to format and style comments using theme-aware colors
 function CommentDisplay({
   comment,
   commentStyle,
@@ -205,19 +208,20 @@ function CommentDisplay({
   comment: string
   commentStyle?: ExerciseInstance["commentStyle"]
 }) {
+  const { theme } = useTheme()
   if (!comment) return null
 
-  // Apply custom styling if provided
-  const style: React.CSSProperties = {}
-  if (commentStyle?.color) {
-    style.color = commentStyle.color
-  }
-  if (commentStyle?.fontStyle) {
-    style.fontStyle = commentStyle.fontStyle
-  }
+  // Get theme-aware colors if color is specified
+  const colorClasses = commentStyle?.color
+    ? getThemeAwareColorClasses(commentStyle.color, theme)
+    : null
 
   return (
-    <span style={style} className="text-gray-600">
+    <span className={cn(
+      "text-muted-foreground",
+      colorClasses?.text,
+      commentStyle?.fontStyle === "italic" && "italic"
+    )}>
       {comment}
     </span>
   )

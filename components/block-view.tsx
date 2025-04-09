@@ -8,7 +8,7 @@ import { useTheme } from "next-themes"
 import { getThemeAwareColorClasses } from "@/utils/color-utils"
 
 interface BlockViewProps {
-  monthBlock: MonthBlock // Using MonthBlock for backward compatibility
+  monthBlock: MonthBlock 
   trainingPlan: TrainingPlanData
 }
 
@@ -43,87 +43,9 @@ export default function BlockView({ monthBlock, trainingPlan }: BlockViewProps) 
   
   const blockDefinition = findBlockDefinition();
   
-  // Get styling information
-  const getBlockStyles = () => {
-    // First, determine the colorName to use (prioritize monthBlock's colorName)
-    let colorName = monthBlock.style?.colorName || blockDefinition?.style?.colorName;
-    
-    // Get theme-aware colors if colorName is set
-    const colorClasses = getThemeAwareColorClasses(colorName, theme);
-    
-    // For backward compatibility, also handle direct color values
-    let styles: React.CSSProperties = {};
-    let bgClass = "";
-    let borderClass = "";
-    let textClass = "";
-    
-    // Only process these if colorName is not set
-    if (!colorName) {
-      // Apply monthBlock style (backward compatibility)
-      if (monthBlock.style) {
-        if (monthBlock.style.backgroundColor) {
-          if (monthBlock.style.backgroundColor.startsWith('#') || 
-              monthBlock.style.backgroundColor.startsWith('rgb')) {
-            styles.backgroundColor = monthBlock.style.backgroundColor;
-          } else {
-            bgClass = `bg-${monthBlock.style.backgroundColor}`;
-          }
-        }
-        
-        if (monthBlock.style.borderColor) {
-          if (monthBlock.style.borderColor.startsWith('#') || 
-              monthBlock.style.borderColor.startsWith('rgb')) {
-            styles.borderColor = monthBlock.style.borderColor;
-          } else {
-            borderClass = `border-${monthBlock.style.borderColor}`;
-          }
-        }
-        
-        if (monthBlock.style.textColor) {
-          if (monthBlock.style.textColor.startsWith('#') || 
-              monthBlock.style.textColor.startsWith('rgb')) {
-            styles.color = monthBlock.style.textColor;
-          } else {
-            textClass = `text-${monthBlock.style.textColor}`;
-          }
-        }
-      }
-      
-      // Override with blockDefinition style if available
-      if (blockDefinition?.style) {
-        if (blockDefinition.style.backgroundColor) {
-          if (blockDefinition.style.backgroundColor.startsWith('#') || 
-              blockDefinition.style.backgroundColor.startsWith('rgb')) {
-            styles.backgroundColor = blockDefinition.style.backgroundColor;
-          } else {
-            bgClass = `bg-${blockDefinition.style.backgroundColor}`;
-          }
-        }
-        
-        if (blockDefinition.style.borderColor) {
-          if (blockDefinition.style.borderColor.startsWith('#') || 
-              blockDefinition.style.borderColor.startsWith('rgb')) {
-            styles.borderColor = blockDefinition.style.borderColor;
-          } else {
-            borderClass = `border-${blockDefinition.style.borderColor}`;
-          }
-        }
-        
-        if (blockDefinition.style.textColor) {
-          if (blockDefinition.style.textColor.startsWith('#') || 
-              blockDefinition.style.textColor.startsWith('rgb')) {
-            styles.color = blockDefinition.style.textColor;
-          } else {
-            textClass = `text-${blockDefinition.style.textColor}`;
-          }
-        }
-      }
-    }
-    
-    return { colorName, colorClasses, styles, bgClass, borderClass, textClass };
-  };
-  
-  const { colorName, colorClasses, styles, bgClass, borderClass, textClass } = getBlockStyles();
+  // Get theme-aware styling information
+  const colorName = monthBlock.style?.colorName || blockDefinition?.style?.colorName;
+  const colorClasses = getThemeAwareColorClasses(colorName, theme);
 
   // Function to scroll to a specific week
   const scrollToWeek = (weekNumber: number) => {
@@ -148,14 +70,11 @@ export default function BlockView({ monthBlock, trainingPlan }: BlockViewProps) 
       {/* Block header - made smaller and similar to week cards */}
       <div className={cn(
         "py-3 px-4 rounded-lg border-2 mb-8 max-w-4xl mx-auto shadow-sm",
-        // Use new theme-aware styling if colorName is set
-        colorName && colorClasses?.bg,
-        colorName && colorClasses?.border,
-        colorName && colorClasses?.text,
-        // Use legacy styling as fallback
-        !colorName && (bgClass || "bg-card"),
-        !colorName && (borderClass || "border-primary/20")
-      )} style={!colorName ? styles : undefined}>
+        // Use theme-aware styling
+        colorClasses?.bg || "bg-card",
+        colorClasses?.border || "border-primary/20",
+        colorClasses?.text
+      )}>
         <div className="md:flex md:justify-between md:items-start">
           <div className="mb-3 md:mb-0">
             <h2 className="text-xl font-bold mb-1">{blockDefinition?.name || monthBlock.name}</h2>

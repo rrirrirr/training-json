@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import type { Session, TrainingPlanData, SessionTypeDefinition } from "@/types/training-plan"
+import type { Session, TrainingPlanData, ColorName } from "@/types/training-plan"
 import { Eye, EyeOff } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { combineExerciseData } from "@/utils/exercise-utils"
@@ -9,17 +9,25 @@ import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
 import { getSessionStyling } from "@/utils/session-utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
+import { getThemeAwareColorClasses } from "@/utils/color-utils"
 
-// Helper component for load display
-function LoadDisplay({ load, loadStyle }: { load: string; loadStyle?: any }) {
+// Helper component for load display with theme-aware styling
+function LoadDisplay({ load, loadStyle }: { load: string; loadStyle?: { strong?: boolean; color?: ColorName } }) {
+  const { theme } = useTheme()
+  
   if (load === "-") return <span className="text-muted-foreground">-</span>
+  
+  // Get theme-aware styling for the color
+  const colorClasses = loadStyle?.color ? 
+    getThemeAwareColorClasses(loadStyle.color, theme) : 
+    undefined
   
   const hasKg = typeof load === "string" && load.toLowerCase().includes("kg")
   if (hasKg) {
     const match = load.match(/(\d+(?:\.\d+)?\s*kg)(.*)/i)
     if (match) {
       return (
-        <span className={loadStyle?.color ? `text-${loadStyle.color}` : ""}>
+        <span className={colorClasses?.text || ""}>
           <span className={cn(loadStyle?.strong && "font-semibold")}>{match[1]}</span>
           {match[2] && <span className="ml-1 text-muted-foreground">{match[2].trim()}</span>}
         </span>
@@ -28,20 +36,36 @@ function LoadDisplay({ load, loadStyle }: { load: string; loadStyle?: any }) {
   }
   
   return (
-    <span className={cn(loadStyle?.color ? `text-${loadStyle.color}` : "", loadStyle?.strong && "font-semibold")}>
+    <span className={cn(
+      colorClasses?.text, 
+      loadStyle?.strong && "font-semibold"
+    )}>
       {load}
     </span>
   )
 }
 
-// Helper component for comment display
-function CommentDisplay({ comment, commentStyle }: { comment: string; commentStyle?: any }) {
+// Helper component for comment display with theme-aware styling
+function CommentDisplay({ 
+  comment, 
+  commentStyle 
+}: { 
+  comment: string; 
+  commentStyle?: { color?: ColorName; fontStyle?: string } 
+}) {
+  const { theme } = useTheme()
+  
   if (!comment) return null
+  
+  // Get theme-aware styling for the color
+  const colorClasses = commentStyle?.color ? 
+    getThemeAwareColorClasses(commentStyle.color, theme) : 
+    undefined
   
   return (
     <span className={cn(
       "text-muted-foreground", 
-      commentStyle?.color ? `text-${commentStyle.color}` : "",
+      colorClasses?.text,
       commentStyle?.fontStyle === "italic" && "italic"
     )}>
       {comment}
@@ -76,8 +100,8 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
       className={cn(
         "transition-colors duration-200 hover:shadow-lg max-w-full overflow-hidden border cursor-pointer",
         // Apply theme-aware styling
-        sessionStyling.colorClasses?.bg,
-        sessionStyling.colorClasses?.border,
+        sessionStyling.colorClasses?.bg || "bg-card",
+        sessionStyling.colorClasses?.border || "border-border",
         session.sessionStyle?.styleClass
       )}
     >
