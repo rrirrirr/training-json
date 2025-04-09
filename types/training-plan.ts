@@ -47,7 +47,7 @@ export type ExerciseDefinition = {
   generalTips?: string
 }
 
-// Exercise instance (unchanged)
+// Exercise instance
 export type ExerciseInstance = {
   exerciseId: string | number
   sets: number | string
@@ -56,10 +56,10 @@ export type ExerciseInstance = {
   comment?: string
   loadStyle?: {
     strong?: boolean
-    color?: string
+    color?: ColorName
   }
   commentStyle?: {
-    color?: string
+    color?: ColorName
     fontStyle?: string
   }
   targetRPE?: number
