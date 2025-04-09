@@ -1,4 +1,4 @@
-// New Metadata type
+// Metadata type
 export type Metadata = {
   planName: string;
   creationDate: string;
@@ -15,19 +15,16 @@ export type ColorName =
   | "blue" | "indigo" | "violet" | "purple" | "fuchsia" 
   | "pink" | "rose";
 
-// New SessionTypeDefinition type with colorName
+// SessionTypeDefinition type with colorName only
 export type SessionTypeDefinition = {
   id: string;
   name: string;
   defaultStyle: {
-    colorName?: ColorName; // New property for theme-aware styling
-    backgroundColor?: string; // Kept for backward compatibility
-    borderColor?: string; // Kept for backward compatibility
-    textColor?: string; // Kept for backward compatibility
+    colorName?: ColorName;
   }
 }
 
-// New BlockDefinition type with colorName
+// BlockDefinition type with colorName only
 export type BlockDefinition = {
   id: string | number;
   name: string;
@@ -35,14 +32,11 @@ export type BlockDefinition = {
   durationWeeks: number;
   description?: string;
   style?: {
-    colorName?: ColorName; // New property for theme-aware styling
-    backgroundColor?: string; // Kept for backward compatibility
-    textColor?: string; // Kept for backward compatibility
-    borderColor?: string; // Kept for backward compatibility
+    colorName?: ColorName;
   }
 }
 
-// Exercise definition (normalized) - unchanged
+// Exercise definition (unchanged)
 export type ExerciseDefinition = {
   id: string | number
   name: string
@@ -53,7 +47,7 @@ export type ExerciseDefinition = {
   generalTips?: string
 }
 
-// Exercise instance (used in sessions) - unchanged
+// Exercise instance (unchanged)
 export type ExerciseInstance = {
   exerciseId: string | number
   sets: number | string
@@ -62,52 +56,44 @@ export type ExerciseInstance = {
   comment?: string
   loadStyle?: {
     strong?: boolean
-    color?: string // Can be Tailwind color like "blue-500" or hex/rgb
+    color?: string
   }
   commentStyle?: {
-    color?: string // Can be Tailwind color like "blue-500" or hex/rgb
+    color?: string
     fontStyle?: string
   }
   targetRPE?: number
   tips?: string
 }
 
-// Session style with colorName
+// Session style with colorName only
 export type SessionStyle = {
   styleClass?: string
   icon?: string
   note?: string
-  colorName?: ColorName; // New property for theme-aware styling
-  backgroundColor?: string // Kept for backward compatibility
-  borderColor?: string // Kept for backward compatibility
-  textColor?: string // Kept for backward compatibility
+  colorName?: ColorName;
 }
 
-// Session is modified to use sessionTypeId
+// Session with sessionTypeId only
 export type Session = {
   sessionName: string
-  sessionTypeId: string // Changed from sessionType enum
-  sessionType?: "Gym" | "Barmark" | "Eget/Vila" // Keep for backward compatibility
-  sessionStyle?: SessionStyle
+  sessionTypeId: string
   exercises: ExerciseInstance[]
+  sessionStyle?: SessionStyle
 }
 
-// Week style with colorName
+// Week style with colorName only
 export type WeekStyle = {
   styleClass?: string
   note?: string
-  colorName?: ColorName; // New property for theme-aware styling
-  backgroundColor?: string // Kept for backward compatibility
-  borderColor?: string // Kept for backward compatibility
-  textColor?: string // Kept for backward compatibility
+  colorName?: ColorName;
 }
 
-// Week is modified to use blockId
+// Week with blockId only
 export type Week = {
   weekNumber: number
   weekType?: "A" | "B" | "-"
-  blockId: string | number // Changed from blockInfo string
-  blockInfo?: string // Keep for backward compatibility
+  blockId: string | number
   gymDays?: number
   barmarkDays?: number
   isDeload?: boolean
@@ -117,24 +103,21 @@ export type Week = {
   sessions: Session[]
 }
 
-// MonthBlock with colorName
+// MonthBlock with colorName only
 export type MonthBlock = {
   id: number
   name: string
   weeks: number[]
   style?: {
-    colorName?: ColorName; // New property for theme-aware styling
-    backgroundColor?: string // Kept for backward compatibility
-    textColor?: string // Kept for backward compatibility
-    borderColor?: string // Kept for backward compatibility
+    colorName?: ColorName;
   }
 }
 
-// Updated TrainingPlanData
+// TrainingPlanData
 export type TrainingPlanData = {
-  metadata?: Metadata // New: plan metadata
-  sessionTypes?: SessionTypeDefinition[] // New: session type definitions
-  blocks?: BlockDefinition[] // New: training block definitions
+  metadata?: Metadata
+  sessionTypes?: SessionTypeDefinition[]
+  blocks?: BlockDefinition[]
   exerciseDefinitions: ExerciseDefinition[]
   weeks: Week[]
   monthBlocks: MonthBlock[]

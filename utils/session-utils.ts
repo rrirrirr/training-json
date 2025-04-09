@@ -18,12 +18,12 @@ export function getSessionType(
 }
 
 /**
- * Combines styling from session type and session-specific style overrides
+ * Gets session styling information including theme-aware color classes
  */
 export function getSessionStyling(session: Session, trainingPlan: TrainingPlanData, theme?: string) {
   const sessionType = getSessionType(session, trainingPlan);
   
-  // First determine the color name
+  // Determine the color name (prioritize session style over session type)
   let colorName: ColorName | undefined;
   
   // Check session style for colorName first (highest priority)
@@ -34,78 +34,13 @@ export function getSessionStyling(session: Session, trainingPlan: TrainingPlanDa
   else if (sessionType?.defaultStyle?.colorName) {
     colorName = sessionType.defaultStyle.colorName;
   }
-  // Legacy fallback to determine colorName from session type
-  else if (session.sessionType) {
-    switch (session.sessionType) {
-      case "Gym":
-        colorName = "blue";
-        break;
-      case "Barmark":
-        colorName = "green";
-        break;
-      case "Eget/Vila":
-        colorName = "gray";
-        break;
-    }
-  }
   
   // Get theme-aware colors based on the determined colorName
   const colorClasses = getThemeAwareColorClasses(colorName, theme);
   
-  // For backward compatibility, also set the direct style properties
-  let legacyStyle = {
-    backgroundColor: "",
-    borderColor: "",
-    textColor: ""
-  };
-  
-  // Set legacy style based on session type
-  if (session.sessionType) {
-    switch (session.sessionType) {
-      case "Gym":
-        legacyStyle = {
-          backgroundColor: "blue-50",
-          borderColor: "blue-200",
-          textColor: "blue-800"
-        };
-        break;
-      case "Barmark":
-        legacyStyle = {
-          backgroundColor: "green-50",
-          borderColor: "green-200",
-          textColor: "green-800"
-        };
-        break;
-      case "Eget/Vila":
-        legacyStyle = {
-          backgroundColor: "gray-50",
-          borderColor: "gray-200",
-          textColor: "gray-800"
-        };
-        break;
-    }
-  }
-  
-  // Apply session type default style if available
-  if (sessionType?.defaultStyle) {
-    legacyStyle = {
-      ...legacyStyle,
-      ...sessionType.defaultStyle
-    };
-  }
-  
-  // Apply session-specific style overrides
-  if (session.sessionStyle) {
-    legacyStyle = {
-      ...legacyStyle,
-      ...session.sessionStyle
-    };
-  }
-  
   return {
-    ...legacyStyle,
     colorName,
     colorClasses,
-    sessionTypeName: sessionType?.name || session.sessionType || "Unknown"
+    sessionTypeName: sessionType?.name || "Unknown"
   };
 }

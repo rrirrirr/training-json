@@ -1,6 +1,6 @@
 "use client"
 
-import type { Week, TrainingPlanData, BlockDefinition } from "@/types/training-plan"
+import type { Week, TrainingPlanData } from "@/types/training-plan"
 import SessionCard from "./session-card"
 import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
@@ -10,39 +10,6 @@ interface WeeklyViewProps {
   week: Week
   trainingPlan: TrainingPlanData
   compact?: boolean
-}
-
-// Function to handle color values for backward compatibility
-const getColorValue = (
-  color: string | undefined,
-  prefix: string,
-  defaultClass: string
-): { className: string; style: React.CSSProperties } => {
-  const style: React.CSSProperties = {}
-
-  if (!color) {
-    return { className: defaultClass, style }
-  }
-
-  // Handle direct color values (hex, rgb, etc.)
-  if (color.startsWith("#") || color.startsWith("rgb")) {
-    if (prefix === "bg-") {
-      style.backgroundColor = color
-    } else if (prefix === "border-") {
-      style.borderColor = color
-    } else if (prefix === "text-") {
-      style.color = color
-    }
-    return { className: "", style }
-  }
-
-  // If the color already has the correct prefix
-  if (color.startsWith(prefix)) {
-    return { className: color, style }
-  }
-
-  // Otherwise, add the prefix to the color value
-  return { className: `${prefix}${color}`, style }
 }
 
 export default function WeeklyView({ week, trainingPlan, compact = false }: WeeklyViewProps) {
@@ -59,24 +26,10 @@ export default function WeeklyView({ week, trainingPlan, compact = false }: Week
     weekStyle
   } = week
 
-  // Get block information using our enhanced utility
+  // Get block information using the updated utility
   const blockInfo = getBlockInfo(week, trainingPlan, theme)
   const blockDescription = blockInfo.description || ""
   const blockFocus = blockInfo.focus || ""
-
-  // For backward compatibility, handle direct styles if colorName isn't used
-  const { className: bgClass, style: bgStyle } = !blockInfo.colorName && blockInfo.style?.backgroundColor
-    ? getColorValue(blockInfo.style.backgroundColor, "bg-", "bg-card")
-    : { className: "bg-card", style: {} }
-
-  const { className: borderClass, style: borderStyle } = !blockInfo.colorName && blockInfo.style?.borderColor
-    ? getColorValue(blockInfo.style.borderColor, "border-", "border-border")
-    : { className: "border-border", style: {} }
-
-  // Combine styles for backward compatibility
-  const combinedStyle = !blockInfo.colorName
-    ? { ...bgStyle, ...borderStyle }
-    : {}
 
   return (
     <div className="max-w-4xl mx-auto mb-8">
@@ -84,15 +37,10 @@ export default function WeeklyView({ week, trainingPlan, compact = false }: Week
       <div
         className={cn(
           "mb-6 p-4 rounded-lg shadow-md border",
-          // If using the new colorName system, apply the theme-aware classes
-          blockInfo.colorName && blockInfo.colorClasses?.bg,
-          blockInfo.colorName && blockInfo.colorClasses?.border,
-          // For backward compatibility
-          !blockInfo.colorName && bgClass,
-          !blockInfo.colorName && borderClass,
-          weekStyle?.styleClass || ""
+          blockInfo.colorClasses?.bg,
+          blockInfo.colorClasses?.border,
+          weekStyle?.styleClass
         )}
-        style={combinedStyle}
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -115,18 +63,12 @@ export default function WeeklyView({ week, trainingPlan, compact = false }: Week
               )}
             </h1>
             {blockDescription && (
-              <p className={cn(
-                "mt-1", 
-                blockInfo.colorName ? blockInfo.colorClasses?.text : "text-gray-600"
-              )}>
+              <p className={cn("mt-1", blockInfo.colorClasses?.text)}>
                 {blockDescription}
               </p>
             )}
             {blockFocus && (
-              <div className={cn(
-                "text-sm mt-1", 
-                blockInfo.colorName ? blockInfo.colorClasses?.text : "text-gray-600"
-              )}>
+              <div className={cn("text-sm mt-1", blockInfo.colorClasses?.text)}>
                 <span className="font-medium">Focus: </span>{blockFocus}
               </div>
             )}
