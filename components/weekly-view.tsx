@@ -15,17 +15,8 @@ interface WeeklyViewProps {
 
 export default function WeeklyView({ week, trainingPlan, compact = false }: WeeklyViewProps) {
   const { theme } = useTheme()
-  
-  const {
-    weekNumber,
-    weekType,
-    gymDays,
-    barmarkDays,
-    isDeload,
-    isTest,
-    sessions,
-    weekStyle
-  } = week
+
+  const { weekNumber, weekType, gymDays, barmarkDays, isDeload, isTest, sessions, weekStyle } = week
 
   // Get block information using the updated utility
   const blockInfo = getBlockInfo(week, trainingPlan, theme)
@@ -57,32 +48,35 @@ export default function WeeklyView({ week, trainingPlan, compact = false }: Week
                 </span>
               )}
               {isDeload && (
-                <span className={cn(
-                  "text-sm font-normal px-2 py-0.5 rounded-full",
-                  deloadColorClasses?.bg || "bg-yellow-200",
-                  deloadColorClasses?.text || "text-yellow-800"
-                )}>
+                <span
+                  className={cn(
+                    "text-sm font-normal px-2 py-0.5 rounded-full",
+                    deloadColorClasses?.bg || "bg-yellow-200",
+                    deloadColorClasses?.text || "text-yellow-800"
+                  )}
+                >
                   DELOAD
                 </span>
               )}
               {isTest && (
-                <span className={cn(
-                  "text-sm font-normal px-2 py-0.5 rounded-full",
-                  testColorClasses?.bg || "bg-green-200",
-                  testColorClasses?.text || "text-green-800"
-                )}>
+                <span
+                  className={cn(
+                    "text-sm font-normal px-2 py-0.5 rounded-full",
+                    testColorClasses?.bg || "bg-green-200",
+                    testColorClasses?.text || "text-green-800"
+                  )}
+                >
                   TEST
                 </span>
               )}
             </h1>
             {blockDescription && (
-              <p className={cn("mt-1", blockInfo.colorClasses?.text)}>
-                {blockDescription}
-              </p>
+              <p className={cn("mt-1", blockInfo.colorClasses?.text)}>{blockDescription}</p>
             )}
             {blockFocus && (
               <div className={cn("text-sm mt-1", blockInfo.colorClasses?.text)}>
-                <span className="font-medium">Focus: </span>{blockFocus}
+                <span className="font-medium">Focus: </span>
+                {blockFocus}
               </div>
             )}
             {weekStyle?.note && (

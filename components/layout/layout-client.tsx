@@ -1,11 +1,12 @@
 "use client"
 
-import React from "react"
+import React, { useEffect } from "react"
 import AppSidebar from "@/components/app-sidebar"
 import { AppHeader } from "@/components/layout/app-header"
 import { Sidebar, SidebarProvider, useSidebar } from "@/components/ui/sidebar"
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
 import { cn } from "@/lib/utils"
+import { useUIState } from "@/contexts/ui-context"
 
 export function LayoutClient({ children }: { children: React.ReactNode }) {
   return (
@@ -18,7 +19,23 @@ export function LayoutClient({ children }: { children: React.ReactNode }) {
 // Separate component to access the useSidebar hook inside the SidebarProvider
 function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
   const { toggleSidebar, state, isMobile } = useSidebar()
+  const { isSidebarOpen, openSidebar, closeSidebar } = useUIState()
   const isCollapsed = state === "collapsed"
+
+  // Sync SidebarProvider state with our UIContext state
+  useEffect(() => {
+    if (isCollapsed && isSidebarOpen) {
+      closeSidebar()
+    } else if (!isCollapsed && !isSidebarOpen) {
+      openSidebar()
+    }
+  }, [isCollapsed, isSidebarOpen, openSidebar, closeSidebar])
+
+  // Handle sidebar toggle with our UIContext
+  const handleToggleSidebar = () => {
+    toggleSidebar()
+    // No need to manually toggle the UI context state as it will be synced via the effect above
+  }
 
   // If on mobile, we don't use the resizable component
   if (isMobile) {
@@ -31,7 +48,7 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
 
         {/* Main content Area */}
         <div className="flex flex-col flex-1 overflow-hidden">
-          <AppHeader onToggleSidebar={toggleSidebar} isSidebarOpen={!isCollapsed} />
+          <AppHeader onToggleSidebar={handleToggleSidebar} isSidebarOpen={!isCollapsed} />
           <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
         </div>
       </div>
@@ -64,7 +81,7 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
         {/* Main Content Panel */}
         <ResizablePanel defaultSize={80}>
           <div className="flex flex-col h-full">
-            <AppHeader onToggleSidebar={toggleSidebar} isSidebarOpen={!isCollapsed} />
+            <AppHeader onToggleSidebar={handleToggleSidebar} isSidebarOpen={!isCollapsed} />
             <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
           </div>
         </ResizablePanel>

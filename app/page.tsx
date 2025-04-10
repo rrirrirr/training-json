@@ -1,87 +1,80 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import type { TrainingPlanData, MonthBlock } from "@/types/training-plan"
+import type { TrainingPlanData } from "@/types/training-plan"
 import { exampleTrainingPlan } from "@/utils/example-training-plan"
 import WeeklyView from "@/components/weekly-view"
 import BlockView from "@/components/block-view"
-import { MobileNavBar } from "@/components/mobile-navbar"
-import { Loader2 } from "lucide-react"
+import { Loader2, PanelBottomOpen } from "lucide-react"
 import { useTrainingPlans } from "@/contexts/training-plan-context"
+import { useUIState } from "@/contexts/ui-context"
 import WelcomeScreen from "@/components/welcome-screen"
+import { Button } from "@/components/ui/button"
 
-// Main content component (Simplified)
+// Main content component
 function TrainingPlanContent() {
-  // Get plan data AND UI state from context
+  // Get plan data from TrainingPlanContext
   const {
     currentPlan,
-    addPlan, // Existing plan data/actions
+    addPlan,
     selectedWeek,
-    selectWeek, // Get UI state and actions from context
     selectedMonth,
-    selectMonth, // Get UI state and actions from context
     viewMode,
-    changeViewMode, // Get UI state and actions from context
-    weeksForSidebar,
-    monthsForSidebar, // Get derived data if needed (e.g., for MobileNavBar)
   } = useTrainingPlans()
 
+  // Get UI state from UIContext
+  const { openMobileNav } = useUIState()
+
   // Minimal local state for loading/error
-  const [loading, setLoading] = useState(false) // Or manage this in context too
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // This useEffect might be removed if context handles loading initial plan state
+  // Loading effect
   useEffect(() => {
     setLoading(true)
-    // Simulate loading or wait for context hydration
     const timer = setTimeout(() => {
-      if (!currentPlan) {
-        // Handle no plan selected state if needed
-      }
       setLoading(false)
-    }, 100) // Adjust timing as needed
+    }, 100)
     return () => clearTimeout(timer)
   }, [currentPlan])
 
-  // Add an event listener for plan-created-from-json
+  // Event listener for plan-created-from-json
   useEffect(() => {
     const handlePlanCreatedFromJson = (e: CustomEvent<{ data: TrainingPlanData }>) => {
-      const data = e.detail.data;
+      const data = e.detail.data
       // Use the planName from metadata rather than passing it separately
       if (data && data.metadata && data.metadata.planName) {
-        addPlan(data.metadata.planName, data);
+        addPlan(data.metadata.planName, data)
       } else {
         // If no metadata exists, generate a default name
-        addPlan(`Training Plan ${new Date().toLocaleDateString()}`, data);
+        addPlan(`Training Plan ${new Date().toLocaleDateString()}`, data)
       }
-    };
+    }
 
     // @ts-ignore - Custom event type
-    window.addEventListener('plan-created-from-json', handlePlanCreatedFromJson);
-    
+    window.addEventListener("plan-created-from-json", handlePlanCreatedFromJson)
+
     return () => {
       // @ts-ignore - Custom event type
-      window.removeEventListener('plan-created-from-json', handlePlanCreatedFromJson);
-    };
-  }, [addPlan]);
+      window.removeEventListener("plan-created-from-json", handlePlanCreatedFromJson)
+    }
+  }, [addPlan])
 
-  // Handler for loading example (calls context action)
+  // Handler for loading example
   const handleLoadExample = () => {
-    // The example data already includes proper metadata with planName
     addPlan(
-      exampleTrainingPlan.metadata?.planName || "Example 5x5 Strength Program", 
+      exampleTrainingPlan.metadata?.planName || "Example 5x5 Strength Program",
       exampleTrainingPlan
     )
   }
 
-  // Handler for importing plan data (JSON)
+  // Handler for importing plan data
   const handleImportPlan = (data: TrainingPlanData) => {
-    // Extract the name from metadata or generate a default
-    const planName = data.metadata?.planName || `Imported Plan ${new Date().toLocaleDateString()}`;
-    addPlan(planName, data);
+    const planName = data.metadata?.planName || `Imported Plan ${new Date().toLocaleDateString()}`
+    addPlan(planName, data)
   }
 
-  // Data finding logic uses state from context
+  // Data finding logic
   const trainingPlan = currentPlan?.data
   const weekData = useMemo(() => {
     return selectedWeek && trainingPlan
@@ -105,12 +98,7 @@ function TrainingPlanContent() {
 
   // Welcome screen if no plan is selected/loaded
   if (!currentPlan || !trainingPlan) {
-    return (
-      <WelcomeScreen
-        onLoadExample={handleLoadExample}
-        onImportData={handleImportPlan}
-      />
-    )
+    return <WelcomeScreen onLoadExample={handleLoadExample} onImportData={handleImportPlan} />
   }
 
   if (error) {
@@ -155,6 +143,18 @@ function TrainingPlanContent() {
             Please select a week or block to view.
           </div>
         )}
+      </div>
+      
+      {/* Mobile Nav Toggle Button - visible only on mobile */}
+      <div className="mt-auto pt-4 flex justify-center md:hidden sticky bottom-0 pb-4 bg-background">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={openMobileNav} 
+          aria-label="Open Navigation"
+        >
+          <PanelBottomOpen className="h-5 w-5" />
+        </Button>
       </div>
     </>
   )

@@ -8,6 +8,7 @@ import { SidebarProvider } from "@/components/ui/sidebar" // Your existing provi
 import { LayoutClient } from "@/components/layout/layout-client" // NEW: Client component wrapper
 import { Toaster } from "@/components/ui/toaster" // Assuming you use Shadcn Toaster
 import { ModalProvider } from "@/components/modals/modal-provider" // Added ModalProvider import
+import { UIProvider } from "@/contexts/ui-context" // Import our new UI context provider
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -30,14 +31,16 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <TrainingPlanProvider>
-            <SidebarProvider>
-              <LayoutClient>
-                {children}
-                <ModalProvider /> {/* Added ModalProvider inside client components */}
-              </LayoutClient>
-            </SidebarProvider>
-          </TrainingPlanProvider>
+          <UIProvider>
+            <TrainingPlanProvider>
+              <SidebarProvider>
+                <LayoutClient>
+                  {children}
+                  <ModalProvider /> {/* Added ModalProvider inside client components */}
+                </LayoutClient>
+              </SidebarProvider>
+            </TrainingPlanProvider>
+          </UIProvider>
           <Toaster />
         </ThemeProvider>
       </body>

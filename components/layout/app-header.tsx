@@ -1,13 +1,14 @@
 "use client"
 
-import React, { useState } from "react"
+import React from "react"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Moon, Sun, Menu, PanelLeft, PanelLeftClose, ChevronDown, PanelBottom } from "lucide-react"
+import { Sheet, SheetTrigger } from "@/components/ui/sheet"
+import { Moon, Sun, PanelLeft, PanelLeftClose, PanelBottom } from "lucide-react"
 import { useTrainingPlans } from "@/contexts/training-plan-context"
-import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar"
-import { MobileNavBar } from "../mobile-navbar"
+import { useSidebar } from "@/components/ui/sidebar"
+import { useUIState } from "@/contexts/ui-context"
+import { MobileNav } from "../mobile-nav"
 
 interface HeaderProps {
   onToggleSidebar: () => void
@@ -16,20 +17,13 @@ interface HeaderProps {
 
 export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
   const { setTheme, theme } = useTheme()
-  const { currentPlan } = useTrainingPlans()
   const { isMobile } = useSidebar()
-
-  // For mobile navigation sheet
-  const [isSheetOpen, setIsSheetOpen] = useState(false)
-
-  // Get data for mobile navigation
+  const { openMobileNav } = useUIState()
+  
+  // Get data for navigation display
   const {
-    monthsForSidebar,
-    weeksForSidebar,
     selectedMonth,
     selectedWeek,
-    selectMonth,
-    selectWeek,
   } = useTrainingPlans()
 
   // Toggle theme
@@ -55,31 +49,14 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
 
       {/* Mobile Navigation Trigger - only on mobile */}
       {isMobile && (
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetTrigger asChild>
-            <Button variant="outline" className="flex-1 mx-2 flex items-center justify-between">
-              <span className="font-medium truncate">{mainButtonText}</span>
-              <PanelBottom className="h-4 w-4 ml-2" />
-            </Button>
-          </SheetTrigger>
-
-          {/* Connect to MobileNavBar component */}
-          <MobileNavBar
-            months={monthsForSidebar}
-            weeks={weeksForSidebar}
-            selectedMonth={selectedMonth}
-            selectedWeek={selectedWeek}
-            onWeekChange={selectWeek}
-            onJumpToSelection={(monthId, weekId) => {
-              if (weekId !== null) {
-                selectWeek(weekId)
-              } else {
-                selectMonth(monthId)
-              }
-              setIsSheetOpen(false)
-            }}
-          />
-        </Sheet>
+        <Button 
+          variant="outline" 
+          className="flex-1 mx-2 flex items-center justify-between"
+          onClick={openMobileNav}
+        >
+          <span className="font-medium truncate">{mainButtonText}</span>
+          <PanelBottom className="h-4 w-4 ml-2" />
+        </Button>
       )}
 
       {/* Theme Switcher - shown only on desktop */}
@@ -93,6 +70,9 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
         <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
         <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
       </Button>
+      
+      {/* Mobile Navigation Panel */}
+      <MobileNav />
     </header>
   )
 }
