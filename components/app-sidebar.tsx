@@ -1,44 +1,14 @@
 "use client"
 
-import { useState } from "react"
-import {
-  Calendar,
-  List,
-  Trash2,
-  Plus,
-  FileText,
-  Info,
-  Download,
-  ExternalLink,
-  // Remove GalleryVerticalEnd, ChevronsUpDown if only used in PlanSwitcher
-} from "lucide-react"
+import { Calendar, List, FileText, Info, Download, ExternalLink, Settings } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import { useTrainingPlans } from "@/contexts/training-plan-context"
-import JsonEditor from "./json-editor"
-import { useInfoModal } from "@/components/modals/info-modal"
 import { useUploadModal } from "@/components/modals/upload-modal"
-import { useExportModal } from "@/components/modals/export-modal"
+import { useUIState } from "@/contexts/ui-context" // Add this import
 import BlockSelector from "./shared/block-selector"
 import WeekSelector from "./shared/week-selector"
 import Link from "next/link"
-// Remove DropdownMenu imports if no longer used directly here
-// import {
-//   DropdownMenu,
-//   DropdownMenuContent,
-//   DropdownMenuItem,
-//   DropdownMenuSeparator,
-//   DropdownMenuTrigger,
-// } from "@/components/ui/dropdown-menu"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import {
   Sidebar,
   SidebarContent,
@@ -48,14 +18,13 @@ import {
   SidebarGroup,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { PlanSwitcher } from "./plan-switcher" // Adjust path if needed
+import { PlanSwitcher } from "./plan-switcher"
 
 export default function AppSidebar() {
   const {
     plans = [],
     currentPlan,
     setCurrentPlan,
-    deletePlan,
     selectedWeek,
     selectWeek,
     selectedMonth,
@@ -67,17 +36,14 @@ export default function AppSidebar() {
     trainingData = [],
   } = useTrainingPlans()
 
+  // Use the UIContext
+  const { openSettingsDialog, openInfoDialog } = useUIState()
+
   const { state } = useSidebar()
   const isOpen = state === "expanded"
 
   const uploadModalStore = useUploadModal()
-  const infoModalStore = useInfoModal()
-  const exportModalStore = useExportModal()
-
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [isJsonEditorOpen, setIsJsonEditorOpen] = useState(false)
-  const [planToDelete, setPlanToDelete] = useState<any | null>(null)
-  const [planToViewJson, setPlanToViewJson] = useState<any | null>(null)
+  // const exportModalStore = useExportModal() // Keep for compatibility with existing code
 
   const getWeekInfo = (weekNumber: number) => {
     const weekData = Array.isArray(trainingData)
@@ -88,28 +54,6 @@ export default function AppSidebar() {
       isDeload: weekData?.isDeload || false,
       isTest: weekData?.isTest || false,
     }
-  }
-
-  const handleViewJson = (plan: any, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setPlanToViewJson(plan)
-    setIsJsonEditorOpen(true)
-  }
-
-  const handleDeletePlan = (plan: any, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setPlanToDelete(plan)
-    setIsDeleteDialogOpen(true)
-  }
-
-  const handleConfirmDelete = () => {
-    if (planToDelete?.id && typeof deletePlan === "function") {
-      deletePlan(planToDelete.id)
-    } else {
-      console.error("Cannot delete plan: 'deletePlan' function or 'planToDelete.id' is missing.")
-    }
-    setPlanToDelete(null)
-    setIsDeleteDialogOpen(false)
   }
 
   const handleCreateNewPlan = () => {
@@ -144,8 +88,6 @@ export default function AppSidebar() {
             currentPlan={currentPlan}
             isOpen={isOpen}
             onSelectPlan={handleSelectPlan}
-            onEditPlan={handleViewJson}
-            onDeletePlan={handleDeletePlan}
             onCreatePlan={handleCreateNewPlan}
           />
         </SidebarGroup>
@@ -262,59 +204,28 @@ export default function AppSidebar() {
           <Button
             variant="ghost"
             size={isOpen ? "default" : "icon"}
-            onClick={() => infoModalStore.open()}
+            onClick={openInfoDialog} // Use UIContext function
             className={cn("w-full", isOpen && "justify-start")}
             aria-label="Information"
           >
             <Info className={cn("h-4 w-4", isOpen && "mr-2")} />
-            {isOpen && "Format & Information"}
+            {isOpen && "About T-JSON"}
+          </Button>
+        </div>
+
+        <div className="px-3 py-2">
+          <Button
+            variant="ghost"
+            size={isOpen ? "default" : "icon"}
+            onClick={openSettingsDialog} // Use UIContext function
+            className={cn("w-full", isOpen && "justify-start")}
+            aria-label="Settings"
+          >
+            <Settings className={cn("h-4 w-4", isOpen && "mr-2")} />
+            {isOpen && "Settings"}
           </Button>
         </div>
       </SidebarFooter>
-
-      <Dialog
-        open={isDeleteDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsDeleteDialogOpen(false)
-            setPlanToDelete(null)
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete JSON Plan</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete "
-              {planToDelete?.metadata?.planName || planToDelete?.name || "this plan"}"? This action
-              cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsDeleteDialogOpen(false)
-                setPlanToDelete(null)
-              }}
-            >
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmDelete}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <JsonEditor
-        isOpen={isJsonEditorOpen}
-        onClose={() => {
-          setIsJsonEditorOpen(false)
-          setPlanToViewJson(null)
-        }}
-        plan={planToViewJson}
-      />
     </>
   )
 }
