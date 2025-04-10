@@ -49,7 +49,7 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
         {/* Main content Area */}
         <div className="flex flex-col flex-1 overflow-hidden">
           <AppHeader onToggleSidebar={handleToggleSidebar} isSidebarOpen={!isCollapsed} />
-          <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
+          <main className="flex-1 overflow-auto">{children}</main>
         </div>
       </div>
     )
@@ -82,7 +82,7 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
         <ResizablePanel defaultSize={80}>
           <div className="flex flex-col h-full">
             <AppHeader onToggleSidebar={handleToggleSidebar} isSidebarOpen={!isCollapsed} />
-            <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
+            <main className="flex-1 overflow-auto">{children}</main>
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>

@@ -34,6 +34,9 @@ export function MobileNav() {
       type: weekData?.weekType || "",
       isDeload: weekData?.isDeload || false,
       isTest: weekData?.isTest || false,
+      colorName: 
+        weekData?.weekStyle?.colorName || 
+        (weekData?.isDeload ? "yellow" : weekData?.isTest ? "green" : undefined),
     }
   }
 
@@ -53,8 +56,14 @@ export function MobileNav() {
   return (
     <Sheet open={isMobileNavOpen} onOpenChange={(open) => !open && closeMobileNav()}>
       <SheetContent side="bottom" className="h-[80vh] flex flex-col p-0 pb-safe" hideCloseButton>
+        <SheetHeader className="px-6 py-3 border-b">
+          <SheetTitle className="text-center">
+            {viewMode === "week" ? "Browse Weeks" : "Browse Blocks"}
+          </SheetTitle>
+        </SheetHeader>
+        
         <Tabs defaultValue={defaultTab} className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="mx-6 my-4 w-auto">
+          <TabsList className="mx-6 my-3 w-auto">
             <TabsTrigger className="flex-grow" value="blocks">
               Blocks
             </TabsTrigger>
@@ -86,7 +95,7 @@ export function MobileNav() {
         </Tabs>
 
         {/* Legend for week colors */}
-        <SheetFooter className="p-6 border-t flex-row justify-start gap-4 text-xs text-muted-foreground">
+        <SheetFooter className="p-4 border-t flex-row justify-start gap-4 text-xs text-muted-foreground">
           <div className="flex items-center">
             <div className="w-4 h-4 border-l-4 border-yellow-500 mr-2"></div>
             <span>DELOAD Week</span>

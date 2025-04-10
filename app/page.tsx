@@ -5,11 +5,11 @@ import type { TrainingPlanData } from "@/types/training-plan"
 import { exampleTrainingPlan } from "@/utils/example-training-plan"
 import WeeklyView from "@/components/weekly-view"
 import BlockView from "@/components/block-view"
-import { Loader2, PanelBottomOpen } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { useTrainingPlans } from "@/contexts/training-plan-context"
 import { useUIState } from "@/contexts/ui-context"
 import WelcomeScreen from "@/components/welcome-screen"
-import { Button } from "@/components/ui/button"
+import { MobileScrollNav } from "@/components/mobile-scroll-nav"
 
 // Main content component
 function TrainingPlanContent() {
@@ -21,9 +21,6 @@ function TrainingPlanContent() {
     selectedMonth,
     viewMode,
   } = useTrainingPlans()
-
-  // Get UI state from UIContext
-  const { openMobileNav } = useUIState()
 
   // Minimal local state for loading/error
   const [loading, setLoading] = useState(false)
@@ -131,8 +128,8 @@ function TrainingPlanContent() {
 
   return (
     <>
-      {/* Content View (Add padding here) */}
-      <div className="p-4 md:p-6">
+      {/* Content View with bottom padding on mobile */}
+      <div className="p-4 pb-20 md:p-6 md:pb-6">
         {viewMode === "week" && weekData ? (
           <WeeklyView week={weekData} trainingPlan={trainingPlan} />
         ) : viewMode === "month" && monthData ? (
@@ -145,17 +142,8 @@ function TrainingPlanContent() {
         )}
       </div>
       
-      {/* Mobile Nav Toggle Button - improved with text and better styling */}
-      <div className="fixed bottom-6 left-0 right-0 flex justify-center md:hidden z-10">
-        <Button 
-          onClick={openMobileNav} 
-          className="rounded-full shadow-lg px-6 py-2 bg-primary hover:bg-primary/90"
-          size="sm"
-        >
-          <PanelBottomOpen className="h-4 w-4 mr-2" />
-          {viewMode === "week" ? "Browse Weeks" : "Browse Blocks"}
-        </Button>
-      </div>
+      {/* Floating Mobile Nav Button - only appears when scrolling on mobile */}
+      <MobileScrollNav />
     </>
   )
 }
