@@ -9,6 +9,7 @@ import {
   FileText,
   Info,
   Download,
+  ExternalLink,
   // Remove GalleryVerticalEnd, ChevronsUpDown if only used in PlanSwitcher
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -234,7 +235,11 @@ export default function AppSidebar() {
               aria-label="Documentation"
             >
               <FileText className={cn("h-4 w-4", isOpen && "mr-2")} />
-              {isOpen && "Documentation"}
+              {isOpen && (
+                <>
+                  Documentation <ExternalLink className="ml-1 h-3 w-3" />
+                </>
+              )}
             </Button>
           </Link>
         </div>

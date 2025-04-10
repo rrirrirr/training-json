@@ -200,7 +200,7 @@ export default function EnhancedJsonUploadModal({
             <Link href="/documentation" passHref>
               <Button variant="outline" size="sm" className="flex items-center gap-1">
                 <FileText className="h-4 w-4" />
-                Documentation
+                Documentation <ExternalLink className="ml-1 h-3 w-3" />
               </Button>
             </Link>
           </div>
@@ -249,7 +249,7 @@ export default function EnhancedJsonUploadModal({
           <Link href="/documentation" passHref>
             <Button variant="secondary" className="flex items-center gap-1">
               <FileText className="h-4 w-4" />
-              Documentation
+              Documentation <ExternalLink className="ml-1 h-3 w-3" />
             </Button>
           </Link>
         </DialogFooter>
