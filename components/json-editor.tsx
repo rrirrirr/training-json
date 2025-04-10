@@ -14,8 +14,10 @@ import { Button } from "@/components/ui/button"
 import { SavedTrainingPlan, useTrainingPlans } from "@/contexts/training-plan-context"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, Save, Copy, Info } from "lucide-react"
+import { AlertCircle, Save, Copy, Info, Bot } from "lucide-react"
 import CopyNotification from "@/components/copy-notification"
+import CopyForAINotification from "@/components/copy-for-ai-notification"
+import { copyJsonErrorForAI } from "@/utils/copy-for-ai"
 
 interface JsonEditorProps {
   isOpen: boolean
@@ -28,7 +30,11 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
   const [jsonText, setJsonText] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isSaved, setIsSaved] = useState(false)
+  
+  // Separate notification states for regular copy and AI copy
   const [showCopyNotification, setShowCopyNotification] = useState(false)
+  const [showAICopyNotification, setShowAICopyNotification] = useState(false)
+  const [copySuccess, setCopySuccess] = useState<boolean>(true)
 
   // Initialize text area content when plan changes
   useEffect(() => {
@@ -105,88 +111,137 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
     navigator.clipboard.writeText(jsonText).then(
       () => {
         setShowCopyNotification(true)
+        setCopySuccess(true)
       },
       (err) => {
         console.error("Failed to copy: ", err)
         setError("Failed to copy text to clipboard")
+        setCopySuccess(false)
+      }
+    )
+  }
+  
+  const handleCopyForAI = () => {
+    copyJsonErrorForAI(
+      jsonText, 
+      error,
+      (success) => {
+        setShowAICopyNotification(true)
+        setCopySuccess(success)
       }
     )
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
-        <DialogHeader className="flex-row justify-between items-center sm:flex-col sm:items-start">
-          <div>
-            <DialogTitle>Edit JSON Plan</DialogTitle>
-            <DialogDescription>
-              Make changes to the raw JSON data of your plan. To rename your plan, 
-              edit the "planName" field inside the "metadata" object.
-            </DialogDescription>
-          </div>
-          <Button 
-            onClick={handleCopy} 
-            variant="outline" 
-            className="ml-auto mt-2 sm:mt-0 flex items-center gap-2"
-            disabled={!jsonText}
-          >
-            <Copy className="h-4 w-4" />
-            Copy JSON
-          </Button>
-        </DialogHeader>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
+          <DialogHeader className="flex-row justify-between items-center sm:flex-col sm:items-start">
+            <div>
+              <DialogTitle>Edit JSON Plan</DialogTitle>
+              <DialogDescription>
+                Make changes to the raw JSON data of your plan. To rename your plan, 
+                edit the "planName" field inside the "metadata" object.
+              </DialogDescription>
+            </div>
+            <div className="ml-auto mt-2 sm:mt-0 flex gap-2">
+              <Button 
+                onClick={handleCopy} 
+                variant="outline" 
+                className="flex items-center gap-2"
+                disabled={!jsonText}
+              >
+                <Copy className="h-4 w-4" />
+                Copy JSON
+              </Button>
+              {error && (
+                <Button 
+                  onClick={handleCopyForAI} 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  disabled={!jsonText}
+                >
+                  <Bot className="h-4 w-4" />
+                  Copy for AI Help
+                </Button>
+              )}
+            </div>
+          </DialogHeader>
 
-        {/* Add metadata tip */}
-        <Alert className="mt-2 bg-blue-50 border-blue-200 text-blue-800">
-          <Info className="h-4 w-4" />
-          <AlertTitle>Renaming Plans</AlertTitle>
-          <AlertDescription>
-            To rename this plan, edit the <code className="bg-blue-100 px-1 rounded">metadata.planName</code> field.
-            The metadata section should look like: <code className="bg-blue-100 px-1 rounded">"metadata": {"{"} "planName": "My Plan Name" {"}"}</code>
-          </AlertDescription>
-        </Alert>
-
-        <ScrollArea className="flex-1 min-h-[400px] max-h-[60vh] mt-4">
-          <Textarea
-            value={jsonText}
-            onChange={(e) => {
-              setJsonText(e.target.value)
-              setError(null)
-              setIsSaved(false)
-            }}
-            className="min-h-[400px] font-mono text-sm resize-none"
-            placeholder="Loading plan data..."
-          />
-        </ScrollArea>
-
-        {error && (
-          <Alert variant="destructive" className="mt-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
+          {/* Add metadata tip */}
+          <Alert className="mt-2 bg-blue-50 border-blue-200 text-blue-800">
+            <Info className="h-4 w-4" />
+            <AlertTitle>Renaming Plans</AlertTitle>
+            <AlertDescription>
+              To rename this plan, edit the <code className="bg-blue-100 px-1 rounded">metadata.planName</code> field.
+              The metadata section should look like: <code className="bg-blue-100 px-1 rounded">"metadata": {"{"} "planName": "My Plan Name" {"}"}</code>
+            </AlertDescription>
           </Alert>
-        )}
 
-        {isSaved && (
-          <Alert className="mt-4 bg-green-50 border-green-200 text-green-800">
-            <Save className="h-4 w-4" />
-            <AlertTitle>Success</AlertTitle>
-            <AlertDescription>Changes saved successfully!</AlertDescription>
-          </Alert>
-        )}
+          <ScrollArea className="flex-1 min-h-[400px] max-h-[60vh] mt-4">
+            <Textarea
+              value={jsonText}
+              onChange={(e) => {
+                setJsonText(e.target.value)
+                setError(null)
+                setIsSaved(false)
+              }}
+              className="min-h-[400px] font-mono text-sm resize-none"
+              placeholder="Loading plan data..."
+            />
+          </ScrollArea>
 
-        <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={!plan}>
-            Save Changes
-          </Button>
-        </DialogFooter>
-      </DialogContent>
+          {error && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription className="flex justify-between items-start">
+                <div>{error}</div>
+                <Button 
+                  variant="destructive" 
+                  size="sm" 
+                  className="flex items-center gap-1 ml-4 mt-1"
+                  onClick={handleCopyForAI}
+                >
+                  <Bot className="h-3 w-3" />
+                  Copy for AI
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isSaved && (
+            <Alert className="mt-4 bg-green-50 border-green-200 text-green-800">
+              <Save className="h-4 w-4" />
+              <AlertTitle>Success</AlertTitle>
+              <AlertDescription>Changes saved successfully!</AlertDescription>
+            </Alert>
+          )}
+
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={!plan}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Regular copy notification */}
       <CopyNotification 
         show={showCopyNotification} 
         onHide={() => setShowCopyNotification(false)} 
+        success={copySuccess}
       />
-    </Dialog>
+      
+      {/* AI copy notification */}
+      <CopyForAINotification
+        show={showAICopyNotification}
+        onHide={() => setShowAICopyNotification(false)}
+        success={copySuccess}
+      />
+    </>
   )
 }
