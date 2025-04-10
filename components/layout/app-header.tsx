@@ -82,15 +82,6 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
         </Sheet>
       )}
 
-      {/* Center area - plan name, shown only on desktop */}
-      {!isMobile && currentPlan && (
-        <div className="flex-1 flex justify-center">
-          <span className="text-sm font-medium truncate max-w-[200px]">
-            {currentPlan.metadata?.planName || currentPlan.name}
-          </span>
-        </div>
-      )}
-
       {/* Theme Switcher - shown only on desktop */}
       <Button
         variant="ghost"
