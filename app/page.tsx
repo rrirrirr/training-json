@@ -145,15 +145,15 @@ function TrainingPlanContent() {
         )}
       </div>
       
-      {/* Mobile Nav Toggle Button - visible only on mobile */}
-      <div className="mt-auto pt-4 flex justify-center md:hidden sticky bottom-0 pb-4 bg-background">
+      {/* Mobile Nav Toggle Button - improved with text and better styling */}
+      <div className="fixed bottom-6 left-0 right-0 flex justify-center md:hidden z-10">
         <Button 
-          variant="outline" 
-          size="icon" 
           onClick={openMobileNav} 
-          aria-label="Open Navigation"
+          className="rounded-full shadow-lg px-6 py-2 bg-primary hover:bg-primary/90"
+          size="sm"
         >
-          <PanelBottomOpen className="h-5 w-5" />
+          <PanelBottomOpen className="h-4 w-4 mr-2" />
+          {viewMode === "week" ? "Browse Weeks" : "Browse Blocks"}
         </Button>
       </div>
     </>

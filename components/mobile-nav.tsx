@@ -24,6 +24,7 @@ export function MobileNav() {
     selectWeek,
     selectMonth,
     trainingData,
+    viewMode, // Get the current view mode
   } = useTrainingPlans()
 
   // Function to get week type and status
@@ -45,17 +46,20 @@ export function MobileNav() {
     }
     closeMobileNav()
   }
+  
+  // Set the default tab based on the current view mode
+  const defaultTab = viewMode === "week" ? "weeks" : "blocks"
 
   return (
     <Sheet open={isMobileNavOpen} onOpenChange={(open) => !open && closeMobileNav()}>
       <SheetContent side="bottom" className="h-[80vh] flex flex-col p-0 pb-safe" hideCloseButton>
-        <Tabs defaultValue="blocks" className="flex-1 flex flex-col overflow-hidden">
+        <Tabs defaultValue={defaultTab} className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="mx-6 my-4 w-auto">
             <TabsTrigger className="flex-grow" value="blocks">
-              Block
+              Blocks
             </TabsTrigger>
             <TabsTrigger className="flex-grow" value="weeks">
-              Veckor
+              Weeks
             </TabsTrigger>
           </TabsList>
 
@@ -85,11 +89,11 @@ export function MobileNav() {
         <SheetFooter className="p-6 border-t flex-row justify-start gap-4 text-xs text-muted-foreground">
           <div className="flex items-center">
             <div className="w-4 h-4 border-l-4 border-yellow-500 mr-2"></div>
-            <span>DELOAD week</span>
+            <span>DELOAD Week</span>
           </div>
           <div className="flex items-center">
             <div className="w-4 h-4 border-l-4 border-green-500 mr-2"></div>
-            <span>TEST week</span>
+            <span>TEST Week</span>
           </div>
         </SheetFooter>
       </SheetContent>
