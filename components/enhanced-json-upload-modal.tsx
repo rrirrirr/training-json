@@ -14,7 +14,16 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import type { TrainingPlanData } from "@/types/training-plan"
-import { AlertCircle, Upload, Sparkles, FilePlus, FileText, ExternalLink, ArrowLeft, Bot } from "lucide-react"
+import {
+  AlertCircle,
+  Upload,
+  Sparkles,
+  FilePlus,
+  FileText,
+  ExternalLink,
+  ArrowLeft,
+  Bot,
+} from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
 import { useAiInfoModal } from "@/components/modals/ai-info-modal"
@@ -29,21 +38,21 @@ interface EnhancedJsonUploadModalProps {
   onImport: (data: TrainingPlanData) => void
 }
 
-export default function EnhancedJsonUploadModal({ 
-  isOpen, 
-  onClose, 
-  onImport 
+export default function EnhancedJsonUploadModal({
+  isOpen,
+  onClose,
+  onImport,
 }: EnhancedJsonUploadModalProps) {
   const [jsonText, setJsonText] = useState("")
   const [activeTab, setActiveTab] = useState("paste")
   const [error, setError] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
-  
+
   // Separate notification states for regular copy and AI copy
   const [showCopyNotification, setShowCopyNotification] = useState(false)
   const [showAICopyNotification, setShowAICopyNotification] = useState(false)
   const [copySuccess, setCopySuccess] = useState(true)
-  
+
   // Access the AI info modal
   const aiInfoModalStore = useAiInfoModal()
 
@@ -71,13 +80,17 @@ export default function EnhancedJsonUploadModal({
       if (!data.exerciseDefinitions || !Array.isArray(data.exerciseDefinitions)) {
         throw new Error("JSON must contain an 'exerciseDefinitions' array")
       }
-      
+
       // Check for metadata and plan name
       if (!data.metadata) {
         throw new Error("JSON must contain a 'metadata' object with at least a 'planName' property")
       }
-      
-      if (!data.metadata.planName || typeof data.metadata.planName !== 'string' || data.metadata.planName.trim() === '') {
+
+      if (
+        !data.metadata.planName ||
+        typeof data.metadata.planName !== "string" ||
+        data.metadata.planName.trim() === ""
+      ) {
         throw new Error("The 'metadata' object must include a non-empty 'planName' property")
       }
 
@@ -113,32 +126,28 @@ export default function EnhancedJsonUploadModal({
       setError("Failed to read file")
     }
   }
-  
+
   const handleOpenAiGuide = () => {
     onClose() // Close the current modal
     aiInfoModalStore.open() // Open the AI guide modal
   }
-  
+
   const handleCopyForAI = () => {
-    copyJsonErrorForAI(
-      jsonText, 
-      error,
-      (success) => {
-        setShowAICopyNotification(true)
-        setCopySuccess(success)
-      }
-    )
+    copyJsonErrorForAI(jsonText, error, (success) => {
+      setShowAICopyNotification(true)
+      setCopySuccess(success)
+    })
   }
 
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-scroll">
           <DialogHeader>
             <DialogTitle>Import Training Plan</DialogTitle>
             <DialogDescription>
-              Upload a JSON file or paste JSON data to import your training plan. The JSON must include 
-              metadata with a plan name.
+              Upload a JSON file or paste JSON data to import your training plan. The JSON must
+              include metadata with a plan name.
             </DialogDescription>
           </DialogHeader>
 
@@ -149,20 +158,18 @@ export default function EnhancedJsonUploadModal({
                 <Sparkles className="h-5 w-5 mr-2 text-primary" />
                 <div>
                   <span className="font-medium block">Coming from an AI assistant?</span>
-                  <span className="text-xs text-muted-foreground">Switch to the AI guide to get started</span>
+                  <span className="text-xs text-muted-foreground">
+                    Switch to the AI guide to get started
+                  </span>
                 </div>
               </div>
-              <Button 
-                onClick={handleOpenAiGuide}
-                className="flex items-center gap-1"
-                size="sm"
-              >
+              <Button onClick={handleOpenAiGuide} className="flex items-center gap-1" size="sm">
                 <ArrowLeft className="h-4 w-4" />
                 AI Guide
               </Button>
             </div>
           </div>
-          
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="paste">Paste JSON</TabsTrigger>
@@ -195,7 +202,9 @@ export default function EnhancedJsonUploadModal({
                   onClick={(e) => e.stopPropagation()}
                   onChange={handleFileChange}
                 />
-                {file && <p className="mt-2 text-sm font-medium text-green-600">Selected: {file.name}</p>}
+                {file && (
+                  <p className="mt-2 text-sm font-medium text-green-600">Selected: {file.name}</p>
+                )}
               </div>
               <Button onClick={handleImportFromFile} className="mt-4" disabled={!file}>
                 Import from File
@@ -210,9 +219,9 @@ export default function EnhancedJsonUploadModal({
               <AlertDescription className="flex justify-between items-start">
                 <div>{error}</div>
                 {activeTab === "paste" && jsonText.trim() && (
-                  <Button 
-                    variant="destructive" 
-                    size="sm" 
+                  <Button
+                    variant="destructive"
+                    size="sm"
                     className="flex items-center gap-1 ml-4 mt-1"
                     onClick={handleCopyForAI}
                   >
@@ -228,7 +237,9 @@ export default function EnhancedJsonUploadModal({
             <div className="bg-primary/5 p-4 rounded-lg flex justify-between items-center">
               <div>
                 <h3 className="text-sm font-medium">Need more information?</h3>
-                <p className="text-xs text-muted-foreground">View our documentation for JSON format details</p>
+                <p className="text-xs text-muted-foreground">
+                  View our documentation for JSON format details
+                </p>
               </div>
               <Link href="/documentation" passHref>
                 <Button variant="outline" size="sm" className="flex items-center gap-1">
@@ -237,15 +248,17 @@ export default function EnhancedJsonUploadModal({
                 </Button>
               </Link>
             </div>
-            
+
             <div className="bg-muted p-4 rounded-lg flex justify-between items-center">
               <div>
                 <h3 className="text-sm font-medium">Created JSON with AI?</h3>
-                <p className="text-xs text-muted-foreground">Already have JSON from an AI assistant?</p>
+                <p className="text-xs text-muted-foreground">
+                  Already have JSON from an AI assistant?
+                </p>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setActiveTab("paste")}
                 className="flex items-center gap-1"
               >
@@ -253,16 +266,20 @@ export default function EnhancedJsonUploadModal({
                 Paste JSON
               </Button>
             </div>
-            
+
             {error && jsonText.trim() && (
               <div className="bg-destructive/10 p-4 rounded-lg flex justify-between items-center">
                 <div>
-                  <h3 className="text-sm font-medium text-destructive">Having troubles with JSON?</h3>
-                  <p className="text-xs text-destructive/80">Copy your JSON with error details for AI assistance</p>
+                  <h3 className="text-sm font-medium text-destructive">
+                    Having troubles with JSON?
+                  </h3>
+                  <p className="text-xs text-destructive/80">
+                    Copy your JSON with error details for AI assistance
+                  </p>
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={handleCopyForAI}
                   className="flex items-center gap-1 border-destructive text-destructive hover:bg-destructive/10"
                 >
@@ -274,14 +291,15 @@ export default function EnhancedJsonUploadModal({
           </div>
 
           <Separator className="my-2" />
-          
+
           {/* Note about required metadata */}
           <div className="text-sm text-muted-foreground">
             <p className="mb-2">
-              <strong>Note:</strong> The training plan JSON must include a metadata object with planName.
+              <strong>Note:</strong> The training plan JSON must include a metadata object with
+              planName.
             </p>
             <pre className="bg-muted p-2 rounded text-xs overflow-x-auto">
-{`{
+              {`{
   "metadata": {
     "planName": "My Training Plan",
     "creationDate": "2025-04-09"
@@ -306,14 +324,14 @@ export default function EnhancedJsonUploadModal({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       {/* Regular copy notification */}
-      <CopyNotification 
-        show={showCopyNotification} 
-        onHide={() => setShowCopyNotification(false)} 
+      <CopyNotification
+        show={showCopyNotification}
+        onHide={() => setShowCopyNotification(false)}
         success={copySuccess}
       />
-      
+
       {/* AI copy notification */}
       <CopyForAINotification
         show={showAICopyNotification}
