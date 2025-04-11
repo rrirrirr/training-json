@@ -8,20 +8,25 @@ import { combineExerciseData } from "@/utils/exercise-utils"
 import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
 import { getSessionStyling } from "@/utils/session-utils"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip" // Assuming path is correct
 import { getThemeAwareColorClasses } from "@/utils/color-utils"
 
 // Helper component for load display with theme-aware styling
-function LoadDisplay({ load, loadStyle }: { load: string; loadStyle?: { strong?: boolean; color?: ColorName } }) {
+function LoadDisplay({
+  load,
+  loadStyle,
+}: {
+  load: string
+  loadStyle?: { strong?: boolean; color?: ColorName }
+}) {
   const { theme } = useTheme()
-  
+
   if (load === "-") return <span className="text-muted-foreground">-</span>
-  
-  // Get theme-aware styling for the color
-  const colorClasses = loadStyle?.color ? 
-    getThemeAwareColorClasses(loadStyle.color, theme) : 
-    undefined
-  
+
+  const colorClasses = loadStyle?.color
+    ? getThemeAwareColorClasses(loadStyle.color, theme)
+    : undefined
+
   const hasKg = typeof load === "string" && load.toLowerCase().includes("kg")
   if (hasKg) {
     const match = load.match(/(\d+(?:\.\d+)?\s*kg)(.*)/i)
@@ -34,61 +39,58 @@ function LoadDisplay({ load, loadStyle }: { load: string; loadStyle?: { strong?:
       )
     }
   }
-  
+
   return (
-    <span className={cn(
-      colorClasses?.text, 
-      loadStyle?.strong && "font-semibold"
-    )}>
-      {load}
-    </span>
+    <span className={cn(colorClasses?.text, loadStyle?.strong && "font-semibold")}>{load}</span>
   )
 }
 
 // Helper component for comment display with theme-aware styling
-function CommentDisplay({ 
-  comment, 
-  commentStyle 
-}: { 
-  comment: string; 
-  commentStyle?: { color?: ColorName; fontStyle?: string } 
+function CommentDisplay({
+  comment,
+  commentStyle,
+}: {
+  comment: string
+  commentStyle?: { color?: ColorName; fontStyle?: string }
 }) {
   const { theme } = useTheme()
-  
+
   if (!comment) return null
-  
-  // Get theme-aware styling for the color
-  const colorClasses = commentStyle?.color ? 
-    getThemeAwareColorClasses(commentStyle.color, theme) : 
-    undefined
-  
+
+  const colorClasses = commentStyle?.color
+    ? getThemeAwareColorClasses(commentStyle.color, theme)
+    : undefined
+
   return (
-    <span className={cn(
-      "text-muted-foreground", 
-      colorClasses?.text,
-      commentStyle?.fontStyle === "italic" && "italic"
-    )}>
+    <span
+      className={cn(
+        "text-muted-foreground",
+        colorClasses?.text,
+        commentStyle?.fontStyle === "italic" && "italic"
+      )}
+    >
       {comment}
     </span>
   )
 }
 
 interface SessionCardProps {
-  session: Session
+  session: Session // Original interface, does not explicitly allow undefined/null
   trainingPlan: TrainingPlanData
   compact?: boolean
 }
 
 export default function SessionCard({ session, trainingPlan, compact = false }: SessionCardProps) {
+  // No check for undefined session here
+
   const [showDetails, setShowDetails] = useState(false)
+  // Destructuring happens immediately - this will error if session is undefined
   const { sessionName, exercises } = session
   const { theme } = useTheme()
 
-  // Get styling information using the updated utility
   const sessionStyling = getSessionStyling(session, trainingPlan, theme)
   const displaySessionType = sessionStyling.sessionTypeName
 
-  // Toggle function for details
   const toggleDetails = (e?: React.MouseEvent) => {
     e?.stopPropagation()
     setShowDetails(!showDetails)
@@ -99,24 +101,24 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
       onClick={() => toggleDetails()}
       className={cn(
         "transition-colors duration-200 hover:shadow-lg max-w-full overflow-hidden border cursor-pointer",
-        // Apply theme-aware styling
         sessionStyling.colorClasses?.bg || "bg-card",
         sessionStyling.colorClasses?.border || "border-border",
-        session.sessionStyle?.styleClass
+        session.sessionStyle?.styleClass // This could also error if session is undefined
       )}
     >
       <CardHeader className="relative flex flex-row justify-between items-start pb-4 border-b pr-10 pt-4">
-        {/* Title and Description */}
         <div>
-          <CardTitle>{sessionName}</CardTitle>
+          {/* Apply Oswald font and light weight + uppercase + tracking */}
+          <CardTitle className="font-oswald font-light uppercase tracking-wide">
+            {sessionName}
+          </CardTitle>
           <CardDescription className="mt-1">
             {displaySessionType}
-            {session.sessionStyle?.note && (
+            {session.sessionStyle?.note && ( // This could also error
               <span className="ml-2 italic">{session.sessionStyle.note}</span>
             )}
           </CardDescription>
         </div>
-        {/* Toggle details icon */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -130,17 +132,18 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
           </Tooltip>
         </TooltipProvider>
       </CardHeader>
-      
-      {/* Session content */}
+
+      {/* Use sessionName in ID - this could also error */}
       <CardContent className="p-4" id={`session-details-${sessionName.replace(/\s+/g, "-")}`}>
         <div className="space-y-4">
+          {/* Mapping exercises - this could also error */}
           {exercises.map((exercise, index) => {
             const combinedData = combineExerciseData(exercise, trainingPlan)
-            const exerciseIdentifier = exercise.exerciseId || `custom-${index}`
+            const exerciseKey = `${exercise.exerciseId || "ex"}-${index}`
 
             return (
               <div
-                key={`${exerciseIdentifier}`}
+                key={exerciseKey}
                 className={cn("p-3 rounded border", index % 2 !== 0 && "bg-muted/50")}
               >
                 {/* Row 1: Exercise Name, Sets, Reps */}
@@ -159,7 +162,7 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
                     </span>
                   </div>
                 </div>
-                
+
                 {/* Row 2: Intensity */}
                 <div className="text-sm mb-2">
                   <span className="font-medium text-xs text-muted-foreground uppercase mr-2">
@@ -167,7 +170,7 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
                   </span>
                   <LoadDisplay load={exercise.load} loadStyle={exercise.loadStyle} />
                 </div>
-                
+
                 {/* Row 3: Comment (except when compact) */}
                 {!compact && exercise.comment && (
                   <div className="text-sm mb-2">
@@ -180,11 +183,10 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
                     />
                   </div>
                 )}
-                
+
                 {/* Details Section (shown when expanded) */}
                 {showDetails && (
                   <div className="mt-3 pt-3 border-t text-xs space-y-1 text-muted-foreground">
-                    {/* Compact comment shown here only when details are open */}
                     {compact && exercise.comment && (
                       <div>
                         <span className="font-semibold text-foreground">Kommentar:</span>{" "}
@@ -194,8 +196,6 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
                         />
                       </div>
                     )}
-                    
-                    {/* Other details */}
                     {combinedData.targetMuscles && combinedData.targetMuscles.length > 0 && (
                       <div>
                         <span className="font-semibold text-foreground">Målmuskler:</span>{" "}
@@ -231,6 +231,10 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
               </div>
             )
           })}
+          {/* Add message if no exercises */}
+          {(!Array.isArray(exercises) || exercises.length === 0) && (
+            <p className="text-sm text-muted-foreground italic">No exercises in this session.</p>
+          )}
         </div>
       </CardContent>
     </Card>

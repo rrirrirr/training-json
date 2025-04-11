@@ -30,4 +30,3 @@ export default function MonthlyView({ monthBlock, trainingPlan }: MonthlyViewPro
     </div>
   )
 }
-

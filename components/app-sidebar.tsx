@@ -117,7 +117,7 @@ export default function AppSidebar() {
       <SidebarHeader className="my-4">
         <SidebarGroupLabel className="w-full flex items-center justify-center">
           <Link href="/" passHref>
-            <h1 className="text-4xl font-bold text-primary">T-JSON</h1>
+            <h1 className="text-4xl font-bold text-primary font-archivo-black">T-JSON</h1>
           </Link>
         </SidebarGroupLabel>
       </SidebarHeader>

@@ -1,17 +1,34 @@
-// app/layout.tsx
 import type { Metadata } from "next"
-import { Inter } from "next/font/google" // Or your chosen font
+import { Inter, Archivo_Black, Oswald } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "next-themes"
-import { TrainingPlanProvider } from "@/contexts/training-plan-context" // Your existing provider
-import { SidebarProvider } from "@/components/ui/sidebar" // Your existing provider
-import { LayoutClient } from "@/components/layout/layout-client" // Client component wrapper
-import { Toaster } from "@/components/ui/toaster" // Shadcn Toaster
-import { ModalProvider } from "@/components/modals/modal-provider" // Existing modal provider
-import { UIProvider } from "@/contexts/ui-context" // UI context provider
-import { DialogProvider } from "@/components/dialogs/dialog-provider" // Add this line
+import { TrainingPlanProvider } from "@/contexts/training-plan-context"
+import { SidebarProvider } from "@/components/ui/sidebar"
+import { LayoutClient } from "@/components/layout/layout-client"
+import { Toaster } from "@/components/ui/toaster"
+import { ModalProvider } from "@/components/modals/modal-provider"
+import { UIProvider } from "@/contexts/ui-context"
+import { DialogProvider } from "@/components/dialogs/dialog-provider"
+import { cn } from "@/lib/utils" // Import cn utility
+const fontSans = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+})
 
-const inter = Inter({ subsets: ["latin"] })
+const fontArchivoBlack = Archivo_Black({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-archivo-black",
+  display: "swap",
+})
+
+const fontOswald = Oswald({
+  subsets: ["latin"],
+  weight: ["200", "300", "400"],
+  variable: "--font-oswald",
+  display: "swap",
+})
 
 export const metadata: Metadata = {
   title: "T-JSON",
@@ -25,7 +42,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <head />
+      {/* --- CORRECTED BODY TAG --- */}
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
+          fontSans.variable,
+          fontArchivoBlack.variable,
+          fontOswald.variable
+        )}
+      >
+        {/* --- END OF CORRECTIONS --- */}
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -37,8 +64,8 @@ export default function RootLayout({
               <SidebarProvider>
                 <LayoutClient>
                   {children}
-                  <ModalProvider /> {/* Existing modal provider */}
-                  <DialogProvider /> {/* Add our new dialog provider */}
+                  <ModalProvider />
+                  <DialogProvider />
                 </LayoutClient>
               </SidebarProvider>
             </TrainingPlanProvider>
