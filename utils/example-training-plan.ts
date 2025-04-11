@@ -10,6 +10,28 @@ export const exampleTrainingPlan: TrainingPlanData = {
     version: "1.0.0",
   },
 
+  // Define the week types
+  weekTypes: [
+    {
+      id: "deload",
+      name: "DELOAD",
+      colorName: "yellow",
+      description: "Lower intensity recovery week"
+    },
+    {
+      id: "test",
+      name: "TEST",
+      colorName: "green",
+      description: "Testing maximum strength"
+    },
+    {
+      id: "competition",
+      name: "COMP",
+      colorName: "red",
+      description: "Competition preparation week"
+    }
+  ],
+
   sessionTypes: [
     {
       id: "gym",
@@ -227,6 +249,8 @@ export const exampleTrainingPlan: TrainingPlanData = {
       weekType: "A",
       blockId: "block-1",
       gymDays: 3,
+      // Empty array for regular week
+      weekTypeIds: [],
       tm: {
         SQ: 115,
         BP: 80,
@@ -238,7 +262,7 @@ export const exampleTrainingPlan: TrainingPlanData = {
       },
       sessions: [
         {
-          sessionName: "Gympass 1 yea",
+          sessionName: "Gympass 1",
           sessionTypeId: "gym",
           sessionStyle: {
             colorName: "green",
@@ -428,6 +452,8 @@ export const exampleTrainingPlan: TrainingPlanData = {
       weekType: "B",
       blockId: "block-1",
       gymDays: 3,
+      // Empty array for regular week
+      weekTypeIds: [],
       tm: {
         SQ: 120,
         BP: 82.5,
@@ -625,7 +651,8 @@ export const exampleTrainingPlan: TrainingPlanData = {
       weekType: "A",
       blockId: "block-4",
       gymDays: 4,
-      isDeload: true,
+      // Replace isDeload with weekTypeIds array containing "deload"
+      weekTypeIds: ["deload"],
       tm: {
         SQ: 150,
         BP: 100,
@@ -703,7 +730,8 @@ export const exampleTrainingPlan: TrainingPlanData = {
       weekType: "A",
       blockId: "block-5",
       gymDays: 4,
-      isTest: true,
+      // Replace isTest with weekTypeIds array containing "test"
+      weekTypeIds: ["test"],
       weekStyle: {
         colorName: "green",
       },
@@ -751,6 +779,73 @@ export const exampleTrainingPlan: TrainingPlanData = {
               reps: "-",
               load: "-",
               comment: "Återhämtning inför nästa test",
+            },
+          ],
+        },
+      ],
+    },
+    // Add a new example week with multiple types
+    {
+      weekNumber: 18,
+      weekType: "A",
+      blockId: "block-5",
+      gymDays: 3,
+      // Multiple week types
+      weekTypeIds: ["deload", "competition"],
+      weekStyle: {
+        colorName: "red",
+      },
+      sessions: [
+        {
+          sessionName: "Gympass 1 (Comp Prep)",
+          sessionTypeId: "gym",
+          sessionStyle: {
+            colorName: "red",
+          },
+          exercises: [
+            {
+              exerciseId: "sq",
+              sets: 3,
+              reps: "3",
+              load: "130 kg (85%)",
+              comment: "Competition prep",
+            },
+            {
+              exerciseId: "bp",
+              sets: 3,
+              reps: "3",
+              load: "80 kg (80%)",
+              comment: "Competition prep",
+            },
+            {
+              exerciseId: "dl",
+              sets: 2,
+              reps: "2",
+              load: "150 kg (85%)",
+              comment: "Competition prep",
+            },
+          ],
+        },
+        {
+          sessionName: "Mobility & Recovery",
+          sessionTypeId: "barmark",
+          sessionStyle: {
+            colorName: "green",
+          },
+          exercises: [
+            {
+              exerciseId: "mobility",
+              sets: 1,
+              reps: "20 min",
+              load: "-",
+              comment: "Full body mobility",
+            },
+            {
+              exerciseId: "light_cardio",
+              sets: 1,
+              reps: "10 min",
+              load: "Very light",
+              comment: "Blood flow",
             },
           ],
         },
