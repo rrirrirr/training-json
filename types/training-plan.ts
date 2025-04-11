@@ -15,6 +15,14 @@ export type ColorName =
   | "blue" | "indigo" | "violet" | "purple" | "fuchsia" 
   | "pink" | "rose";
 
+// WeekType definition - NEW
+export type WeekType = {
+  id: string;
+  name: string;
+  colorName: ColorName;
+  description?: string;
+}
+
 // SessionTypeDefinition type with colorName only
 export type SessionTypeDefinition = {
   id: string;
@@ -92,12 +100,12 @@ export type WeekStyle = {
 // Week with blockId only
 export type Week = {
   weekNumber: number
-  weekType?: "A" | "B" | "-"
+  weekType?: "A" | "B" | "-" 
   blockId: string | number
   gymDays?: number
   barmarkDays?: number
-  isDeload?: boolean
-  isTest?: boolean
+  // New field for week types
+  weekTypeIds: string[]
   weekStyle?: WeekStyle
   tm?: Record<string, number>
   sessions: Session[]
@@ -118,6 +126,8 @@ export type TrainingPlanData = {
   metadata?: Metadata
   sessionTypes?: SessionTypeDefinition[]
   blocks?: BlockDefinition[]
+  // New field for week types
+  weekTypes: WeekType[]
   exerciseDefinitions: ExerciseDefinition[]
   weeks: Week[]
   monthBlocks: MonthBlock[]

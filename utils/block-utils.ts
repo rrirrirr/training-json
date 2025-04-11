@@ -1,4 +1,4 @@
-import type { Week, BlockDefinition, TrainingPlanData, ColorName } from "@/types/training-plan"
+import type { Week, BlockDefinition, TrainingPlanData, ColorName, WeekType } from "@/types/training-plan"
 import { getThemeAwareColorClasses } from "@/utils/color-utils"
 
 /**
@@ -15,6 +15,45 @@ export function getBlock(
   
   // Find the block from the blockId
   return trainingPlan.blocks.find(block => block.id === week.blockId);
+}
+
+/**
+ * Gets a week type by its ID
+ */
+export function getWeekType(
+  weekTypeId: string,
+  trainingPlan: TrainingPlanData,
+): WeekType | undefined {
+  // Check if weekTypes array exists
+  if (!trainingPlan.weekTypes) {
+    return undefined;
+  }
+  
+  // Find the week type from the ID
+  return trainingPlan.weekTypes.find(weekType => weekType.id === weekTypeId);
+}
+
+/**
+ * Gets all week types assigned to a week
+ */
+export function getWeekTypes(
+  week: Week,
+  trainingPlan: TrainingPlanData,
+): WeekType[] {
+  // Initialize empty array if no week type IDs
+  if (!week.weekTypeIds || !Array.isArray(week.weekTypeIds) || week.weekTypeIds.length === 0) {
+    return [];
+  }
+  
+  // If no week types defined in plan, return empty array
+  if (!trainingPlan.weekTypes || !Array.isArray(trainingPlan.weekTypes)) {
+    return [];
+  }
+  
+  // Look up the week types from the trainingPlan
+  return week.weekTypeIds
+    .map(id => getWeekType(id, trainingPlan))
+    .filter((weekType): weekType is WeekType => weekType !== undefined);
 }
 
 /**
@@ -42,21 +81,22 @@ export function getBlockInfo(week: Week, trainingPlan: TrainingPlanData, theme?:
     };
   }
   
-  // Special cases for deload and test weeks
-  let specialColorName: ColorName | undefined;
+  // Get week types to check for special styling
+  const weekTypes = getWeekTypes(week, trainingPlan);
+  const hasSpecialType = weekTypes.length > 0;
   
-  // Apply week-specific style overrides if the week has deload or test flags
-  if (week.isDeload) {
-    specialColorName = "yellow";
-  } else if (week.isTest) {
-    specialColorName = "green";
+  // If there are week types, use the first one's color for now
+  // In a more advanced implementation, we might want to handle multiple types differently
+  if (hasSpecialType && weekTypes[0]) {
+    // Week type styling overrides block styling unless week has explicit styling
+    if (!week.weekStyle?.colorName) {
+      blockInfo.colorName = weekTypes[0].colorName;
+    }
   }
   
-  // If the week has its own style, it overrides the block style
+  // If the week has its own style, it overrides everything
   if (week.weekStyle?.colorName) {
     blockInfo.colorName = week.weekStyle.colorName;
-  } else if (specialColorName) {
-    blockInfo.colorName = specialColorName;
   }
   
   // Get theme-aware color classes
@@ -64,6 +104,7 @@ export function getBlockInfo(week: Week, trainingPlan: TrainingPlanData, theme?:
   
   return {
     ...blockInfo,
-    colorClasses
+    colorClasses,
+    weekTypes  // Include the week types in the returned info
   };
 }

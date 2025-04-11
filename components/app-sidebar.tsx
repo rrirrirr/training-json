@@ -5,9 +5,10 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useTrainingPlans } from "@/contexts/training-plan-context"
 import { useUploadModal } from "@/components/modals/upload-modal"
-import { useUIState } from "@/contexts/ui-context" // Add this import
+import { useUIState } from "@/contexts/ui-context"
 import BlockSelector from "./shared/block-selector"
 import WeekSelector from "./shared/week-selector"
+import WeekTypeLegend from "./week-type-legend"
 import Link from "next/link"
 import {
   SidebarContent,
@@ -18,6 +19,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { PlanSwitcher } from "./plan-switcher"
+import { useEffect, useState } from "react"
+import { WeekType } from "@/types/training-plan"
 
 export default function AppSidebar() {
   const {
@@ -40,6 +43,18 @@ export default function AppSidebar() {
 
   const { state } = useSidebar()
   const isOpen = state === "expanded"
+  
+  // State for week types
+  const [weekTypes, setWeekTypes] = useState<WeekType[]>([])
+
+  // Get week types from current plan
+  useEffect(() => {
+    if (currentPlan?.data?.weekTypes && Array.isArray(currentPlan.data.weekTypes)) {
+      setWeekTypes(currentPlan.data.weekTypes)
+    } else {
+      setWeekTypes([])
+    }
+  }, [currentPlan])
 
   const uploadModalStore = useUploadModal()
   // const exportModalStore = useExportModal() // Keep for compatibility with existing code
@@ -48,10 +63,13 @@ export default function AppSidebar() {
     const weekData = Array.isArray(trainingData)
       ? trainingData.find((w: any) => w.weekNumber === weekNumber)
       : undefined
+      
+    if (!weekData) return { type: "", weekTypeIds: [], colorName: undefined }
+    
     return {
-      type: weekData?.weekType || "",
-      isDeload: weekData?.isDeload || false,
-      isTest: weekData?.isTest || false,
+      type: weekData.weekType || "",
+      weekTypeIds: weekData.weekTypeIds || [],
+      colorName: weekData.weekStyle?.colorName
     }
   }
 
@@ -174,14 +192,16 @@ export default function AppSidebar() {
       <SidebarFooter className={cn(!isOpen && "items-center")}>
         {isOpen && (
           <div className="p-4 text-sm text-muted-foreground">
-            <div className="flex items-center mb-2">
-              <div className="w-4 h-4 border-l-4 border-yellow-500 mr-2 shrink-0"></div>
-              <span>DELOAD week</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-4 h-4 border-l-4 border-green-500 mr-2 shrink-0"></div>
-              <span>TEST week</span>
-            </div>
+            {/* Use the dynamic week type legend component */}
+            <h4 className="font-medium mb-2">Week Types</h4>
+            <WeekTypeLegend weekTypes={weekTypes} />
+            
+            {/* If no week types are defined, show a message */}
+            {(!weekTypes || weekTypes.length === 0) && (
+              <p className="text-xs italic mt-2">
+                No week types defined. Add week types in the JSON to customize week styling.
+              </p>
+            )}
           </div>
         )}
 

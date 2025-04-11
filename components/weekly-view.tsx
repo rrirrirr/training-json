@@ -1,10 +1,10 @@
 "use client"
 
-import type { Week, TrainingPlanData } from "@/types/training-plan"
+import type { Week, TrainingPlanData, WeekType } from "@/types/training-plan"
 import SessionCard from "./session-card"
 import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
-import { getBlockInfo } from "@/utils/block-utils"
+import { getBlockInfo, getWeekTypes } from "@/utils/block-utils"
 import { getThemeAwareColorClasses } from "@/utils/color-utils"
 
 interface WeeklyViewProps {
@@ -16,16 +16,15 @@ interface WeeklyViewProps {
 export default function WeeklyView({ week, trainingPlan, compact = false }: WeeklyViewProps) {
   const { theme } = useTheme()
 
-  const { weekNumber, weekType, gymDays, barmarkDays, isDeload, isTest, sessions, weekStyle } = week
+  const { weekNumber, weekType, gymDays, barmarkDays, sessions, weekStyle } = week
 
   // Get block information using the updated utility
   const blockInfo = getBlockInfo(week, trainingPlan, theme)
   const blockDescription = blockInfo.description || ""
   const blockFocus = blockInfo.focus || ""
-
-  // Get theme-aware styles for badges
-  const deloadColorClasses = getThemeAwareColorClasses("yellow", theme)
-  const testColorClasses = getThemeAwareColorClasses("green", theme)
+  
+  // Get the week types for this week
+  const weekTypes = getWeekTypes(week, trainingPlan)
 
   return (
     <div className="max-w-4xl mx-auto mb-8">
@@ -47,28 +46,24 @@ export default function WeeklyView({ week, trainingPlan, compact = false }: Week
                   Typ {weekType}
                 </span>
               )}
-              {isDeload && (
-                <span
-                  className={cn(
-                    "text-sm font-normal px-2 py-0.5 rounded-full",
-                    deloadColorClasses?.bg || "bg-yellow-200",
-                    deloadColorClasses?.text || "text-yellow-800"
-                  )}
-                >
-                  DELOAD
-                </span>
-              )}
-              {isTest && (
-                <span
-                  className={cn(
-                    "text-sm font-normal px-2 py-0.5 rounded-full",
-                    testColorClasses?.bg || "bg-green-200",
-                    testColorClasses?.text || "text-green-800"
-                  )}
-                >
-                  TEST
-                </span>
-              )}
+              
+              {/* Week Type Badges */}
+              {weekTypes.map((weekType) => {
+                const typeColorClasses = getThemeAwareColorClasses(weekType.colorName, theme)
+                return (
+                  <span
+                    key={weekType.id}
+                    className={cn(
+                      "text-sm font-normal px-2 py-0.5 rounded-full",
+                      typeColorClasses?.bg || `bg-${weekType.colorName}-200`,
+                      typeColorClasses?.text || `text-${weekType.colorName}-800`
+                    )}
+                    title={weekType.description}
+                  >
+                    {weekType.name}
+                  </span>
+                )
+              })}
             </h1>
             {blockDescription && (
               <p className={cn("mt-1", blockInfo.colorClasses?.text)}>{blockDescription}</p>
