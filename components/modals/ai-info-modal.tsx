@@ -1,7 +1,7 @@
 "use client"
 
-import { create } from 'zustand'
-import AiAssistantDialog from '@/components/ai-assistant-dialog' // Use our new component
+import { create } from "zustand"
+import AiAssistantDialog from "../ai-assistant-dialog"
 
 interface AiInfoModalStore {
   isOpen: boolean
@@ -17,11 +17,6 @@ export const useAiInfoModal = create<AiInfoModalStore>((set) => ({
 
 export function AiInfoModal() {
   const { isOpen, close } = useAiInfoModal()
-  
-  return (
-    <AiAssistantDialog 
-      isOpen={isOpen} 
-      onClose={close}
-    />
-  )
+
+  return <AiAssistantDialog isOpen={isOpen} onClose={close} />
 }

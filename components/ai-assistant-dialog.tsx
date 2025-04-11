@@ -15,16 +15,24 @@ import CopyNotification from "./copy-notification"
 import { useUploadModal } from "@/components/modals/upload-modal"
 import { ExternalLink, Copy, FileDown, FileUp } from "lucide-react"
 import Link from "next/link"
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "./ui/navigation-menu"
 
 interface AiAssistantDialogProps {
   isOpen: boolean
   onClose: () => void
 }
 
-export default function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
+function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
   const [showCopyNotification, setShowCopyNotification] = useState(false)
   const uploadModalStore = useUploadModal()
-  
+
   const aiPromptTemplate = `Please create a JSON file for my training plan with the following normalized structure:
 
 {
@@ -60,13 +68,13 @@ After I answer these questions, please create a complete training plan JSON.`
     navigator.clipboard.writeText(aiPromptTemplate)
     setShowCopyNotification(true)
   }
-  
+
   const handleOpenUploadModal = () => {
     onClose()
     uploadModalStore.open((data) => {
       // Create and dispatch a custom event with the imported JSON data
-      const event = new CustomEvent('plan-created-from-json', { 
-        detail: { data } 
+      const event = new CustomEvent("plan-created-from-json", {
+        detail: { data },
       })
       window.dispatchEvent(event)
     })
@@ -78,7 +86,8 @@ After I answer these questions, please create a complete training plan JSON.`
         <DialogHeader>
           <DialogTitle>Create Training Plan with AI</DialogTitle>
           <DialogDescription>
-            AI assistants like ChatGPT, Claude, or Bard can help you create a personalized training plan in minutes.
+            AI assistants like ChatGPT, Claude, or Bard can help you create a personalized training
+            plan in minutes.
           </DialogDescription>
         </DialogHeader>
 
@@ -100,18 +109,116 @@ After I answer these questions, please create a complete training plan JSON.`
                   <strong>Copy the generated JSON</strong> from the AI's response
                 </li>
                 <li>
-                  <strong>Paste the JSON</strong> back into this app using the "Import JSON" button below
+                  <strong>Paste the JSON</strong> back into this app using the "Import JSON" button
+                  below
                 </li>
               </ol>
+            </div>
+            <div className="flex justify-start p-4">
+              <NavigationMenu>
+                <NavigationMenuList>
+                  <NavigationMenuItem>
+                    <NavigationMenuTrigger>Copy prompt for AI</NavigationMenuTrigger>
+                    <NavigationMenuContent className="w-[600px] lg:w-[700px]">
+                      <div className="grid grid-cols-2 gap-3 p-4">
+                        {/* Left column */}
+                        <div className="col-span-1 space-y-3">
+                          <Button
+                            variant="outline"
+                            className="w-full p-6 text-left justify-start h-auto"
+                            onClick={() => navigator.clipboard.writeText(aiPromptTemplate)}
+                          >
+                            <div>
+                              <div className="font-medium mb-1">General Strength Plan</div>
+                              <div className="text-xs text-muted-foreground">
+                                Basic prompt for strength training plan
+                              </div>
+                            </div>
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            className="w-full p-6 text-left justify-start h-auto"
+                            onClick={() => navigator.clipboard.writeText(aiPromptTemplate)}
+                          >
+                            <div>
+                              <div className="font-medium mb-1">Hypertrophy Focus</div>
+                              <div className="text-xs text-muted-foreground">
+                                Muscle building program
+                              </div>
+                            </div>
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            className="w-full p-6 text-left justify-start h-auto"
+                            onClick={() => navigator.clipboard.writeText(aiPromptTemplate)}
+                          >
+                            <div>
+                              <div className="font-medium mb-1">Endurance Training</div>
+                              <div className="text-xs text-muted-foreground">
+                                Cardiovascular and endurance focus
+                              </div>
+                            </div>
+                          </Button>
+                        </div>
+
+                        {/* Right column */}
+                        <div className="col-span-1 space-y-3">
+                          <Button
+                            variant="outline"
+                            className="w-full p-6 text-left justify-start h-auto"
+                            onClick={() => navigator.clipboard.writeText(aiPromptTemplate)}
+                          >
+                            <div>
+                              <div className="font-medium mb-1">Powerlifting Program</div>
+                              <div className="text-xs text-muted-foreground">
+                                Focused on the big three lifts
+                              </div>
+                            </div>
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            className="w-full p-6 text-left justify-start h-auto"
+                            onClick={() => navigator.clipboard.writeText(aiPromptTemplate)}
+                          >
+                            <div>
+                              <div className="font-medium mb-1">Athletic Performance</div>
+                              <div className="text-xs text-muted-foreground">
+                                Sports-specific training
+                              </div>
+                            </div>
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            className="w-full p-6 text-left justify-start h-auto"
+                            onClick={() => navigator.clipboard.writeText(aiPromptTemplate)}
+                          >
+                            <div>
+                              <div className="font-medium mb-1">Beginner Program</div>
+                              <div className="text-xs text-muted-foreground">
+                                Starter plan for newcomers
+                              </div>
+                            </div>
+                          </Button>
+                        </div>
+                      </div>
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
+                </NavigationMenuList>
+              </NavigationMenu>
             </div>
 
             <div className="p-4 bg-muted rounded-lg">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-base font-medium">AI Prompt</h3>
-                <Button 
+
+                <Button
                   size="sm"
                   onClick={handleCopyPrompt}
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 ml-2"
                 >
                   <Copy className="h-4 w-4" />
                   Copy to Clipboard
@@ -121,7 +228,7 @@ After I answer these questions, please create a complete training plan JSON.`
                 {aiPromptTemplate}
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <h3 className="text-base font-semibold">Tips for Best Results</h3>
               <ul className="list-disc pl-6 space-y-1 text-sm">
@@ -134,14 +241,17 @@ After I answer these questions, please create a complete training plan JSON.`
                 </li>
               </ul>
             </div>
-            
+
             <div className="bg-primary/5 p-4 rounded-lg">
               <h3 className="text-base font-semibold mb-2">Need More Information?</h3>
               <p className="text-sm mb-2">
-                Visit our documentation page for detailed instructions on the JSON format, exercise definitions, 
-                and how to customize your training plan.
+                Visit our documentation page for detailed instructions on the JSON format, exercise
+                definitions, and how to customize your training plan.
               </p>
-              <Link href="/documentation" className="text-primary hover:underline flex items-center gap-1">
+              <Link
+                href="/documentation"
+                className="text-primary hover:underline flex items-center gap-1"
+              >
                 View Documentation <ExternalLink className="h-3 w-3" />
               </Link>
             </div>
@@ -152,24 +262,21 @@ After I answer these questions, please create a complete training plan JSON.`
           show={showCopyNotification}
           onHide={() => setShowCopyNotification(false)}
         />
-        
+
         <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-4">
           <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
             Close
           </Button>
-          <Button 
+          <Button
             variant="outline"
-            onClick={handleOpenUploadModal} 
+            onClick={handleOpenUploadModal}
             className="w-full sm:w-auto flex items-center gap-1"
           >
             <FileUp className="h-4 w-4" />
             Import JSON
           </Button>
           <Link href="/documentation" passHref>
-            <Button 
-              variant="secondary" 
-              className="w-full sm:w-auto flex items-center gap-1"
-            >
+            <Button variant="secondary" className="w-full sm:w-auto flex items-center gap-1">
               <FileDown className="h-4 w-4" />
               Documentation
             </Button>
@@ -179,3 +286,5 @@ After I answer these questions, please create a complete training plan JSON.`
     </Dialog>
   )
 }
+
+export default AiAssistantDialog
