@@ -1,51 +1,106 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { Loader2 } from "lucide-react"
+import WelcomeScreen from "@/components/welcome-screen"
 import type { TrainingPlanData } from "@/types/training-plan"
 import { exampleTrainingPlan } from "@/utils/example-training-plan"
-import WeeklyView from "@/components/weekly-view"
-import BlockView from "@/components/block-view"
-import { Loader2 } from "lucide-react"
-import { useTrainingPlans } from "@/contexts/training-plan-context"
-import { useUIState } from "@/contexts/ui-context"
-import WelcomeScreen from "@/components/welcome-screen"
-import { MobileScrollNav } from "@/components/mobile-scroll-nav"
+import { usePlanStore } from "@/store/plan-store"
+import { supabase } from "@/lib/supa-client"
 
-// Main content component
-function TrainingPlanContent() {
-  // Get plan data from TrainingPlanContext
-  const {
-    currentPlan,
-    addPlan,
-    selectedWeek,
-    selectedMonth,
-    viewMode,
-  } = useTrainingPlans()
-
-  // Minimal local state for loading/error
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  // Loading effect
+export default function HomePage() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [creatingPlan, setCreatingPlan] = useState(false)
+  
+  // Check for plans in local storage on mount
   useEffect(() => {
-    setLoading(true)
-    const timer = setTimeout(() => {
-      setLoading(false)
-    }, 100)
-    return () => clearTimeout(timer)
-  }, [currentPlan])
-
-  // Event listener for plan-created-from-json
-  useEffect(() => {
-    const handlePlanCreatedFromJson = (e: CustomEvent<{ data: TrainingPlanData }>) => {
-      const data = e.detail.data
-      // Use the planName from metadata rather than passing it separately
-      if (data && data.metadata && data.metadata.planName) {
-        addPlan(data.metadata.planName, data)
-      } else {
-        // If no metadata exists, generate a default name
-        addPlan(`Training Plan ${new Date().toLocaleDateString()}`, data)
+    const checkForExistingPlans = async () => {
+      try {
+        // Check localStorage first
+        const storedPlanId = localStorage.getItem("lastViewedPlanId")
+        
+        if (storedPlanId) {
+          // If we have a recently viewed plan ID, redirect to it
+          router.push(`/plan/${storedPlanId}`)
+          return
+        }
+        
+        // No stored plan, let the user choose what to do
+        setLoading(false)
+      } catch (error) {
+        console.error("Error checking for existing plans:", error)
+        setLoading(false)
       }
+    }
+
+    checkForExistingPlans()
+  }, [router])
+
+  // Handler for loading example
+  const handleLoadExample = async () => {
+    setCreatingPlan(true)
+    try {
+      // Insert the example plan into Supabase
+      const { data, error } = await supabase
+        .from("training_plans")
+        .insert({
+          name: exampleTrainingPlan.metadata?.planName || "Example 5x5 Strength Program",
+          plan_data: exampleTrainingPlan
+        })
+        .select("id")
+        .single()
+
+      if (error) throw error
+
+      // Redirect to the newly created plan
+      if (data?.id) {
+        // Store the ID in localStorage for future visits
+        localStorage.setItem("lastViewedPlanId", data.id)
+        router.push(`/plan/${data.id}`)
+      }
+    } catch (error) {
+      console.error("Error creating example plan:", error)
+      setCreatingPlan(false)
+    }
+  }
+
+  // Handler for importing plan data
+  const handleImportPlan = async (data: TrainingPlanData) => {
+    setCreatingPlan(true)
+    try {
+      const planName = data.metadata?.planName || `Imported Plan ${new Date().toLocaleDateString()}`
+      
+      // Insert the imported plan into Supabase
+      const { data: createdPlan, error } = await supabase
+        .from("training_plans")
+        .insert({
+          name: planName,
+          plan_data: data
+        })
+        .select("id")
+        .single()
+
+      if (error) throw error
+
+      // Redirect to the newly created plan
+      if (createdPlan?.id) {
+        // Store the ID in localStorage for future visits
+        localStorage.setItem("lastViewedPlanId", createdPlan.id)
+        router.push(`/plan/${createdPlan.id}`)
+      }
+    } catch (error) {
+      console.error("Error creating imported plan:", error)
+      setCreatingPlan(false)
+    }
+  }
+
+  // Listen for plan-created-from-json event (AI generation)
+  useEffect(() => {
+    const handlePlanCreatedFromJson = async (e: CustomEvent<{ data: TrainingPlanData }>) => {
+      const data = e.detail.data
+      await handleImportPlan(data)
     }
 
     // @ts-ignore - Custom event type
@@ -55,100 +110,26 @@ function TrainingPlanContent() {
       // @ts-ignore - Custom event type
       window.removeEventListener("plan-created-from-json", handlePlanCreatedFromJson)
     }
-  }, [addPlan])
+  }, [])
 
-  // Handler for loading example
-  const handleLoadExample = () => {
-    addPlan(
-      exampleTrainingPlan.metadata?.planName || "Example 5x5 Strength Program",
-      exampleTrainingPlan
-    )
-  }
-
-  // Handler for importing plan data
-  const handleImportPlan = (data: TrainingPlanData) => {
-    const planName = data.metadata?.planName || `Imported Plan ${new Date().toLocaleDateString()}`
-    addPlan(planName, data)
-  }
-
-  // Data finding logic
-  const trainingPlan = currentPlan?.data
-  const weekData = useMemo(() => {
-    return selectedWeek && trainingPlan
-      ? trainingPlan.weeks.find((week) => week.weekNumber === selectedWeek)
-      : null
-  }, [selectedWeek, trainingPlan])
-
-  const monthData = useMemo(() => {
-    return trainingPlan?.monthBlocks.find((block) => block.id === selectedMonth)
-  }, [selectedMonth, trainingPlan])
-
-  // --- RENDER LOGIC ---
-
-  if (loading) {
+  if (loading || creatingPlan) {
     return (
-      <div className="flex h-full items-center justify-center p-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
-  }
-
-  // Welcome screen if no plan is selected/loaded
-  if (!currentPlan || !trainingPlan) {
-    return <WelcomeScreen onLoadExample={handleLoadExample} onImportData={handleImportPlan} />
-  }
-
-  if (error) {
-    return (
-      <div className="flex h-full items-center justify-center p-4">
-        <div className="text-center max-w-lg p-8 bg-destructive/10 rounded-lg border border-destructive/20">
-          <h2 className="text-2xl font-bold text-destructive mb-4">Error</h2>
-          <p className="text-foreground/80 mb-6">{error}</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Handle case where plan exists but has no weeks
-  if (trainingPlan.weeks.length === 0 && !loading) {
-    return (
-      <div className="flex h-full items-center justify-center p-4">
-        <div className="text-center max-w-lg p-8 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-          <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-400 mb-4">
-            Empty Plan
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary/70" />
+          <h2 className="text-xl font-medium">
+            {creatingPlan ? "Creating Plan..." : "Loading..."}
           </h2>
-          <p className="text-gray-700 dark:text-gray-300 mb-6">
-            This training plan doesn't have any weeks defined yet. Edit the plan JSON or import a
-            different one.
+          <p className="text-muted-foreground">
+            {creatingPlan
+              ? "Please wait while we set up your training plan"
+              : "Looking for existing plans"}
           </p>
         </div>
       </div>
     )
   }
 
-  return (
-    <>
-      {/* Content View with bottom padding on mobile */}
-      <div className="p-4 pb-20 md:p-6 md:pb-6">
-        {viewMode === "week" && weekData ? (
-          <WeeklyView week={weekData} trainingPlan={trainingPlan} />
-        ) : viewMode === "month" && monthData ? (
-          <BlockView monthBlock={monthData} trainingPlan={trainingPlan} />
-        ) : (
-          // Better fallback if data is somehow missing despite checks
-          <div className="text-center p-8 text-muted-foreground">
-            Please select a week or block to view.
-          </div>
-        )}
-      </div>
-      
-      {/* Floating Mobile Nav Button - only appears when scrolling on mobile */}
-      <MobileScrollNav />
-    </>
-  )
-}
-
-// Main export for the page
-export default function Page() {
-  return <TrainingPlanContent />
+  // Show welcome screen if no plan is selected/loaded
+  return <WelcomeScreen onLoadExample={handleLoadExample} onImportData={handleImportPlan} />
 }
