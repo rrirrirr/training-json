@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button"
 import CopyNotification from "@/components/copy-notification"
 // --- Import the Copy icon ---
-import { Copy } from "lucide-react"
+import { Copy, Wand2 } from "lucide-react"
 
 // Model: Data and state management (remains the same)
 interface PromptTemplate {
@@ -116,7 +116,16 @@ export function AIPromptMenu({ onCopy }: AIPromptMenuProps) {
     <>
       <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline">Select AI Prompt Template</Button>
+          <Button
+            variant="default" // Use primary background/foreground from your theme
+            size="lg" // Make it taller
+            className="w-full sm:w-auto min-w-[200px] px-6 shadow-md hover:shadow-lg hover:brightness-110 transition-all duration-150 ease-in-out flex items-center justify-center gap-2 group" // Ensure width behaves, add padding, shadow, hover, flex for icon
+          >
+            <Wand2 className="h-5 w-5 transition-transform duration-150 group-hover:rotate-12 flex-shrink-0" />{" "}
+            {/* Icon */}
+            <span className="text-sm sm:text-base whitespace-nowrap">Pick Your Prompt!</span>{" "}
+            {/* Text, adjust size */}
+          </Button>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent className="w-full max-w-lg md:max-w-xl lg:max-w-2xl p-0" align="start">

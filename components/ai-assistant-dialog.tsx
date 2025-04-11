@@ -9,11 +9,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import CopyNotification from "./copy-notification"
 import { useUploadModal } from "@/components/modals/upload-modal"
-import { ExternalLink, Copy, FileDown, FileUp } from "lucide-react"
+import { ExternalLink, Copy, FileDown, FileUp, Wand2 } from "lucide-react"
 import Link from "next/link"
 import { AIPromptMenu } from "./ai-prompt-menu"
 
@@ -24,44 +29,13 @@ interface AiAssistantDialogProps {
 
 function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
   const [showCopyNotification, setShowCopyNotification] = useState(false)
-  const [currentPrompt, setCurrentPrompt] = useState<string>(`Please create a JSON file for my training plan with the following normalized structure:
-
-{
-  "metadata": {
-    "planName": "My 5x5 Strength Program",
-    "creationDate": "2025-04-09"
-  },
-  "exerciseDefinitions": [
-    // Array of exercise definition objects
-  ],
-  "weeks": [
-    // Array of week objects
-  ],
-  "monthBlocks": [
-    // Array of month/block objects
-  ]
-}
-
-Before creating the JSON, please interview me with the following questions to understand my training goals:
-
-1. What is your primary training goal? (Strength, hypertrophy, endurance, sport-specific, etc.)
-2. What is your current experience level? (Beginner, intermediate, advanced)
-3. How many days per week can you train?
-4. What equipment do you have access to?
-5. Do you have any injuries or limitations I should consider?
-6. What are your current strength levels for main lifts? (if applicable)
-7. How long should the training program be? (weeks/months)
-8. Any specific exercises you want to include or avoid?
-
-After I answer these questions, please create a complete training plan JSON.`)
-  
+  const [currentPrompt, setCurrentPrompt] = useState<string>(`Please create a JSON file...`) // Your default prompt here
   const uploadModalStore = useUploadModal()
 
+  // --- Handlers remain the same ---
   const handleCopyPrompt = () => {
     navigator.clipboard.writeText(currentPrompt)
     setShowCopyNotification(true)
-    
-    // Auto-hide notification after 2 seconds
     setTimeout(() => {
       setShowCopyNotification(false)
     }, 2000)
@@ -70,128 +44,157 @@ After I answer these questions, please create a complete training plan JSON.`)
   const handleOpenUploadModal = () => {
     onClose()
     uploadModalStore.open((data) => {
-      // Create and dispatch a custom event with the imported JSON data
       const event = new CustomEvent("plan-created-from-json", {
         detail: { data },
       })
       window.dispatchEvent(event)
     })
   }
-  
-  // Handle prompt selection from AIPromptMenu
+
   const handlePromptSelected = (prompt: string) => {
     setCurrentPrompt(prompt)
-    // We don't need to handle the notification here as AIPromptMenu handles it internally
   }
+
+  const howItWorksSteps = (
+    <ol className="list-decimal pl-6 mt-2 space-y-2 text-sm text-muted-foreground">
+      {/* Steps content remains the same */}
+      <li>Select an AI prompt template below (or use the default).</li>
+      <li>
+        Copy the selected prompt using the <Copy className="inline h-3 w-3 mx-0.5" /> button.
+      </li>
+      <li>Paste it into an AI assistant like ChatGPT-4, Claude, Gemini, etc.</li>
+      <li>Answer the interview questions the AI asks about your training goals.</li>
+      <li>Copy the complete JSON code block the AI generates.</li>
+      <li>Come back here and click the "Open JSON Uploader" button to paste the plan.</li>
+    </ol>
+  )
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh]">
+      {/* --- ADJUSTED: More Responsive Max Width & Padding on DialogContent --- */}
+      <DialogContent className="w-full max-w-sm p-4 sm:max-w-md sm:p-6 md:max-w-lg lg:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Training Plan with AI</DialogTitle>
-          <DialogDescription>
-            AI assistants like ChatGPT, Claude, or Bard can help you create a personalized training
-            plan in minutes.
+          <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
+            {" "}
+            {/* Slightly smaller title on mobile */}
+            <Wand2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Create Plan with AI Magic!
+          </DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm">
+            {" "}
+            {/* Slightly smaller desc on mobile */}
+            Let an AI craft your personalized training plan in minutes. Follow these steps:
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-[50vh] mt-4 pr-4">
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold">How It Works</h3>
-              <ol className="list-decimal pl-6 mt-2 space-y-2 text-sm">
-                <li>
-                  <strong>Copy the AI prompt</strong> using the button below
-                </li>
-                <li>
-                  <strong>Paste it to an AI assistant</strong> like ChatGPT-4 or Claude
-                </li>
-                <li>
-                  <strong>Answer the interview questions</strong> about your training goals
-                </li>
-                <li>
-                  <strong>Copy the generated JSON</strong> from the AI's response
-                </li>
-                <li>
-                  <strong>Paste the JSON</strong> back into this app using the "Import JSON" button
-                  below
-                </li>
-              </ol>
-            </div>
-            
-            <div className="flex justify-start p-2">
+        {/* --- Main Content - REMOVED HORIZONTAL PADDING (px-) --- */}
+        <div className="space-y-6 py-4">
+          {" "}
+          {/* Rely on DialogContent padding */}
+          {/* 1. Pick Prompt Section */}
+          {/* --- Adjusted Padding/Margin inside section for smaller screens --- */}
+          <div className="rounded-lg border border-primary/50 p-3 sm:p-4 space-y-2 sm:space-y-3 shadow-md bg-primary/5">
+            <h3 className="text-base sm:text-lg font-semibold text-primary flex items-center gap-2">
+              <span className="bg-primary text-primary-foreground rounded-full h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center text-xs sm:text-sm font-bold flex-shrink-0">
+                1
+              </span>
+              Pick Your AI Prompt Template
+            </h3>
+            <p className="text-xs sm:text-sm text-muted-foreground md:pl-8">
+              Choose a starting point for your conversation with the AI assistant.
+            </p>
+            <div className="flex justify-center pt-2">
+              {/* --- CRITICAL: Style the button in AIPromptMenu.tsx (See instructions below) --- */}
               <AIPromptMenu onCopy={handlePromptSelected} />
             </div>
-
-            <div className="p-4 bg-muted rounded-lg">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-base font-medium">AI Prompt</h3>
-                <Button
-                  size="sm"
-                  onClick={handleCopyPrompt}
-                  className="flex items-center gap-1 ml-2"
-                >
-                  <Copy className="h-4 w-4" />
-                  Copy to Clipboard
-                </Button>
-              </div>
-              <div className="bg-background p-3 rounded border text-xs font-mono max-h-[200px] overflow-y-auto">
-                {currentPrompt}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="text-base font-semibold">Tips for Best Results</h3>
-              <ul className="list-disc pl-6 space-y-1 text-sm">
-                <li>Be specific about your training goals and limitations</li>
-                <li>Provide as much detail as possible about your experience level</li>
-                <li>Ask the AI to adjust the plan if it doesn't match your preferences</li>
-                <li>Request the AI to explain why it structured the plan the way it did</li>
-                <li>
-                  Check the generated JSON in the upload modal to make sure it's properly formatted
-                </li>
-              </ul>
-            </div>
-
-            <div className="bg-primary/5 p-4 rounded-lg">
-              <h3 className="text-base font-semibold mb-2">Need More Information?</h3>
-              <p className="text-sm mb-2">
-                Visit our documentation page for detailed instructions on the JSON format, exercise
-                definitions, and how to customize your training plan.
-              </p>
-              <Link
-                href="/documentation"
-                className="text-primary hover:underline flex items-center gap-1"
+            <div className="pt-2 sm:pt-3 md:pl-8 space-y-1">
+              <label
+                htmlFor="current-prompt-display"
+                className="text-xs font-medium text-muted-foreground "
               >
-                View Documentation <ExternalLink className="h-3 w-3" />
-              </Link>
+                Selected Prompt (Copy this for the AI!)
+              </label>
+              <div
+                id="current-prompt-display"
+                className="mt-1 p-2 sm:p-3 bg-muted/50 rounded-md relative border"
+              >
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleCopyPrompt}
+                  className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 h-6 w-6 sm:h-7 sm:w-7 z-10"
+                  aria-label="Copy prompt to clipboard"
+                >
+                  <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                </Button>
+                {/* --- ADJUSTED: Font size for prompt display on mobile --- */}
+                <div className="bg-background p-2 sm:p-3 rounded text-[11px] sm:text-xs font-mono max-h-[150px] sm:max-h-[180px] overflow-y-auto pr-8 sm:pr-10">
+                  {currentPrompt}
+                </div>
+              </div>
             </div>
           </div>
-        </ScrollArea>
+          {/* 2. Import Plan Section */}
+          <div className="rounded-lg border p-3 sm:p-4 space-y-2 sm:space-y-3 shadow-sm">
+            <h3 className="text-base sm:text-lg font-semibold text-primary flex items-center gap-2">
+              <span className="bg-primary text-primary-foreground rounded-full h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center text-xs sm:text-sm font-bold flex-shrink-0">
+                2
+              </span>
+              Generate & Import Your Plan
+            </h3>
+            <p className="text-xs sm:text-sm text-muted-foreground md:pl-8">
+              After the AI generates the plan{" "}
+              <span className="font-medium">as a JSON code block</span>, copy it. Then, come back
+              and click below to upload it.
+            </p>
+            {/* --- ADJUSTED: Button styling and container padding --- */}
+            <div className="flex justify-center pt-2 md:pl-8">
+              <Button
+                onClick={handleOpenUploadModal}
+                size="lg" // Keep large, but width is controlled
+                className="w-full sm:w-auto shadow text-xs sm:text-sm" // Full width on mobile, auto on larger
+              >
+                <FileUp className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                Open JSON Uploader & Import
+              </Button>
+            </div>
+          </div>
+          {/* 3. Tips Link */}
+          <div className="text-center pt-4">
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              {" "}
+              {/* Adjusted text size */}
+              🤖 Didn't get the perfect plan?{" "}
+              <Link
+                href="/documentation#ai-tips"
+                className="text-primary hover:underline font-medium focus:outline-none focus:ring-1 focus:ring-primary rounded px-0.5"
+              >
+                Check out our tips for better AI results!
+              </Link>
+            </p>
+          </div>
+          {/* 4. How it Works (Collapsed) */}
+          <Accordion type="single" collapsible className="w-full pt-4 border-t mt-6">
+            <AccordionItem value="how-it-works">
+              <AccordionTrigger className="text-xs sm:text-sm font-medium text-muted-foreground hover:no-underline">
+                {" "}
+                {/* Adjusted text size */}
+                Need the step-by-step details again?
+              </AccordionTrigger>
+              <AccordionContent className="pt-2">{howItWorksSteps}</AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+        {/* --- End of main content div --- */}
 
         <CopyNotification
           show={showCopyNotification}
           onHide={() => setShowCopyNotification(false)}
         />
 
-        <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-4">
+        <DialogFooter className="pt-4 border-t sm:justify-center">
           <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
             Close
           </Button>
-          <Button
-            variant="outline"
-            onClick={handleOpenUploadModal}
-            className="w-full sm:w-auto flex items-center gap-1"
-          >
-            <FileUp className="h-4 w-4" />
-            Import JSON
-          </Button>
-          <Link href="/documentation" passHref>
-            <Button variant="secondary" className="w-full sm:w-auto flex items-center gap-1">
-              <FileDown className="h-4 w-4" />
-              Documentation
-            </Button>
-          </Link>
         </DialogFooter>
       </DialogContent>
     </Dialog>
