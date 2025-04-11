@@ -90,7 +90,7 @@ export function PlanSwitcher({
 
   return (
     <SidebarMenu>
-      <SidebarMenuItem>
+      <SidebarMenuItem className="flex items-center justify-center">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton

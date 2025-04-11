@@ -93,11 +93,13 @@ export default function AppSidebar() {
     <>
       <SidebarHeader className="my-4">
         <SidebarGroupLabel className="w-full flex items-center justify-center">
-          <h1 className="text-4xl font-bold text-primary">T-JSON</h1>
+          <Link href="/" passHref>
+            <h1 className="text-4xl font-bold text-primary">T-JSON</h1>
+          </Link>
         </SidebarGroupLabel>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup className="px-3 py-2">
+        <SidebarGroup className={cn(isOpen ? "px-3" : "px-1 flex flex-col items-center")}>
           <PlanSwitcher
             plans={plans}
             currentPlan={currentPlan}
@@ -109,30 +111,28 @@ export default function AppSidebar() {
           />
         </SidebarGroup>
         <SidebarGroup
-          className={cn("px-3 py-2 flex gap-2", isOpen ? "flex-col" : "flex-col items-center")}
+          className={cn("py-2 flex gap-2", isOpen ? "px-3 flex-col" : "px-3 flex-col items-center")}
         >
           <Button
             variant={viewMode === "month" ? "default" : "outline"}
-            size={isOpen ? "sm" : "icon"}
             onClick={() =>
               typeof changeViewMode === "function"
                 ? changeViewMode("month")
                 : console.error("'changeViewMode' is not a function")
             }
-            className={cn("w-full", isOpen && "justify-start")}
+            className={cn("w-full aspect-square", isOpen && "justify-start")}
             aria-label="Block View"
           >
             <Calendar className={cn("h-4 w-4", isOpen && "mr-2")} /> {isOpen && "Block View"}
           </Button>
           <Button
             variant={viewMode === "week" ? "default" : "outline"}
-            size={isOpen ? "sm" : "icon"}
             onClick={() =>
               typeof changeViewMode === "function"
                 ? changeViewMode("week")
                 : console.error("'changeViewMode' is not a function")
             }
-            className={cn("w-full", isOpen && "justify-start")}
+            className={cn("w-full aspect-square", isOpen && "justify-start")}
             aria-label="Weekly View"
           >
             <List className={cn("h-4 w-4", isOpen && "mr-2")} /> {isOpen && "Weekly View"}
