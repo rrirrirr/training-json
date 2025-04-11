@@ -15,14 +15,7 @@ import CopyNotification from "./copy-notification"
 import { useUploadModal } from "@/components/modals/upload-modal"
 import { ExternalLink, Copy, FileDown, FileUp } from "lucide-react"
 import Link from "next/link"
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "./ui/navigation-menu"
+import { AIPromptMenu } from "./ai-prompt-menu"
 
 interface AiAssistantDialogProps {
   isOpen: boolean
@@ -31,9 +24,7 @@ interface AiAssistantDialogProps {
 
 function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
   const [showCopyNotification, setShowCopyNotification] = useState(false)
-  const uploadModalStore = useUploadModal()
-
-  const aiPromptTemplate = `Please create a JSON file for my training plan with the following normalized structure:
+  const [currentPrompt, setCurrentPrompt] = useState<string>(`Please create a JSON file for my training plan with the following normalized structure:
 
 {
   "metadata": {
@@ -62,11 +53,18 @@ Before creating the JSON, please interview me with the following questions to un
 7. How long should the training program be? (weeks/months)
 8. Any specific exercises you want to include or avoid?
 
-After I answer these questions, please create a complete training plan JSON.`
+After I answer these questions, please create a complete training plan JSON.`)
+  
+  const uploadModalStore = useUploadModal()
 
   const handleCopyPrompt = () => {
-    navigator.clipboard.writeText(aiPromptTemplate)
+    navigator.clipboard.writeText(currentPrompt)
     setShowCopyNotification(true)
+    
+    // Auto-hide notification after 2 seconds
+    setTimeout(() => {
+      setShowCopyNotification(false)
+    }, 2000)
   }
 
   const handleOpenUploadModal = () => {
@@ -78,6 +76,12 @@ After I answer these questions, please create a complete training plan JSON.`
       })
       window.dispatchEvent(event)
     })
+  }
+  
+  // Handle prompt selection from AIPromptMenu
+  const handlePromptSelected = (prompt: string) => {
+    setCurrentPrompt(prompt)
+    // We don't need to handle the notification here as AIPromptMenu handles it internally
   }
 
   return (
@@ -114,107 +118,14 @@ After I answer these questions, please create a complete training plan JSON.`
                 </li>
               </ol>
             </div>
-            <div className="flex justify-start p-4">
-              <NavigationMenu>
-                <NavigationMenuList>
-                  <NavigationMenuItem>
-                    <NavigationMenuTrigger>Copy prompt for AI</NavigationMenuTrigger>
-                    <NavigationMenuContent className="w-[600px] lg:w-[700px]">
-                      <div className="grid grid-cols-2 gap-3 p-4">
-                        {/* Left column */}
-                        <div className="col-span-1 space-y-3">
-                          <Button
-                            variant="outline"
-                            className="w-full p-6 text-left justify-start h-auto"
-                            onClick={() => navigator.clipboard.writeText(aiPromptTemplate)}
-                          >
-                            <div>
-                              <div className="font-medium mb-1">General Strength Plan</div>
-                              <div className="text-xs text-muted-foreground">
-                                Basic prompt for strength training plan
-                              </div>
-                            </div>
-                          </Button>
-
-                          <Button
-                            variant="outline"
-                            className="w-full p-6 text-left justify-start h-auto"
-                            onClick={() => navigator.clipboard.writeText(aiPromptTemplate)}
-                          >
-                            <div>
-                              <div className="font-medium mb-1">Hypertrophy Focus</div>
-                              <div className="text-xs text-muted-foreground">
-                                Muscle building program
-                              </div>
-                            </div>
-                          </Button>
-
-                          <Button
-                            variant="outline"
-                            className="w-full p-6 text-left justify-start h-auto"
-                            onClick={() => navigator.clipboard.writeText(aiPromptTemplate)}
-                          >
-                            <div>
-                              <div className="font-medium mb-1">Endurance Training</div>
-                              <div className="text-xs text-muted-foreground">
-                                Cardiovascular and endurance focus
-                              </div>
-                            </div>
-                          </Button>
-                        </div>
-
-                        {/* Right column */}
-                        <div className="col-span-1 space-y-3">
-                          <Button
-                            variant="outline"
-                            className="w-full p-6 text-left justify-start h-auto"
-                            onClick={() => navigator.clipboard.writeText(aiPromptTemplate)}
-                          >
-                            <div>
-                              <div className="font-medium mb-1">Powerlifting Program</div>
-                              <div className="text-xs text-muted-foreground">
-                                Focused on the big three lifts
-                              </div>
-                            </div>
-                          </Button>
-
-                          <Button
-                            variant="outline"
-                            className="w-full p-6 text-left justify-start h-auto"
-                            onClick={() => navigator.clipboard.writeText(aiPromptTemplate)}
-                          >
-                            <div>
-                              <div className="font-medium mb-1">Athletic Performance</div>
-                              <div className="text-xs text-muted-foreground">
-                                Sports-specific training
-                              </div>
-                            </div>
-                          </Button>
-
-                          <Button
-                            variant="outline"
-                            className="w-full p-6 text-left justify-start h-auto"
-                            onClick={() => navigator.clipboard.writeText(aiPromptTemplate)}
-                          >
-                            <div>
-                              <div className="font-medium mb-1">Beginner Program</div>
-                              <div className="text-xs text-muted-foreground">
-                                Starter plan for newcomers
-                              </div>
-                            </div>
-                          </Button>
-                        </div>
-                      </div>
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
-                </NavigationMenuList>
-              </NavigationMenu>
+            
+            <div className="flex justify-start p-2">
+              <AIPromptMenu onCopy={handlePromptSelected} />
             </div>
 
             <div className="p-4 bg-muted rounded-lg">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-base font-medium">AI Prompt</h3>
-
                 <Button
                   size="sm"
                   onClick={handleCopyPrompt}
@@ -225,7 +136,7 @@ After I answer these questions, please create a complete training plan JSON.`
                 </Button>
               </div>
               <div className="bg-background p-3 rounded border text-xs font-mono max-h-[200px] overflow-y-auto">
-                {aiPromptTemplate}
+                {currentPrompt}
               </div>
             </div>
 
