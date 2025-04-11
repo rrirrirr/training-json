@@ -1,13 +1,13 @@
 "use client"
 
-import { Calendar, List, FileText, Info, Download, ExternalLink, Settings } from "lucide-react"
+import { Calendar, List, FileText, Info, Download, ExternalLink, Settings } from "lucide-react" // Keep imports
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useTrainingPlans } from "@/contexts/training-plan-context"
 import { useUploadModal } from "@/components/modals/upload-modal"
 import { useUIState } from "@/contexts/ui-context"
-import BlockSelector from "./shared/block-selector"
-import WeekSelector from "./shared/week-selector"
+import BlockSelector from "./shared/block-selector" // Keep import
+import WeekSelector from "./shared/week-selector" // Keep import
 import WeekTypeLegend from "./week-type-legend"
 import Link from "next/link"
 import {
@@ -21,6 +21,10 @@ import {
 import { PlanSwitcher } from "./plan-switcher"
 import { useEffect, useState } from "react"
 import { WeekType } from "@/types/training-plan"
+import React from "react" // Import React for Fragment shorthand <>
+
+// Assuming useExportModal exists or is handled elsewhere
+// import { useExportModal } from "@/components/modals/export-modal"
 
 export default function AppSidebar() {
   const {
@@ -43,7 +47,7 @@ export default function AppSidebar() {
 
   const { state } = useSidebar()
   const isOpen = state === "expanded"
-  
+
   // State for week types
   const [weekTypes, setWeekTypes] = useState<WeekType[]>([])
 
@@ -57,19 +61,20 @@ export default function AppSidebar() {
   }, [currentPlan])
 
   const uploadModalStore = useUploadModal()
-  // const exportModalStore = useExportModal() // Keep for compatibility with existing code
+  // Placeholder for exportModalStore if needed - replace with actual hook/context if used
+  const exportModalStore = { open: () => console.log("Export modal needs implementation") }
 
   const getWeekInfo = (weekNumber: number) => {
     const weekData = Array.isArray(trainingData)
       ? trainingData.find((w: any) => w.weekNumber === weekNumber)
       : undefined
-      
+
     if (!weekData) return { type: "", weekTypeIds: [], colorName: undefined }
-    
+
     return {
       type: weekData.weekType || "",
       weekTypeIds: weekData.weekTypeIds || [],
-      colorName: weekData.weekStyle?.colorName
+      colorName: weekData.weekStyle?.colorName,
     }
   }
 
@@ -128,75 +133,85 @@ export default function AppSidebar() {
             onDeletePlan={handleDeletePlan}
           />
         </SidebarGroup>
-        <SidebarGroup
-          className={cn("py-2 flex gap-2", isOpen ? "px-3 flex-col" : "px-3 flex-col items-center")}
-        >
-          <Button
-            variant={viewMode === "month" ? "default" : "outline"}
-            onClick={() =>
-              typeof changeViewMode === "function"
-                ? changeViewMode("month")
-                : console.error("'changeViewMode' is not a function")
-            }
-            className={cn("w-full aspect-square", isOpen && "justify-start")}
-            aria-label="Block View"
-          >
-            <Calendar className={cn("h-4 w-4", isOpen && "mr-2")} /> {isOpen && "Block View"}
-          </Button>
-          <Button
-            variant={viewMode === "week" ? "default" : "outline"}
-            onClick={() =>
-              typeof changeViewMode === "function"
-                ? changeViewMode("week")
-                : console.error("'changeViewMode' is not a function")
-            }
-            className={cn("w-full aspect-square", isOpen && "justify-start")}
-            aria-label="Weekly View"
-          >
-            <List className={cn("h-4 w-4", isOpen && "mr-2")} /> {isOpen && "Weekly View"}
-          </Button>
 
-          {isOpen ? (
-            <>
-              {viewMode === "month" ? (
-                <BlockSelector
-                  blocks={monthsForSidebar}
-                  selectedBlockId={selectedMonth}
-                  onSelectBlock={(id) =>
-                    typeof selectMonth === "function"
-                      ? selectMonth(id)
-                      : console.error("'selectMonth' is not a function")
-                  }
-                  variant="sidebar"
-                />
-              ) : (
-                <WeekSelector
-                  weeks={weeksForSidebar}
-                  selectedWeek={selectedWeek}
-                  onSelectWeek={(num) =>
-                    typeof selectWeek === "function"
-                      ? selectWeek(num)
-                      : console.error("'selectWeek' is not a function")
-                  }
-                  variant="sidebar"
-                  getWeekInfo={getWeekInfo}
-                />
-              )}
-            </>
-          ) : (
-            <div className="p-4 text-center text-muted-foreground text-xs"></div>
+        {/* Container for buttons + selectors hidden on mobile */}
+        <div
+          className={cn(
+            "hidden md:flex md:flex-col md:gap-2",
+            isOpen ? "px-3" : "px-3 items-center"
           )}
-        </SidebarGroup>
+        >
+          <SidebarGroup className={cn("flex gap-2", isOpen ? "flex-col" : "flex-col items-center")}>
+            {/* Buttons only appear on 'md' screens and larger */}
+            <Button
+              variant={viewMode === "month" ? "default" : "outline"}
+              onClick={() =>
+                typeof changeViewMode === "function"
+                  ? changeViewMode("month")
+                  : console.error("'changeViewMode' is not a function")
+              }
+              className={cn("aspect-square", isOpen ? "w-full justify-start" : "w-auto")}
+              aria-label="Block View"
+            >
+              <Calendar className={cn("h-4 w-4", isOpen && "mr-2")} /> {isOpen && "Block View"}
+            </Button>
+            <Button
+              variant={viewMode === "week" ? "default" : "outline"}
+              onClick={() =>
+                typeof changeViewMode === "function"
+                  ? changeViewMode("week")
+                  : console.error("'changeViewMode' is not a function")
+              }
+              className={cn("aspect-square", isOpen ? "w-full justify-start" : "w-auto")}
+              aria-label="Weekly View"
+            >
+              <List className={cn("h-4 w-4", isOpen && "mr-2")} /> {isOpen && "Weekly View"}
+            </Button>
+
+            {/* Selector logic - also only shown on 'md' screens and larger */}
+            {isOpen ? (
+              <>
+                {viewMode === "month" ? (
+                  <BlockSelector
+                    blocks={monthsForSidebar}
+                    selectedBlockId={selectedMonth}
+                    onSelectBlock={(id) =>
+                      typeof selectMonth === "function"
+                        ? selectMonth(id)
+                        : console.error("'selectMonth' is not a function")
+                    }
+                    variant="sidebar"
+                  />
+                ) : (
+                  <WeekSelector
+                    weeks={weeksForSidebar}
+                    selectedWeek={selectedWeek}
+                    onSelectWeek={(num) =>
+                      typeof selectWeek === "function"
+                        ? selectWeek(num)
+                        : console.error("'selectWeek' is not a function")
+                    }
+                    variant="sidebar"
+                    getWeekInfo={getWeekInfo}
+                  />
+                )}
+              </>
+            ) : (
+              <div className="p-4 text-center text-muted-foreground text-xs"></div>
+            )}
+          </SidebarGroup>
+        </div>
       </SidebarContent>
 
       <SidebarFooter className={cn(!isOpen && "items-center")}>
+        {/* Apply responsive hiding to the Week Types legend container */}
+        {/* It's already inside an `isOpen` check, so we add `hidden md:block` */}
         {isOpen && (
-          <div className="p-4 text-sm text-muted-foreground">
-            {/* Use the dynamic week type legend component */}
+          <div className="hidden md:block p-4 text-sm text-muted-foreground">
+            {" "}
+            {/* <-- Added hidden md:block here */}
             <h4 className="font-medium mb-2">Week Types</h4>
             <WeekTypeLegend weekTypes={weekTypes} />
-            
-            {/* If no week types are defined, show a message */}
             {(!weekTypes || weekTypes.length === 0) && (
               <p className="text-xs italic mt-2">
                 No week types defined. Add week types in the JSON to customize week styling.
@@ -205,6 +220,7 @@ export default function AppSidebar() {
           </div>
         )}
 
+        {/* Other footer items remain unchanged and visible on all sizes */}
         <div className="px-3 py-2">
           <Link href="/documentation" passHref>
             <Button
@@ -241,7 +257,7 @@ export default function AppSidebar() {
           <Button
             variant="ghost"
             size={isOpen ? "default" : "icon"}
-            onClick={openInfoDialog} // Use UIContext function
+            onClick={openInfoDialog}
             className={cn("w-full", isOpen && "justify-start")}
             aria-label="Information"
           >
@@ -254,7 +270,7 @@ export default function AppSidebar() {
           <Button
             variant="ghost"
             size={isOpen ? "default" : "icon"}
-            onClick={openSettingsDialog} // Use UIContext function
+            onClick={openSettingsDialog}
             className={cn("w-full", isOpen && "justify-start")}
             aria-label="Settings"
           >
