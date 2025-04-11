@@ -10,7 +10,6 @@ import BlockSelector from "./shared/block-selector"
 import WeekSelector from "./shared/week-selector"
 import Link from "next/link"
 import {
-  Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroupLabel,
@@ -37,7 +36,7 @@ export default function AppSidebar() {
   } = useTrainingPlans()
 
   // Use the UIContext
-  const { openSettingsDialog, openInfoDialog } = useUIState()
+  const { openSettingsDialog, openInfoDialog, openPlanActionDialog } = useUIState()
 
   const { state } = useSidebar()
   const isOpen = state === "expanded"
@@ -74,6 +73,22 @@ export default function AppSidebar() {
     }
   }
 
+  const handleEditPlan = (plan: any) => {
+    if (typeof openPlanActionDialog === "function") {
+      openPlanActionDialog("edit", plan) // Open dialog in 'edit' mode
+    } else {
+      console.error("'openPlanActionDialog' is not available from UI context")
+    }
+  }
+
+  const handleDeletePlan = (plan: any) => {
+    if (typeof openPlanActionDialog === "function") {
+      openPlanActionDialog("delete", plan) // Open dialog in 'delete' mode
+    } else {
+      console.error("'openPlanActionDialog' is not available from UI context")
+    }
+  }
+
   return (
     <>
       <SidebarHeader className="my-4">
@@ -89,6 +104,8 @@ export default function AppSidebar() {
             isOpen={isOpen}
             onSelectPlan={handleSelectPlan}
             onCreatePlan={handleCreateNewPlan}
+            onEditPlan={handleEditPlan}
+            onDeletePlan={handleDeletePlan}
           />
         </SidebarGroup>
         <SidebarGroup
