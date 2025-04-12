@@ -3,7 +3,7 @@
 import type { Week, MonthBlock } from "@/types/training-plan"
 import { Calendar, List, FilePlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useTrainingPlans } from "@/contexts/training-plan-context"
+import { usePlanStore } from "@/store/plan-store"
 
 interface SidebarProps {
   weeks: number[]
@@ -28,7 +28,7 @@ export default function Sidebar({
   viewMode,
   onViewModeChange,
 }: SidebarProps) {
-  const { currentPlan } = useTrainingPlans()
+  const activePlan = usePlanStore((state) => state.activePlan)
   
   // Function to get week type (A/B) and special status (deload/test)
   const getWeekInfo = (weekNumber: number) => {
@@ -56,7 +56,7 @@ export default function Sidebar({
           </Button>
         </div>
         <p className="text-sm text-gray-400">
-          {currentPlan ? currentPlan.name : "Träningsöversikt"}
+          {activePlan ? activePlan.metadata?.planName || "Unnamed Plan" : "Träningsöversikt"}
         </p>
       </div>
 

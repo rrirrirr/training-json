@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useState, useEffect } from "react"
 import type { MonthBlock, Week, WeekType } from "@/types/training-plan"
 import { cn } from "@/lib/utils"
-import { useTrainingPlans } from "@/contexts/training-plan-context"
+import { usePlanStore } from "@/store/plan-store"
 import BlockSelector from "@/components/shared/block-selector"
 import WeekSelector from "@/components/shared/week-selector"
 import WeekTypeLegend from "./week-type-legend"
@@ -36,19 +36,20 @@ export function MobileNavBar({
   onWeekChange,
   onJumpToSelection,
 }: MobileNavBarProps) {
-  const { trainingData, currentPlan } = useTrainingPlans()
+  const activePlan = usePlanStore((state) => state.activePlan)
+  const trainingData = activePlan?.weeks || []
   
   // State for week types
   const [weekTypes, setWeekTypes] = useState<WeekType[]>([])
   
   // Get week types from current plan
   useEffect(() => {
-    if (currentPlan?.data?.weekTypes && Array.isArray(currentPlan.data.weekTypes)) {
-      setWeekTypes(currentPlan.data.weekTypes)
+    if (activePlan?.weekTypes && Array.isArray(activePlan.weekTypes)) {
+      setWeekTypes(activePlan.weekTypes)
     } else {
       setWeekTypes([])
     }
-  }, [currentPlan])
+  }, [activePlan])
 
   // Function to get week type and status
   const getWeekInfo = (weekNumber: number) => {

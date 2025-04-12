@@ -12,10 +12,7 @@ interface WelcomeScreenProps {
   onImportData: (data: TrainingPlanData) => void
 }
 
-export default function WelcomeScreen({
-  onLoadExample,
-  onImportData,
-}: WelcomeScreenProps) {
+export default function WelcomeScreen({ onLoadExample, onImportData }: WelcomeScreenProps) {
   // Get the modal stores directly
   const uploadModalStore = useUploadModal()
   const aiInfoModalStore = useAiInfoModal()
@@ -26,12 +23,10 @@ export default function WelcomeScreen({
         <div className="max-w-4xl mx-auto">
           {/* Main Header */}
           <div className="text-center mb-10">
-            <h1 className="text-4xl font-bold text-primary sm:text-5xl md:text-6xl mb-4">
-              T-JSON
-            </h1>
+            <h1 className="text-4xl font-bold text-primary sm:text-5xl md:text-6xl mb-4">T-JSON</h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              JSON-based training plan visualization tool. Create, manage, and visualize your training 
-              plans easily with T-JSON.
+              JSON-based training plan visualization tool. Create, manage, and visualize your
+              training plans easily with T-JSON.
             </p>
           </div>
 
@@ -100,8 +95,8 @@ export default function WelcomeScreen({
           {/* Info Text Footer */}
           <div className="mt-12 text-center">
             <p className="text-sm text-muted-foreground">
-              Use this tool to easily organize, visualize, and track your training plan
-              whether it's created manually or generated with AI.
+              Use this tool to easily organize, visualize, and track your training plan whether it's
+              created manually or generated with AI.
             </p>
           </div>
         </div>
