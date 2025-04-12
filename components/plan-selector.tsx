@@ -26,33 +26,47 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
-import { useTrainingPlans, type SavedTrainingPlan } from "@/contexts/training-plan-context"
+import { usePlanStore, type PlanMetadata } from "@/store/plan-store"
 import JsonEditor from "./json-editor" // Import the new JSON editor component
 
 export default function PlanSelector() {
-  const { plans, currentPlan, setCurrentPlan, deletePlan } = useTrainingPlans()
+  const planMetadataList = usePlanStore((state) => state.planMetadataList)
+  const activePlan = usePlanStore((state) => state.activePlan)
+  const activePlanId = usePlanStore((state) => state.activePlanId)
+  const removeLocalPlan = usePlanStore((state) => state.removeLocalPlan)
+  
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isJsonEditorOpen, setIsJsonEditorOpen] = useState(false) // New state for JSON editor
-  const [planToDelete, setPlanToDelete] = useState<SavedTrainingPlan | null>(null)
-  const [planToViewJson, setPlanToViewJson] = useState<SavedTrainingPlan | null>(null) // New state for JSON viewing
+  const [planToDelete, setPlanToDelete] = useState<PlanMetadata | null>(null)
+  const [planToViewJson, setPlanToViewJson] = useState<any | null>(null) // New state for JSON viewing
 
   // Handle plan selection
-  const handleSelectPlan = (plan: SavedTrainingPlan) => {
-    setCurrentPlan(plan)
+  const handleSelectPlan = (plan: PlanMetadata) => {
+    // Instead of directly updating the state, navigate to the plan page
+    window.location.href = `/plan/${plan.id}`;
     setIsPopoverOpen(false)
   }
 
   // Handle view JSON click
-  const handleViewJsonClick = (plan: SavedTrainingPlan, e: React.MouseEvent) => {
+  const handleViewJsonClick = (plan: PlanMetadata, e: React.MouseEvent) => {
     e.stopPropagation()
-    setPlanToViewJson(plan)
+    // Since we only have metadata, we need to make sure we have the full plan
+    const planData = activePlanId === plan.id ? { 
+      id: plan.id,
+      name: plan.name,
+      data: activePlan, 
+      createdAt: plan.createdAt,
+      updatedAt: plan.updatedAt,
+    } : plan
+    
+    setPlanToViewJson(planData)
     setIsJsonEditorOpen(true)
     setIsPopoverOpen(false)
   }
 
   // Handle delete button click
-  const handleDeleteClick = (plan: SavedTrainingPlan, e: React.MouseEvent) => {
+  const handleDeleteClick = (plan: PlanMetadata, e: React.MouseEvent) => {
     e.stopPropagation()
     setPlanToDelete(plan)
     setIsDeleteDialogOpen(true)
@@ -60,19 +74,28 @@ export default function PlanSelector() {
   }
 
   // Handle confirm delete
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (planToDelete) {
-      deletePlan(planToDelete.id)
+      await removeLocalPlan(planToDelete.id)
+      
+      // If we just deleted the active plan, redirect to home
+      if (activePlanId === planToDelete.id) {
+        window.location.href = "/";
+      }
     }
     setPlanToDelete(null)
     setIsDeleteDialogOpen(false)
   }
 
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString()
+  const formatDate = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleDateString()
+    } catch {
+      return "Unknown date"
+    }
   }
 
-  if (!plans.length) {
+  if (!planMetadataList.length) {
     return null
   }
 
@@ -84,18 +107,18 @@ export default function PlanSelector() {
             variant="outline"
             className="flex items-center justify-between gap-2 w-full md:w-auto md:min-w-[200px]"
           >
-            {currentPlan ? currentPlan.name : "Select a Plan"}
+            {activePlan?.metadata?.planName || "Select a Plan"}
             <ChevronDown className="h-4 w-4 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0">
           <div className="max-h-[400px] overflow-auto">
-            {plans.map((plan) => (
+            {planMetadataList.map((plan) => (
               <div
                 key={plan.id}
                 className={`
                   flex items-center justify-between p-2 cursor-pointer hover:bg-gray-100 group relative overflow-hidden
-                  ${currentPlan?.id === plan.id ? "bg-blue-50" : ""}
+                  ${activePlanId === plan.id ? "bg-blue-50" : ""}
                 `}
                 onClick={() => handleSelectPlan(plan)}
               >

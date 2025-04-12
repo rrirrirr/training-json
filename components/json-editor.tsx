@@ -11,25 +11,28 @@ import {
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { SavedTrainingPlan, useTrainingPlans } from "@/contexts/training-plan-context"
+import { usePlanStore } from "@/store/plan-store"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle, Save, Copy, Info, Bot } from "lucide-react"
 import CopyNotification from "@/components/copy-notification"
 import CopyForAINotification from "@/components/copy-for-ai-notification"
 import { copyJsonErrorForAI } from "@/utils/copy-for-ai"
+import { useRouter } from "next/navigation"
 
 interface JsonEditorProps {
   isOpen: boolean
   onClose: () => void
-  plan: SavedTrainingPlan | null
+  plan: any // We'll accept any plan object that has id and data properties
 }
 
 export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
-  const { updatePlan } = useTrainingPlans()
+  const router = useRouter()
+  const createPlanFromEdit = usePlanStore((state) => state.createPlanFromEdit)
   const [jsonText, setJsonText] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isSaved, setIsSaved] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   
   // Separate notification states for regular copy and AI copy
   const [showCopyNotification, setShowCopyNotification] = useState(false)
@@ -55,12 +58,14 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
     if (!isOpen) {
       setError(null)
       setIsSaved(false)
+      setIsSubmitting(false)
     }
   }, [isOpen])
 
-  const handleSave = () => {
-    if (!plan) return
+  const handleSave = async () => {
+    if (!plan || !plan.id) return
 
+    setIsSubmitting(true)
     try {
       const parsedData = JSON.parse(jsonText)
 
@@ -74,36 +79,43 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
       }
       
       // Now, also check metadata and extract the plan name
-      let newPlanName = plan.name; // Default to current name
+      let newPlanName;
       if (parsedData.metadata && parsedData.metadata.planName) {
         newPlanName = parsedData.metadata.planName;
       } else {
         // If no metadata exists, create it with the current plan name
+        const currentName = plan.name || plan.metadata?.planName || "Edited Plan"
         if (!parsedData.metadata) {
           parsedData.metadata = {
-            planName: plan.name,
+            planName: `${currentName} (Edited)`,
             creationDate: new Date().toISOString().split('T')[0]
           };
         } else if (!parsedData.metadata.planName) {
-          parsedData.metadata.planName = plan.name;
+          parsedData.metadata.planName = `${currentName} (Edited)`;
         }
+        newPlanName = parsedData.metadata.planName;
       }
 
-      // Update plan with validated data - also update plan name if changed
-      updatePlan(plan.id, { 
-        data: parsedData,
-        name: newPlanName // Now we update the name directly from metadata
-      });
+      // Create a new plan from the edited data
+      const newPlanId = await createPlanFromEdit(plan.id, parsedData, newPlanName);
       
-      setIsSaved(true)
-      setError(null)
+      if (newPlanId) {
+        setIsSaved(true)
+        setError(null)
 
-      // Close dialog after a brief delay to show success state
-      setTimeout(() => {
-        onClose()
-      }, 1500)
+        // Close dialog after a brief delay to show success state
+        setTimeout(() => {
+          onClose()
+          // Redirect to the new plan
+          router.push(`/plan/${newPlanId}`)
+        }, 1500)
+      } else {
+        throw new Error("Failed to create new plan from edit")
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invalid JSON format")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -149,7 +161,7 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
                 onClick={handleCopy} 
                 variant="outline" 
                 className="flex items-center gap-2"
-                disabled={!jsonText}
+                disabled={!jsonText || isSubmitting}
               >
                 <Copy className="h-4 w-4" />
                 Copy JSON
@@ -159,7 +171,7 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
                   onClick={handleCopyForAI} 
                   variant="outline" 
                   className="flex items-center gap-2"
-                  disabled={!jsonText}
+                  disabled={!jsonText || isSubmitting}
                 >
                   <Bot className="h-4 w-4" />
                   Copy for AI Help
@@ -169,12 +181,12 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
           </DialogHeader>
 
           {/* Add metadata tip */}
-          <Alert className="mt-2 bg-blue-50 border-blue-200 text-blue-800">
+          <Alert className="mt-2 bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950 dark:border-blue-900 dark:text-blue-200">
             <Info className="h-4 w-4" />
             <AlertTitle>Renaming Plans</AlertTitle>
             <AlertDescription>
-              To rename this plan, edit the <code className="bg-blue-100 px-1 rounded">metadata.planName</code> field.
-              The metadata section should look like: <code className="bg-blue-100 px-1 rounded">"metadata": {"{"} "planName": "My Plan Name" {"}"}</code>
+              To rename this plan, edit the <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">metadata.planName</code> field.
+              The metadata section should look like: <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">"metadata": {"{"} "planName": "My Plan Name" {"}"}</code>
             </AlertDescription>
           </Alert>
 
@@ -188,6 +200,7 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
               }}
               className="min-h-[400px] font-mono text-sm resize-none"
               placeholder="Loading plan data..."
+              disabled={isSubmitting}
             />
           </ScrollArea>
 
@@ -202,6 +215,7 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
                   size="sm" 
                   className="flex items-center gap-1 ml-4 mt-1"
                   onClick={handleCopyForAI}
+                  disabled={isSubmitting}
                 >
                   <Bot className="h-3 w-3" />
                   Copy for AI
@@ -211,19 +225,26 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
           )}
 
           {isSaved && (
-            <Alert className="mt-4 bg-green-50 border-green-200 text-green-800">
+            <Alert className="mt-4 bg-green-50 border-green-200 text-green-800 dark:bg-green-950 dark:border-green-900 dark:text-green-200">
               <Save className="h-4 w-4" />
               <AlertTitle>Success</AlertTitle>
-              <AlertDescription>Changes saved successfully!</AlertDescription>
+              <AlertDescription>Changes saved successfully! Creating new plan...</AlertDescription>
             </Alert>
           )}
 
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={!plan}>
-              Save Changes
+            <Button onClick={handleSave} disabled={!plan || isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <span className="animate-spin mr-2">⏳</span>
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

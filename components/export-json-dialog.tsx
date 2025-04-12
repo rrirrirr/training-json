@@ -11,8 +11,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { useTrainingPlans } from "@/contexts/training-plan-context"
-import { SavedTrainingPlan } from "@/contexts/training-plan-context"
+import { usePlanStore } from "@/store/plan-store"
 import CopyNotification from "./copy-notification"
 import { Copy, Download, Check } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -23,23 +22,24 @@ interface ExportJsonDialogProps {
 }
 
 export default function ExportJsonDialog({ isOpen, onClose }: ExportJsonDialogProps) {
-  const { currentPlan } = useTrainingPlans()
+  const activePlan = usePlanStore((state) => state.activePlan)
+  const activePlanId = usePlanStore((state) => state.activePlanId)
   const [showCopyNotification, setShowCopyNotification] = useState(false)
   const [activeTab, setActiveTab] = useState("standard")
   const [copySuccess, setCopySuccess] = useState(false)
   const [downloadSuccess, setDownloadSuccess] = useState(false)
 
   // Format JSON data for display and export
-  const getFormattedJson = (plan: SavedTrainingPlan | null, formatted = true) => {
+  const getFormattedJson = (plan: typeof activePlan, formatted = true) => {
     if (!plan) return ""
-    return JSON.stringify(plan.data, null, formatted ? 2 : 0)
+    return JSON.stringify(plan, null, formatted ? 2 : 0)
   }
 
   // Handle copy to clipboard
   const handleCopy = () => {
-    if (!currentPlan) return
+    if (!activePlan) return
     
-    const jsonData = getFormattedJson(currentPlan, activeTab === "standard")
+    const jsonData = getFormattedJson(activePlan, activeTab === "standard")
     
     navigator.clipboard.writeText(jsonData).then(
       () => {
@@ -55,10 +55,11 @@ export default function ExportJsonDialog({ isOpen, onClose }: ExportJsonDialogPr
 
   // Handle download JSON file
   const handleDownload = () => {
-    if (!currentPlan) return
+    if (!activePlan) return
     
-    const jsonData = getFormattedJson(currentPlan, activeTab === "standard")
-    const fileName = `${currentPlan.name.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.json`
+    const jsonData = getFormattedJson(activePlan, activeTab === "standard")
+    const planName = activePlan.metadata?.planName || "training-plan"
+    const fileName = `${planName.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.json`
     
     // Create a blob with the JSON data
     const blob = new Blob([jsonData], { type: "application/json" })
@@ -79,9 +80,10 @@ export default function ExportJsonDialog({ isOpen, onClose }: ExportJsonDialogPr
     setTimeout(() => setDownloadSuccess(false), 2000)
   }
 
-  const formattedJson = getFormattedJson(currentPlan)
-  const minifiedJson = getFormattedJson(currentPlan, false)
+  const formattedJson = getFormattedJson(activePlan)
+  const minifiedJson = getFormattedJson(activePlan, false)
   const displayJson = activeTab === "standard" ? formattedJson : minifiedJson
+  const planName = activePlan?.metadata?.planName || "Unknown Plan"
   
   return (
     <>
@@ -90,13 +92,13 @@ export default function ExportJsonDialog({ isOpen, onClose }: ExportJsonDialogPr
           <DialogHeader>
             <DialogTitle>Export Training Plan JSON</DialogTitle>
             <DialogDescription>
-              {currentPlan ? 
-                `Export "${currentPlan.name}" training plan as JSON. You can copy to clipboard or download as a file.` : 
+              {activePlan ? 
+                `Export "${planName}" training plan as JSON. You can copy to clipboard or download as a file.` : 
                 "No training plan selected to export."}
             </DialogDescription>
           </DialogHeader>
           
-          {currentPlan ? (
+          {activePlan ? (
             <>
               <Tabs 
                 defaultValue="standard" 

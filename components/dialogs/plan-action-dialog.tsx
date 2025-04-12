@@ -1,7 +1,7 @@
 "use client"
 
 import { useUIState } from "@/contexts/ui-context"
-import { useTrainingPlans } from "@/contexts/training-plan-context"
+import { usePlanStore } from "@/store/plan-store"
 import JsonEditor from "@/components/json-editor"
 import {
   Dialog,
@@ -15,12 +15,12 @@ import { Button } from "@/components/ui/button"
 
 export function PlanActionDialog() {
   const { isPlanActionDialogOpen, planActionType, planActionTarget, closePlanActionDialog } = useUIState()
-  const { deletePlan } = useTrainingPlans()
+  const removeLocalPlan = usePlanStore((state) => state.removeLocalPlan)
 
   // Function to handle deletion
   const handleConfirmDelete = () => {
-    if (planActionTarget?.id && typeof deletePlan === "function") {
-      deletePlan(planActionTarget.id)
+    if (planActionTarget?.id && typeof removeLocalPlan === "function") {
+      removeLocalPlan(planActionTarget.id)
     }
     closePlanActionDialog()
   }

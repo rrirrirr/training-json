@@ -8,7 +8,9 @@ import { Toaster } from "@/components/ui/toaster"
 import { ModalProvider } from "@/components/modals/modal-provider"
 import { UIProvider } from "@/contexts/ui-context"
 import { DialogProvider } from "@/components/dialogs/dialog-provider"
+import { PlanEventHandler } from "@/components/plan-event-handler"
 import { cn } from "@/lib/utils" // Import cn utility
+
 const fontSans = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -58,11 +60,13 @@ export default function RootLayout({
         >
           <UIProvider>
             <SidebarProvider>
-              <LayoutClient>
-                {children}
-                <ModalProvider />
-                <DialogProvider />
-              </LayoutClient>
+              <PlanEventHandler>
+                <LayoutClient>
+                  {children}
+                  <ModalProvider />
+                  <DialogProvider />
+                </LayoutClient>
+              </PlanEventHandler>
             </SidebarProvider>
           </UIProvider>
           <Toaster />
