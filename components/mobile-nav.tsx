@@ -1,7 +1,7 @@
 "use client"
 
 import { useUIState } from "@/contexts/ui-context"
-import { useTrainingPlans } from "@/contexts/training-plan-context"
+import { usePlanStore } from "@/store/plan-store"
 import {
   Sheet,
   SheetContent,
@@ -19,29 +19,30 @@ import type { WeekType } from "@/types/training-plan"
 export function MobileNav() {
   const { isMobileNavOpen, closeMobileNav } = useUIState()
   
-  const {
-    monthsForSidebar,
-    weeksForSidebar,
-    selectedMonth,
-    selectedWeek,
-    selectWeek,
-    selectMonth,
-    trainingData,
-    currentPlan,
-    viewMode, // Get the current view mode
-  } = useTrainingPlans()
+  // Get data from Zustand store
+  const activePlan = usePlanStore((state) => state.activePlan)
+  const selectedMonth = usePlanStore((state) => state.selectedMonth)
+  const selectedWeek = usePlanStore((state) => state.selectedWeek)
+  const viewMode = usePlanStore((state) => state.viewMode)
+  const selectWeek = usePlanStore((state) => state.selectWeek)
+  const selectMonth = usePlanStore((state) => state.selectMonth)
+  
+  // Derive monthsForSidebar and weeksForSidebar from activePlan
+  const monthsForSidebar = activePlan?.monthBlocks || []
+  const weeksForSidebar = activePlan?.weeks.map(w => w.weekNumber).sort((a, b) => a - b) || []
+  const trainingData = activePlan?.weeks || []
   
   // State for week types
   const [weekTypes, setWeekTypes] = useState<WeekType[]>([])
   
   // Get week types from current plan
   useEffect(() => {
-    if (currentPlan?.data?.weekTypes && Array.isArray(currentPlan.data.weekTypes)) {
-      setWeekTypes(currentPlan.data.weekTypes)
+    if (activePlan?.weekTypes && Array.isArray(activePlan.weekTypes)) {
+      setWeekTypes(activePlan.weekTypes)
     } else {
       setWeekTypes([])
     }
-  }, [currentPlan])
+  }, [activePlan])
 
   // Function to get week type and status
   const getWeekInfo = (weekNumber: number) => {

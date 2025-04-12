@@ -3,7 +3,7 @@
 import { useScrollPosition } from "@/hooks/use-scroll-position"
 import { Button } from "@/components/ui/button"
 import { PanelBottomOpen } from "lucide-react"
-import { useTrainingPlans } from "@/contexts/training-plan-context"
+import { usePlanStore } from "@/store/plan-store"
 import { useUIState } from "@/contexts/ui-context"
 import { cn } from "@/lib/utils"
 
@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils"
 export function MobileScrollNav() {
   const { scrollY, isHeaderVisible } = useScrollPosition()
   const { openMobileNav } = useUIState()
-  const { viewMode } = useTrainingPlans()
+  const viewMode = usePlanStore((state) => state.viewMode)
 
   // Only show on mobile
   if (typeof window !== "undefined" && window.innerWidth > 768) {

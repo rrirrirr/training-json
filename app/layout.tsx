@@ -2,7 +2,6 @@ import type { Metadata } from "next"
 import { Inter, Archivo_Black, Oswald } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "next-themes"
-import { TrainingPlanProvider } from "@/contexts/training-plan-context"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { LayoutClient } from "@/components/layout/layout-client"
 import { Toaster } from "@/components/ui/toaster"
@@ -43,7 +42,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
-      {/* --- CORRECTED BODY TAG --- */}
       <body
         className={cn(
           "min-h-screen bg-background font-sans antialiased",
@@ -52,7 +50,6 @@ export default function RootLayout({
           fontOswald.variable
         )}
       >
-        {/* --- END OF CORRECTIONS --- */}
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -60,15 +57,13 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <UIProvider>
-            <TrainingPlanProvider>
-              <SidebarProvider>
-                <LayoutClient>
-                  {children}
-                  <ModalProvider />
-                  <DialogProvider />
-                </LayoutClient>
-              </SidebarProvider>
-            </TrainingPlanProvider>
+            <SidebarProvider>
+              <LayoutClient>
+                {children}
+                <ModalProvider />
+                <DialogProvider />
+              </LayoutClient>
+            </SidebarProvider>
           </UIProvider>
           <Toaster />
         </ThemeProvider>

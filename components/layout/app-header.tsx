@@ -3,7 +3,7 @@
 import React from "react"
 import { Button } from "@/components/ui/button"
 import { PanelLeft, PanelLeftClose, PanelBottom, Settings, ChevronDown } from "lucide-react"
-import { useTrainingPlans } from "@/contexts/training-plan-context"
+import { usePlanStore } from "@/store/plan-store"
 import { useSidebar } from "@/components/ui/sidebar"
 import { useUIState } from "@/contexts/ui-context"
 import { MobileNav } from "../mobile-nav"
@@ -18,8 +18,10 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
   const { isMobile } = useSidebar()
   const { openMobileNav, openSettingsDialog } = useUIState() 
   
-  // Get data for navigation display
-  const { selectedMonth, selectedWeek, viewMode } = useTrainingPlans()
+  // Get data for navigation display from the Zustand store
+  const selectedMonth = usePlanStore((state) => state.selectedMonth)
+  const selectedWeek = usePlanStore((state) => state.selectedWeek)
+  const viewMode = usePlanStore((state) => state.viewMode)
 
   // Display text for the navigation button
   const mainButtonText = selectedWeek !== null ? `Vecka ${selectedWeek}` : `Block ${selectedMonth}`

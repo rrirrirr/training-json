@@ -1,13 +1,12 @@
 "use client"
 
-import { Calendar, List, FileText, Info, Download, ExternalLink, Settings } from "lucide-react" // Keep imports
+import { Calendar, List, FileText, Info, Download, ExternalLink, Settings } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { useTrainingPlans } from "@/contexts/training-plan-context"
 import { useUploadModal } from "@/components/modals/upload-modal"
 import { useUIState } from "@/contexts/ui-context"
-import BlockSelector from "./shared/block-selector" // Keep import
-import WeekSelector from "./shared/week-selector" // Keep import
+import BlockSelector from "./shared/block-selector"
+import WeekSelector from "./shared/week-selector"
 import WeekTypeLegend from "./week-type-legend"
 import Link from "next/link"
 import {
@@ -18,56 +17,61 @@ import {
   SidebarGroup,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { PlanSwitcher } from "./plan-switcher"
 import { useEffect, useState } from "react"
 import { WeekType } from "@/types/training-plan"
-import React from "react" // Import React for Fragment shorthand <>
-
-// Assuming useExportModal exists or is handled elsewhere
-// import { useExportModal } from "@/components/modals/export-modal"
+import { useRouter } from "next/navigation"
+import { usePlanStore } from "@/store/plan-store"
+import { useExportModal } from "@/components/modals/export-modal"
+import { PlanSwitcher } from "./plan-switcher"
 
 export default function AppSidebar() {
-  const {
-    plans = [],
-    currentPlan,
-    setCurrentPlan,
-    selectedWeek,
-    selectWeek,
-    selectedMonth,
-    selectMonth,
-    viewMode,
-    changeViewMode,
-    weeksForSidebar = [],
-    monthsForSidebar = [],
-    trainingData = [],
-  } = useTrainingPlans()
+  const router = useRouter()
 
-  // Use the UIContext
-  const { openSettingsDialog, openInfoDialog, openPlanActionDialog } = useUIState()
+  // Get data from Zustand store
+  const activePlan = usePlanStore((state) => state.activePlan)
+  const activePlanId = usePlanStore((state) => state.activePlanId)
+  const selectedWeek = usePlanStore((state) => state.selectedWeek)
+  const selectedMonth = usePlanStore((state) => state.selectedMonth)
+  const viewMode = usePlanStore((state) => state.viewMode)
+  const selectWeek = usePlanStore((state) => state.selectWeek)
+  const selectMonth = usePlanStore((state) => state.selectMonth)
+  const setViewMode = usePlanStore((state) => state.setViewMode)
+  const planMetadataList = usePlanStore((state) => state.planMetadataList)
+  const fetchPlanMetadata = usePlanStore((state) => state.fetchPlanMetadata)
 
+  // Use the UIContext for UI-specific actions
+  const { openSettingsDialog, openInfoDialog } = useUIState()
+
+  // Use the sidebar state
   const { state } = useSidebar()
   const isOpen = state === "expanded"
 
   // State for week types
   const [weekTypes, setWeekTypes] = useState<WeekType[]>([])
 
-  // Get week types from current plan
+  // Load plan metadata when necessary
   useEffect(() => {
-    if (currentPlan?.data?.weekTypes && Array.isArray(currentPlan.data.weekTypes)) {
-      setWeekTypes(currentPlan.data.weekTypes)
+    if (planMetadataList.length === 0) {
+      fetchPlanMetadata()
+    }
+  }, [planMetadataList, fetchPlanMetadata])
+
+  // Get week types from active plan
+  useEffect(() => {
+    if (activePlan?.weekTypes && Array.isArray(activePlan.weekTypes)) {
+      setWeekTypes(activePlan.weekTypes)
     } else {
       setWeekTypes([])
     }
-  }, [currentPlan])
+  }, [activePlan])
 
+  // Upload modal for creating new plans
   const uploadModalStore = useUploadModal()
-  // Placeholder for exportModalStore if needed - replace with actual hook/context if used
-  const exportModalStore = { open: () => console.log("Export modal needs implementation") }
+  const exportModalStore = useExportModal()
 
+  // Function to get week info for displaying week badges
   const getWeekInfo = (weekNumber: number) => {
-    const weekData = Array.isArray(trainingData)
-      ? trainingData.find((w: any) => w.weekNumber === weekNumber)
-      : undefined
+    const weekData = activePlan?.weeks.find((w) => w.weekNumber === weekNumber)
 
     if (!weekData) return { type: "", weekTypeIds: [], colorName: undefined }
 
@@ -78,37 +82,15 @@ export default function AppSidebar() {
     }
   }
 
+  // Handle creating a new plan
   const handleCreateNewPlan = () => {
-    uploadModalStore.open((data) => {
-      const event = new CustomEvent("plan-created-from-json", {
-        detail: { data },
-      })
-      window.dispatchEvent(event)
-    })
+    router.push("/")
   }
 
-  // Define the select plan handler
-  const handleSelectPlan = (plan: any) => {
-    if (typeof setCurrentPlan === "function") {
-      setCurrentPlan(plan)
-    } else {
-      console.error("'setCurrentPlan' is not a function")
-    }
-  }
-
-  const handleEditPlan = (plan: any) => {
-    if (typeof openPlanActionDialog === "function") {
-      openPlanActionDialog("edit", plan) // Open dialog in 'edit' mode
-    } else {
-      console.error("'openPlanActionDialog' is not available from UI context")
-    }
-  }
-
-  const handleDeletePlan = (plan: any) => {
-    if (typeof openPlanActionDialog === "function") {
-      openPlanActionDialog("delete", plan) // Open dialog in 'delete' mode
-    } else {
-      console.error("'openPlanActionDialog' is not available from UI context")
+  // Handle changing view mode
+  const handleChangeViewMode = (mode: "week" | "month") => {
+    if (typeof setViewMode === "function") {
+      setViewMode(mode)
     }
   }
 
@@ -122,16 +104,23 @@ export default function AppSidebar() {
         </SidebarGroupLabel>
       </SidebarHeader>
       <SidebarContent>
+        {/* Plan Switcher */}
         <SidebarGroup className={cn(isOpen ? "px-3" : "px-1 flex flex-col items-center")}>
-          <PlanSwitcher
-            plans={plans}
-            currentPlan={currentPlan}
-            isOpen={isOpen}
-            onSelectPlan={handleSelectPlan}
-            onCreatePlan={handleCreateNewPlan}
-            onEditPlan={handleEditPlan}
-            onDeletePlan={handleDeletePlan}
-          />
+          <div className={cn(isOpen ? "w-full" : "w-10")}>
+            {isOpen ? (
+              <PlanSwitcher />
+            ) : (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => router.push("/")}
+                className="w-10 h-10"
+                title="Plans"
+              >
+                <FileText className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </SidebarGroup>
 
         {/* Container for buttons + selectors hidden on mobile */}
@@ -142,14 +131,10 @@ export default function AppSidebar() {
           )}
         >
           <SidebarGroup className={cn("flex gap-2", isOpen ? "flex-col" : "flex-col items-center")}>
-            {/* Buttons only appear on 'md' screens and larger */}
+            {/* View mode toggle buttons */}
             <Button
               variant={viewMode === "month" ? "default" : "outline"}
-              onClick={() =>
-                typeof changeViewMode === "function"
-                  ? changeViewMode("month")
-                  : console.error("'changeViewMode' is not a function")
-              }
+              onClick={() => handleChangeViewMode("month")}
               className={cn("aspect-square", isOpen ? "w-full justify-start" : "w-auto")}
               aria-label="Block View"
             >
@@ -157,40 +142,28 @@ export default function AppSidebar() {
             </Button>
             <Button
               variant={viewMode === "week" ? "default" : "outline"}
-              onClick={() =>
-                typeof changeViewMode === "function"
-                  ? changeViewMode("week")
-                  : console.error("'changeViewMode' is not a function")
-              }
+              onClick={() => handleChangeViewMode("week")}
               className={cn("aspect-square", isOpen ? "w-full justify-start" : "w-auto")}
               aria-label="Weekly View"
             >
               <List className={cn("h-4 w-4", isOpen && "mr-2")} /> {isOpen && "Weekly View"}
             </Button>
 
-            {/* Selector logic - also only shown on 'md' screens and larger */}
-            {isOpen ? (
+            {/* Weekly or Monthly selector */}
+            {isOpen && activePlan ? (
               <>
                 {viewMode === "month" ? (
                   <BlockSelector
-                    blocks={monthsForSidebar}
+                    blocks={activePlan.monthBlocks || []}
                     selectedBlockId={selectedMonth}
-                    onSelectBlock={(id) =>
-                      typeof selectMonth === "function"
-                        ? selectMonth(id)
-                        : console.error("'selectMonth' is not a function")
-                    }
+                    onSelectBlock={(id) => selectMonth(id)}
                     variant="sidebar"
                   />
                 ) : (
                   <WeekSelector
-                    weeks={weeksForSidebar}
+                    weeks={activePlan.weeks.map((w) => w.weekNumber) || []}
                     selectedWeek={selectedWeek}
-                    onSelectWeek={(num) =>
-                      typeof selectWeek === "function"
-                        ? selectWeek(num)
-                        : console.error("'selectWeek' is not a function")
-                    }
+                    onSelectWeek={(num) => selectWeek(num)}
                     variant="sidebar"
                     getWeekInfo={getWeekInfo}
                   />
@@ -204,12 +177,9 @@ export default function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className={cn(!isOpen && "items-center")}>
-        {/* Apply responsive hiding to the Week Types legend container */}
-        {/* It's already inside an `isOpen` check, so we add `hidden md:block` */}
+        {/* Week Types legend - only shown when sidebar is expanded */}
         {isOpen && (
           <div className="hidden md:block p-4 text-sm text-muted-foreground">
-            {" "}
-            {/* <-- Added hidden md:block here */}
             <h4 className="font-medium mb-2">Week Types</h4>
             <WeekTypeLegend weekTypes={weekTypes} />
             {(!weekTypes || weekTypes.length === 0) && (
@@ -220,7 +190,7 @@ export default function AppSidebar() {
           </div>
         )}
 
-        {/* Other footer items remain unchanged and visible on all sizes */}
+        {/* Documentation link */}
         <div className="px-3 py-2">
           <Link href="/documentation" passHref>
             <Button
@@ -239,13 +209,14 @@ export default function AppSidebar() {
           </Link>
         </div>
 
+        {/* Export JSON button */}
         <div className="px-3 py-2">
           <Button
             variant="ghost"
             size={isOpen ? "default" : "icon"}
             onClick={() => exportModalStore.open()}
             className={cn("w-full", isOpen && "justify-start")}
-            disabled={!currentPlan}
+            disabled={!activePlan}
             aria-label="Export JSON"
           >
             <Download className={cn("h-4 w-4", isOpen && "mr-2")} />
@@ -253,6 +224,7 @@ export default function AppSidebar() {
           </Button>
         </div>
 
+        {/* About button */}
         <div className="px-3 py-2">
           <Button
             variant="ghost"
@@ -266,6 +238,7 @@ export default function AppSidebar() {
           </Button>
         </div>
 
+        {/* Settings button */}
         <div className="px-3 py-2">
           <Button
             variant="ghost"

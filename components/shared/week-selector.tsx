@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { useTrainingPlans } from "@/contexts/training-plan-context"
+import { usePlanStore } from "@/store/plan-store"
 import type { WeekType } from "@/types/training-plan"
 import { useTheme } from "next-themes"
 import { getThemeAwareColorClasses } from "@/utils/color-utils"
@@ -25,12 +25,15 @@ export default function WeekSelector({
   // variant = "sidebar", // Not used for layout logic here
   getWeekInfo,
 }: WeekSelectorProps) {
-  const { trainingData, currentPlan } = useTrainingPlans()
+  // Get active plan directly from Zustand store
+  const activePlan = usePlanStore((state) => state.activePlan)
+  const trainingData = activePlan?.weeks || []
+  
   const { theme } = useTheme()
 
   // Mapping function to get week type by ID
   const getWeekTypeById = (typeId: string): WeekType | undefined => {
-    return currentPlan?.data?.weekTypes?.find((type) => type.id === typeId)
+    return activePlan?.weekTypes?.find((type) => type.id === typeId)
   }
 
   // Default week info function if not provided
