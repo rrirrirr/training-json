@@ -1,7 +1,8 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,7 @@ import {
   ExternalLink,
   ArrowLeft,
   Bot,
+  Loader2,
 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
@@ -31,11 +33,12 @@ import CopyNotification from "@/components/copy-notification"
 import CopyForAINotification from "@/components/copy-for-ai-notification"
 import { copyJsonErrorForAI } from "@/utils/copy-for-ai"
 import Link from "next/link"
+import { usePlanStore } from "@/store/plan-store"
 
 interface EnhancedJsonUploadModalProps {
   isOpen: boolean
   onClose: () => void
-  onImport: (data: TrainingPlanData) => void
+  onImport?: (data: TrainingPlanData) => void // Made optional as we'll handle import directly
 }
 
 export default function EnhancedJsonUploadModal({
@@ -43,10 +46,15 @@ export default function EnhancedJsonUploadModal({
   onClose,
   onImport,
 }: EnhancedJsonUploadModalProps) {
+  const router = useRouter()
   const [jsonText, setJsonText] = useState("")
   const [activeTab, setActiveTab] = useState("paste")
   const [error, setError] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Get the createPlan function from the Zustand store
+  const createPlan = usePlanStore((state) => state.createPlan)
 
   // Separate notification states for regular copy and AI copy
   const [showCopyNotification, setShowCopyNotification] = useState(false)
@@ -64,8 +72,9 @@ export default function EnhancedJsonUploadModal({
     }
   }
 
-  const validateAndImport = (jsonData: string) => {
+  const validateAndImport = useCallback(async (jsonData: string) => {
     try {
+      setIsSubmitting(true)
       const data = JSON.parse(jsonData) as TrainingPlanData
 
       // Basic validation
@@ -94,16 +103,37 @@ export default function EnhancedJsonUploadModal({
         throw new Error("The 'metadata' object must include a non-empty 'planName' property")
       }
 
-      // Continue with other validations...
-      onImport(data)
-      onClose()
-      setJsonText("")
-      setFile(null)
-      setError(null)
+      // Get the plan name from metadata
+      const planName = data.metadata.planName.trim()
+      
+      // Use the Zustand store to create the plan
+      const newPlanId = await createPlan(planName, data)
+      
+      if (newPlanId) {
+        // Reset form state
+        setJsonText("")
+        setFile(null)
+        setError(null)
+        
+        // Close the modal
+        onClose()
+        
+        // If legacy onImport callback exists, call it too
+        if (typeof onImport === "function") {
+          onImport(data)
+        }
+        
+        // Redirect to the new plan page
+        router.push(`/plan/${newPlanId}`)
+      } else {
+        throw new Error("Failed to create plan. Please try again.")
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invalid JSON format")
+    } finally {
+      setIsSubmitting(false)
     }
-  }
+  }, [createPlan, onImport, onClose, router])
 
   const handleImportFromText = () => {
     if (!jsonText.trim()) {
@@ -185,9 +215,21 @@ export default function EnhancedJsonUploadModal({
                   setJsonText(e.target.value)
                   setError(null)
                 }}
+                disabled={isSubmitting}
               />
-              <Button onClick={handleImportFromText} className="mt-4">
-                Import from Text
+              <Button 
+                onClick={handleImportFromText} 
+                className="mt-4"
+                disabled={isSubmitting || !jsonText.trim()}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating Plan...
+                  </>
+                ) : (
+                  "Import from Text"
+                )}
               </Button>
             </TabsContent>
 
@@ -201,13 +243,25 @@ export default function EnhancedJsonUploadModal({
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   onClick={(e) => e.stopPropagation()}
                   onChange={handleFileChange}
+                  disabled={isSubmitting}
                 />
                 {file && (
                   <p className="mt-2 text-sm font-medium text-green-600">Selected: {file.name}</p>
                 )}
               </div>
-              <Button onClick={handleImportFromFile} className="mt-4" disabled={!file}>
-                Import from File
+              <Button 
+                onClick={handleImportFromFile} 
+                className="mt-4" 
+                disabled={isSubmitting || !file}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating Plan...
+                  </>
+                ) : (
+                  "Import from File"
+                )}
               </Button>
             </TabsContent>
           </Tabs>
@@ -224,6 +278,7 @@ export default function EnhancedJsonUploadModal({
                     size="sm"
                     className="flex items-center gap-1 ml-4 mt-1"
                     onClick={handleCopyForAI}
+                    disabled={isSubmitting}
                   >
                     <Bot className="h-3 w-3" />
                     Copy for AI
@@ -261,6 +316,7 @@ export default function EnhancedJsonUploadModal({
                 size="sm"
                 onClick={() => setActiveTab("paste")}
                 className="flex items-center gap-1"
+                disabled={isSubmitting}
               >
                 <FilePlus className="h-4 w-4" />
                 Paste JSON
@@ -282,6 +338,7 @@ export default function EnhancedJsonUploadModal({
                   size="sm"
                   onClick={handleCopyForAI}
                   className="flex items-center gap-1 border-destructive text-destructive hover:bg-destructive/10"
+                  disabled={isSubmitting}
                 >
                   <Bot className="h-4 w-4" />
                   Copy for AI Help
@@ -312,11 +369,11 @@ export default function EnhancedJsonUploadModal({
           </div>
 
           <DialogFooter className="mt-4 space-x-2">
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
             <Link href="/documentation" passHref>
-              <Button variant="secondary" className="flex items-center gap-1">
+              <Button variant="secondary" className="flex items-center gap-1" disabled={isSubmitting}>
                 <FileText className="h-4 w-4" />
                 Documentation <ExternalLink className="ml-1 h-3 w-3" />
               </Button>

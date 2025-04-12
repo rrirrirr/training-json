@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   Dialog,
   DialogContent,
@@ -18,7 +19,7 @@ import {
 import { Button } from "@/components/ui/button"
 import CopyNotification from "./copy-notification"
 import { useUploadModal } from "@/components/modals/upload-modal"
-import { ExternalLink, Copy, FileDown, FileUp, Wand2 } from "lucide-react"
+import { ExternalLink, Copy, FileUp, Wand2 } from "lucide-react"
 import Link from "next/link"
 import { AIPromptMenu } from "./ai-prompt-menu"
 
@@ -28,11 +29,12 @@ interface AiAssistantDialogProps {
 }
 
 function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
+  const router = useRouter()
   const [showCopyNotification, setShowCopyNotification] = useState(false)
   const [currentPrompt, setCurrentPrompt] = useState<string>(`Please create a JSON file...`) // Your default prompt here
   const uploadModalStore = useUploadModal()
 
-  // --- Handlers remain the same ---
+  // Copy the prompt to clipboard
   const handleCopyPrompt = () => {
     navigator.clipboard.writeText(currentPrompt)
     setShowCopyNotification(true)
@@ -41,14 +43,12 @@ function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
     }, 2000)
   }
 
+  // Open the upload modal
+  // No need to pass a special callback anymore - the enhanced-json-upload-modal 
+  // now handles plan creation with Zustand store directly
   const handleOpenUploadModal = () => {
     onClose()
-    uploadModalStore.open((data) => {
-      const event = new CustomEvent("plan-created-from-json", {
-        detail: { data },
-      })
-      window.dispatchEvent(event)
-    })
+    uploadModalStore.open()
   }
 
   const handlePromptSelected = (prompt: string) => {
@@ -57,7 +57,6 @@ function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
 
   const howItWorksSteps = (
     <ol className="list-decimal pl-6 mt-2 space-y-2 text-sm text-muted-foreground">
-      {/* Steps content remains the same */}
       <li>Select an AI prompt template below (or use the default).</li>
       <li>
         Copy the selected prompt using the <Copy className="inline h-3 w-3 mx-0.5" /> button.
@@ -71,27 +70,18 @@ function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      {/* --- ADJUSTED: More Responsive Max Width & Padding on DialogContent --- */}
       <DialogContent className="w-full max-w-sm p-4 sm:max-w-md sm:p-6 md:max-w-lg lg:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
-            {" "}
-            {/* Slightly smaller title on mobile */}
             <Wand2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Create Plan with AI Magic!
           </DialogTitle>
           <DialogDescription className="text-xs sm:text-sm">
-            {" "}
-            {/* Slightly smaller desc on mobile */}
             Let an AI craft your personalized training plan in minutes. Follow these steps:
           </DialogDescription>
         </DialogHeader>
 
-        {/* --- Main Content - REMOVED HORIZONTAL PADDING (px-) --- */}
         <div className="space-y-6 py-4">
-          {" "}
-          {/* Rely on DialogContent padding */}
           {/* 1. Pick Prompt Section */}
-          {/* --- Adjusted Padding/Margin inside section for smaller screens --- */}
           <div className="rounded-lg border border-primary/50 p-3 sm:p-4 space-y-2 sm:space-y-3 shadow-md bg-primary/5">
             <h3 className="text-base sm:text-lg font-semibold text-primary flex items-center gap-2">
               <span className="bg-primary text-primary-foreground rounded-full h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center text-xs sm:text-sm font-bold flex-shrink-0">
@@ -103,7 +93,6 @@ function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
               Choose a starting point for your conversation with the AI assistant.
             </p>
             <div className="flex justify-center pt-2">
-              {/* --- CRITICAL: Style the button in AIPromptMenu.tsx (See instructions below) --- */}
               <AIPromptMenu onCopy={handlePromptSelected} />
             </div>
             <div className="pt-2 sm:pt-3 md:pl-8 space-y-1">
@@ -126,13 +115,13 @@ function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
                 >
                   <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Button>
-                {/* --- ADJUSTED: Font size for prompt display on mobile --- */}
                 <div className="bg-background p-2 sm:p-3 rounded text-[11px] sm:text-xs font-mono max-h-[150px] sm:max-h-[180px] overflow-y-auto pr-8 sm:pr-10">
                   {currentPrompt}
                 </div>
               </div>
             </div>
           </div>
+          
           {/* 2. Import Plan Section */}
           <div className="rounded-lg border p-3 sm:p-4 space-y-2 sm:space-y-3 shadow-sm">
             <h3 className="text-base sm:text-lg font-semibold text-primary flex items-center gap-2">
@@ -146,23 +135,21 @@ function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
               <span className="font-medium">as a JSON code block</span>, copy it. Then, come back
               and click below to upload it.
             </p>
-            {/* --- ADJUSTED: Button styling and container padding --- */}
             <div className="flex justify-center pt-2 md:pl-8">
               <Button
                 onClick={handleOpenUploadModal}
-                size="lg" // Keep large, but width is controlled
-                className="w-full sm:w-auto shadow text-xs sm:text-sm" // Full width on mobile, auto on larger
+                size="lg"
+                className="w-full sm:w-auto shadow text-xs sm:text-sm"
               >
                 <FileUp className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                 Open JSON Uploader & Import
               </Button>
             </div>
           </div>
+          
           {/* 3. Tips Link */}
           <div className="text-center pt-4">
             <p className="text-xs sm:text-sm text-muted-foreground">
-              {" "}
-              {/* Adjusted text size */}
               🤖 Didn't get the perfect plan?{" "}
               <Link
                 href="/documentation#ai-tips"
@@ -172,19 +159,17 @@ function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
               </Link>
             </p>
           </div>
+          
           {/* 4. How it Works (Collapsed) */}
           <Accordion type="single" collapsible className="w-full pt-4 border-t mt-6">
             <AccordionItem value="how-it-works">
               <AccordionTrigger className="text-xs sm:text-sm font-medium text-muted-foreground hover:no-underline">
-                {" "}
-                {/* Adjusted text size */}
                 Need the step-by-step details again?
               </AccordionTrigger>
               <AccordionContent className="pt-2">{howItWorksSteps}</AccordionContent>
             </AccordionItem>
           </Accordion>
         </div>
-        {/* --- End of main content div --- */}
 
         <CopyNotification
           show={showCopyNotification}
