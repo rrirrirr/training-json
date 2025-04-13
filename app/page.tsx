@@ -46,14 +46,12 @@ export default function HomePage() {
       const { data, error } = await supabase
         .from("training_plans")
         .insert({
-          name: exampleTrainingPlan.metadata?.planName || "Example 5x5 Strength Program",
           plan_data: exampleTrainingPlan
         })
         .select("id")
         .single()
 
       if (error) throw error
-
       // Redirect to the newly created plan
       if (data?.id) {
         // Store the ID in localStorage for future visits
@@ -70,13 +68,17 @@ export default function HomePage() {
   const handleImportPlan = async (data: TrainingPlanData) => {
     setCreatingPlan(true)
     try {
-      const planName = data.metadata?.planName || `Imported Plan ${new Date().toLocaleDateString()}`
+      // Make sure data has metadata with plan name
+      if (!data.metadata) {
+        data.metadata = { planName: `Imported Plan ${new Date().toLocaleDateString()}` }
+      } else if (!data.metadata.planName) {
+        data.metadata.planName = `Imported Plan ${new Date().toLocaleDateString()}`
+      }
       
       // Insert the imported plan into Supabase
       const { data: createdPlan, error } = await supabase
         .from("training_plans")
         .insert({
-          name: planName,
           plan_data: data
         })
         .select("id")

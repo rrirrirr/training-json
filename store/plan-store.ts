@@ -97,17 +97,17 @@ export const usePlanStore = create<PlanState>()(
           
           const { data, error } = await supabase
             .from("training_plans")
-            .select("id, name, created_at, updated_at")
-            .order("updated_at", { ascending: false })
+            .select("id, plan_data, created_at, last_accessed_at")
+            .order("last_accessed_at", { ascending: false })
           
           if (error) throw error
           
-          // Format the metadata
+          // Format the metadata - extract plan name from plan_data.metadata
           const planMetadata: PlanMetadata[] = data.map(plan => ({
             id: plan.id,
-            name: plan.name,
+            name: plan.plan_data?.metadata?.planName || "Unnamed Plan",
             createdAt: plan.created_at,
-            updatedAt: plan.updated_at || plan.created_at
+            updatedAt: plan.last_accessed_at || plan.created_at
           }))
           
           set({ planMetadataList: planMetadata, isLoading: false })
@@ -132,11 +132,10 @@ export const usePlanStore = create<PlanState>()(
             planData.metadata.planName = name
           }
           
-          // Insert into Supabase
+          // Insert into Supabase - removing the name property since it doesn't exist in the table
           const { data, error } = await supabase
             .from("training_plans")
             .insert({
-              name: name,
               plan_data: planData
             })
             .select("id")
@@ -180,11 +179,10 @@ export const usePlanStore = create<PlanState>()(
             updatedPlan.metadata.planName = planName
           }
           
-          // Insert as a new plan in Supabase
+          // Insert as a new plan in Supabase - removing the name property since it doesn't exist in the table
           const { data, error } = await supabase
             .from("training_plans")
             .insert({
-              name: planName,
               plan_data: updatedPlan
             })
             .select("id")

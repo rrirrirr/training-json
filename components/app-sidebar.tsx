@@ -178,16 +178,13 @@ export default function AppSidebar() {
 
       <SidebarFooter className={cn(!isOpen && "items-center")}>
         {/* Week Types legend - only shown when sidebar is expanded */}
-        {isOpen && (
+        {isOpen && weekTypes.length ? (
           <div className="hidden md:block p-4 text-sm text-muted-foreground">
             <h4 className="font-medium mb-2">Week Types</h4>
             <WeekTypeLegend weekTypes={weekTypes} />
-            {(!weekTypes || weekTypes.length === 0) && (
-              <p className="text-xs italic mt-2">
-                No week types defined. Add week types in the JSON to customize week styling.
-              </p>
-            )}
           </div>
+        ) : (
+          <></>
         )}
 
         {/* Documentation link */}
@@ -235,20 +232,6 @@ export default function AppSidebar() {
           >
             <Info className={cn("h-4 w-4", isOpen && "mr-2")} />
             {isOpen && "About T-JSON"}
-          </Button>
-        </div>
-
-        {/* Settings button */}
-        <div className="px-3 py-2">
-          <Button
-            variant="ghost"
-            size={isOpen ? "default" : "icon"}
-            onClick={openSettingsDialog}
-            className={cn("w-full", isOpen && "justify-start")}
-            aria-label="Settings"
-          >
-            <Settings className={cn("h-4 w-4", isOpen && "mr-2")} />
-            {isOpen && "Settings"}
           </Button>
         </div>
       </SidebarFooter>

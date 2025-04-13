@@ -15,7 +15,7 @@ interface PlanViewerProps {
 
 export default function PlanViewer({ planId }: PlanViewerProps) {
   const router = useRouter()
-  
+
   // Get data and actions from Zustand store
   const activePlan = usePlanStore((state) => state.activePlan)
   const activePlanId = usePlanStore((state) => state.activePlanId)
@@ -31,7 +31,7 @@ export default function PlanViewer({ planId }: PlanViewerProps) {
       router.replace(`/plan/${activePlanId}`)
     }
   }, [activePlanId, planId, router])
-  
+
   // Handle loading state
   if (isLoading || !activePlan) {
     return (
@@ -69,19 +69,16 @@ export default function PlanViewer({ planId }: PlanViewerProps) {
       </div>
     )
   }
-  
+
   // Find the relevant data for the selected week or month
-  const weekData = selectedWeek 
+  const weekData = selectedWeek
     ? activePlan.weeks.find((week) => week.weekNumber === selectedWeek)
     : null
-    
+
   const monthData = activePlan.monthBlocks.find((block) => block.id === selectedMonth)
 
   return (
     <>
-      {/* Plan Header with controls and navigation */}
-      <PlanHeader planId={planId} />
-      
       {/* Content View with bottom padding on mobile */}
       <div className="p-4 pb-20 md:p-6 md:pb-6">
         {viewMode === "week" && weekData ? (
@@ -95,7 +92,7 @@ export default function PlanViewer({ planId }: PlanViewerProps) {
           </div>
         )}
       </div>
-      
+
       {/* Floating Mobile Nav Button - only appears when scrolling on mobile */}
       <MobileScrollNav />
     </>
