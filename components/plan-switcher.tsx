@@ -131,7 +131,7 @@ export function PlanSwitcher() {
                 <DropdownMenuItem
                   key={plan.id}
                   // Prevent default item action when clicking buttons inside
-                  onSelect={(e) => e.preventDefault()}
+                  //onSelect={(e) => e.preventDefault()}
                   onClick={() => handleSelectPlan(plan.id)}
                   className="flex flex-col items-start p-0 focus:bg-accent data-[highlighted]:bg-accent" // Adjust focus/highlight styles
                 >
