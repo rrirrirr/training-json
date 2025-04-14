@@ -106,10 +106,8 @@ export default function EnhancedJsonUploadModal({
       // Get the plan name from metadata
       const planName = data.metadata.planName.trim()
       
-      // Use the Zustand store to create the plan
-      const newPlanId = await createPlan(planName, data)
-      
-      if (newPlanId) {
+      // If there's an onImport callback, call it with the data and let the parent handle plan creation
+      if (typeof onImport === "function") {
         // Reset form state
         setJsonText("")
         setFile(null)
@@ -118,15 +116,27 @@ export default function EnhancedJsonUploadModal({
         // Close the modal
         onClose()
         
-        // If legacy onImport callback exists, call it too
-        if (typeof onImport === "function") {
-          onImport(data)
-        }
-        
-        // Redirect to the new plan page
-        router.push(`/plan/${newPlanId}`)
+        // Call the onImport callback with the validated data
+        // The parent component will decide what to do with it
+        onImport(data)
       } else {
-        throw new Error("Failed to create plan. Please try again.")
+        // No onImport callback, so create the plan directly
+        const newPlanId = await createPlan(planName, data)
+        
+        if (newPlanId) {
+          // Reset form state
+          setJsonText("")
+          setFile(null)
+          setError(null)
+          
+          // Close the modal
+          onClose()
+          
+          // Redirect to the new plan page
+          router.push(`/plan/${newPlanId}`)
+        } else {
+          throw new Error("Failed to create plan. Please try again.")
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invalid JSON format")
