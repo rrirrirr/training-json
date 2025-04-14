@@ -1,8 +1,7 @@
 "use client"
-
 import { useEffect } from "react"
 import type { TrainingPlanData } from "@/types/training-plan"
-import { usePlanStore } from "@/store/plan-store"
+import { usePlanStore } from "@/store/plan-store" // Ensure correct path
 
 type PlanLoaderAndSaverProps = {
   planData: TrainingPlanData | null
@@ -10,50 +9,74 @@ type PlanLoaderAndSaverProps = {
 }
 
 export function PlanLoaderAndSaver({ planData, planId }: PlanLoaderAndSaverProps) {
-  // Get actions from the Zustand store
   const setActivePlan = usePlanStore((state) => state.setActivePlan)
-  const fetchPlanMetadata = usePlanStore((state) => state.fetchPlanMetadata)
   const clearActivePlan = usePlanStore((state) => state.clearActivePlan)
-  const activePlanId = usePlanStore((state) => state.activePlanId)
+  const currentStoreActiveId = usePlanStore((state) => state.activePlanId)
+  const planMetadataList = usePlanStore((state) => state.planMetadataList)
+  const fetchPlanMetadata = usePlanStore((state) => state.fetchPlanMetadata) // Needed if we fetch
 
-  // Load the plan into store on mount or when props change
   useEffect(() => {
+    const effectTimestamp = Date.now() // For debugging timing
+    console.log(
+      `[${effectTimestamp}] [PlanLoaderAndSaver] Effect - Page ID: ${planId}, Store Active ID: ${currentStoreActiveId}, List Size: ${planMetadataList.length}`
+    )
+    console.log(
+      `[${effectTimestamp}] [PlanLoaderAndSaver] Effect - Received planData: ${planData ? "Yes" : "No"}`
+    )
+
     if (planData) {
-      // Set the active plan in the store with its ID
-      setActivePlan(planData, planId)
-      
-      // Update our list of plans with this plan's metadata if it's not already there
-      const planMetadataList = usePlanStore.getState().planMetadataList
-      const existingPlan = planMetadataList.find(p => p.id === planId)
-      
-      // If this is a new plan we haven't seen before, add it to our local list
-      if (!existingPlan) {
-        const currentDate = new Date().toISOString()
-        const newPlanMetadata = {
-          id: planId,
-          name: planData.metadata?.planName || "Unnamed Plan",
-          createdAt: currentDate,
-          updatedAt: currentDate,
+      const planExistsInStoreList = planMetadataList.some((meta) => meta.id === planId)
+
+      if (
+        currentStoreActiveId !== planId &&
+        (planMetadataList.length === 0 || planExistsInStoreList)
+      ) {
+        console.log(
+          `[${effectTimestamp}] [PlanLoaderAndSaver] Condition met to set active plan (${planId}). List empty: ${planMetadataList.length === 0}, Exists in list: ${planExistsInStoreList}`
+        )
+        setActivePlan(planData, planId)
+      } else if (
+        currentStoreActiveId !== planId &&
+        planMetadataList.length > 0 &&
+        !planExistsInStoreList
+      ) {
+        // Case: Not active, list HAS loaded, but this plan is NOT in it. Likely deleted.
+        console.warn(
+          `[${effectTimestamp}] [PlanLoaderAndSaver] Plan ${planId} not active and not found in loaded list (${planMetadataList.length} items). Likely deleted. Aborting setActivePlan.`
+        )
+      } else if (currentStoreActiveId === planId) {
+        // Case: Already active. Log for info.
+        console.log(
+          `[${effectTimestamp}] [PlanLoaderAndSaver] Plan ${planId} is already active in store. No action needed.`
+        )
+        // Optional: Add the check here too, to clear if active but missing from list
+        if (!planExistsInStoreList && planMetadataList.length > 0) {
+          console.warn(
+            `[${effectTimestamp}] [PlanLoaderAndSaver] Active plan ${planId} is missing from loaded list (${planMetadataList.length} items). Clearing active plan.`
+          )
+          clearActivePlan()
         }
-        
-        // Add the new plan to the beginning of our list
-        usePlanStore.setState({ 
-          planMetadataList: [newPlanMetadata, ...planMetadataList] 
-        })
+      } else {
+        // Should not be reachable if logic is sound
+        console.error(
+          `[${effectTimestamp}] [PlanLoaderAndSaver] Unhandled state in planData block.`
+        )
       }
-      
-      // Log for debugging
-      console.log(`Plan loaded: ${planData.metadata?.planName || "Unnamed Plan"} (ID: ${planId})`)
     } else {
-      console.log(`No plan data found for ID: ${planId}`)
-      
-      // If we were previously viewing this plan, clear it
-      if (activePlanId === planId) {
+      // No planData received for this page ID.
+      console.warn(
+        `[${effectTimestamp}] [PlanLoaderAndSaver] No planData received for page ID: ${planId}.`
+      )
+      if (currentStoreActiveId === planId) {
+        // If the store thinks this (non-existent) plan is active, clear it.
+        console.warn(
+          `[${effectTimestamp}] [PlanLoaderAndSaver] Store active ID matches failed page ID (${planId}). Clearing active plan.`
+        )
         clearActivePlan()
       }
     }
-  }, [planData, planId, setActivePlan, fetchPlanMetadata, clearActivePlan, activePlanId])
+    // Keep planMetadataList dependency
+  }, [planData, planId, setActivePlan, clearActivePlan, currentStoreActiveId, planMetadataList])
 
-  // This component doesn't render any UI itself
   return null
 }
