@@ -25,12 +25,13 @@ export default function PlanViewer({ planId }: PlanViewerProps) {
   const isLoading = usePlanStore((state) => state.isLoading)
   const error = usePlanStore((state) => state.error)
 
+  // Commented because probably not needed but might be
   // Redirect if the active plan ID doesn't match the URL ID
-  useEffect(() => {
-    if (activePlanId && activePlanId !== planId) {
-      router.replace(`/plan/${activePlanId}`)
-    }
-  }, [activePlanId, planId, router])
+  // useEffect(() => {
+  //   if (activePlanId && activePlanId !== planId) {
+  // router.replace(`/plan/${activePlanId}`)
+  //   }
+  // }, [activePlanId, planId, router])
 
   // Handle loading state
   if (isLoading || !activePlan) {
