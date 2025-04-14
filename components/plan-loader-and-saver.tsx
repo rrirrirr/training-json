@@ -22,8 +22,25 @@ export function PlanLoaderAndSaver({ planData, planId }: PlanLoaderAndSaverProps
       // Set the active plan in the store with its ID
       setActivePlan(planData, planId)
       
-      // Fetch metadata for all plans (for navigation)
-      fetchPlanMetadata()
+      // Update our list of plans with this plan's metadata if it's not already there
+      const planMetadataList = usePlanStore.getState().planMetadataList
+      const existingPlan = planMetadataList.find(p => p.id === planId)
+      
+      // If this is a new plan we haven't seen before, add it to our local list
+      if (!existingPlan) {
+        const currentDate = new Date().toISOString()
+        const newPlanMetadata = {
+          id: planId,
+          name: planData.metadata?.planName || "Unnamed Plan",
+          createdAt: currentDate,
+          updatedAt: currentDate,
+        }
+        
+        // Add the new plan to the beginning of our list
+        usePlanStore.setState({ 
+          planMetadataList: [newPlanMetadata, ...planMetadataList] 
+        })
+      }
       
       // Log for debugging
       console.log(`Plan loaded: ${planData.metadata?.planName || "Unnamed Plan"} (ID: ${planId})`)
