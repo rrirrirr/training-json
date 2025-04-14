@@ -22,11 +22,13 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { usePlanStore, type PlanMetadata } from "@/store/plan-store"
 import { useEffect, useState } from "react"
+import { useNewPlanModal } from "@/components/modals/new-plan-modal"
 import JsonEditor from "./json-editor"
 import { cn } from "@/lib/utils"
 
 export function PlanSwitcher() {
   const router = useRouter()
+  const { open: openNewPlanModal } = useNewPlanModal()
 
   // Get data and actions from Zustand store
   const activePlanId = usePlanStore((state) => state.activePlanId)
@@ -196,7 +198,7 @@ export function PlanSwitcher() {
           )}
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={() => router.push("/")}
+            onClick={() => openNewPlanModal()}
             className="flex items-center gap-2 cursor-pointer focus:bg-primary/10 hover:bg-primary/10 hover:text-primary focus:text-primary data-[highlighted]:bg-primary/10 data-[highlighted]:text-primary" // Adjust focus/highlight styles
           >
             <Plus className="h-4 w-4" />
