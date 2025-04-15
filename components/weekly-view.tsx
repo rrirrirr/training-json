@@ -2,6 +2,7 @@
 
 import type { Week, TrainingPlanData, WeekType } from "@/types/training-plan"
 import SessionCard from "./session-card" // Assuming this component exists and is correct
+import { BadgeWithTooltip } from "@/components/ui/badge-with-tooltip"
 import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
 import { getBlockInfo, getWeekTypes } from "@/utils/block-utils" // Assuming these utils exist and are correct
@@ -49,31 +50,31 @@ export default function WeeklyView({ week, trainingPlan, compact = false }: Week
           <div>
             {/* Apply title styling here */}
             <h1 className="text-3xl flex flex-wrap items-center gap-2 font-oswald font-light uppercase tracking-wide">
-              {" "}
               {/* <-- Applied styles, removed font-bold, changed size */}
-              Vecka {weekNumber}
-              {/* Week Type and Badges - Keep original styling */}
+              Week {weekNumber}
+              {/* Week Type and Badges - Using BadgeWithTooltip */}
               {weekType && weekType !== "-" && (
-                <span className="text-sm font-normal px-2 py-0.5 bg-muted rounded-full normal-case tracking-normal font-sans">
-                  {" "}
-                  {/* Reset styles for badge */}
-                  Typ {weekType}
-                </span>
+                <BadgeWithTooltip 
+                  className="text-sm font-normal px-2 py-0.5 bg-muted rounded-full normal-case tracking-normal font-sans"
+                  tooltipContent={`This is a Type ${weekType} training week`}
+                >
+                  Type {weekType}
+                </BadgeWithTooltip>
               )}
               {weekTypes.map((wt) => {
                 const typeColorClasses = getThemeAwareColorClasses(wt.colorName, theme)
                 return (
-                  <span
+                  <BadgeWithTooltip
                     key={wt.id}
                     className={cn(
                       "text-sm font-normal px-2 py-0.5 rounded-full normal-case tracking-normal font-sans", // Reset styles for badge
                       typeColorClasses?.bg || `bg-${wt.colorName}-200`,
                       typeColorClasses?.text || `text-${wt.colorName}-800`
                     )}
-                    title={wt.description}
+                    tooltipContent={wt.description || `${wt.name} training week`}
                   >
                     {wt.name}
-                  </span>
+                  </BadgeWithTooltip>
                 )
               })}
             </h1>
