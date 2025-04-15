@@ -1,9 +1,9 @@
 "use client"
 
-import { create } from 'zustand'
-import { useUploadModal } from './upload-modal'
-import { TrainingPlanData } from '@/types/training-plan'
-import React from 'react'
+import { create } from "zustand"
+import { TrainingPlanData } from "@/types/training-plan"
+import React from "react"
+import { useAiInfoModal } from "./ai-info-modal"
 
 interface NewPlanModalStore {
   isOpen: boolean
@@ -19,24 +19,18 @@ export const useNewPlanModal = create<NewPlanModalStore>((set) => ({
 
 export function NewPlanModal() {
   const { isOpen, close } = useNewPlanModal()
-  const uploadModal = useUploadModal()
-  
-  // Instead of opening the name dialog, we'll directly redirect to the JSON upload modal
+  const aiInfoModal = useAiInfoModal()
+
+  // Instead of opening the JSON upload modal, we'll directly open the AI assistant dialog
   React.useEffect(() => {
     if (isOpen) {
       close() // Close this modal immediately
-      
-      // Open the upload modal with a callback that dispatches the plan-created-from-json event
-      uploadModal.open((data: TrainingPlanData) => {
-        // Create and dispatch a custom event with the imported JSON data
-        const event = new CustomEvent('plan-created-from-json', { 
-          detail: { data } 
-        })
-        window.dispatchEvent(event)
-      })
+
+      // Open the AI assistant dialog
+      aiInfoModal.open()
     }
-  }, [isOpen, close, uploadModal])
-  
+  }, [isOpen, close, aiInfoModal])
+
   // This component doesn't render anything since it immediately redirects
   return null
 }
