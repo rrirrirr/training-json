@@ -131,13 +131,42 @@ export const usePlanStore = create<PlanState>()(
           console.log(
             `[setActivePlan] Active plan changed from ${previousActivePlanId} to ${planId}. Resetting view state.`
           )
+          
           // Default to the first month block of the new plan, or month 1 if none exist
           const firstMonthId = plan?.monthBlocks?.[0]?.id ?? 1
-          set({
-            selectedMonth: firstMonthId,
-            selectedWeek: null, // Clear week selection
-            viewMode: "month", // Default to month view
-          })
+          
+          // Check if we're loading from localStorage (we're visiting a plan we've seen before)
+          const lastViewedPlanId = localStorage.getItem("lastViewedPlanId")
+          const isVisitingFromStorage = lastViewedPlanId === planId
+          
+          if (isVisitingFromStorage) {
+            // If we're revisiting a plan from storage, keep previous behavior
+            // State will be loaded from localStorage's persisted state
+            console.log(`[setActivePlan] Revisiting plan ${planId} from storage, keeping current view state`)
+            set({ selectedMonth: firstMonthId })
+          } else {
+            // For new plans, check if we have weeks
+            const hasWeeks = Boolean(plan?.weeks?.length)
+            const firstWeek = hasWeeks ? plan?.weeks[0]?.weekNumber : null
+            
+            if (hasWeeks && firstWeek !== null) {
+              // If we have weeks, automatically load the first week
+              console.log(`[setActivePlan] New plan has weeks. Auto-selecting first week: ${firstWeek}`)
+              set({
+                selectedMonth: firstMonthId,
+                selectedWeek: firstWeek,
+                viewMode: "week", // Switch to week view
+              })
+            } else {
+              // If no weeks available, default to month view with first block
+              console.log(`[setActivePlan] New plan has no weeks or first week is null. Defaulting to month view`)
+              set({
+                selectedMonth: firstMonthId,
+                selectedWeek: null,
+                viewMode: "month",
+              })
+            }
+          }
         } else {
           console.log(
             `[setActivePlan] Active plan ID ${planId} is the same as before. Not resetting view state.`
