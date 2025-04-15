@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { usePlanStore } from "@/store/plan-store"
 import WeeklyView from "@/components/weekly-view"
 import BlockView from "@/components/block-view"
 import { MobileScrollNav } from "@/components/mobile-scroll-nav"
-import PlanHeader from "@/components/plan-header"
+import { PlanModeMenu } from "@/components/plan-mode-menu"
+import { usePlanMode } from "@/contexts/plan-mode-context"
 
 interface PlanViewerProps {
   planId: string
@@ -18,23 +18,20 @@ export default function PlanViewer({ planId }: PlanViewerProps) {
 
   // Get data and actions from Zustand store
   const activePlan = usePlanStore((state) => state.activePlan)
-  const activePlanId = usePlanStore((state) => state.activePlanId)
   const selectedWeek = usePlanStore((state) => state.selectedWeek)
   const selectedMonth = usePlanStore((state) => state.selectedMonth)
   const viewMode = usePlanStore((state) => state.viewMode)
   const isLoading = usePlanStore((state) => state.isLoading)
   const error = usePlanStore((state) => state.error)
+  
+  // Get plan mode data from context
+  const { mode, draftPlan } = usePlanMode()
 
-  // Commented because probably not needed but might be
-  // Redirect if the active plan ID doesn't match the URL ID
-  // useEffect(() => {
-  //   if (activePlanId && activePlanId !== planId) {
-  // router.replace(`/plan/${activePlanId}`)
-  //   }
-  // }, [activePlanId, planId, router])
+  // Determine which plan to show based on mode
+  const planToDisplay = mode !== "normal" ? draftPlan : activePlan
 
   // Handle loading state
-  if (isLoading || !activePlan) {
+  if (isLoading || (!planToDisplay && mode === "normal")) {
     return (
       <div className="flex h-full items-center justify-center p-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -43,7 +40,7 @@ export default function PlanViewer({ planId }: PlanViewerProps) {
   }
 
   // Handle error state
-  if (error) {
+  if (error && mode === "normal") {
     return (
       <div className="flex h-full items-center justify-center p-4">
         <div className="text-center max-w-lg p-8 bg-destructive/10 rounded-lg border border-destructive/20">
@@ -55,7 +52,7 @@ export default function PlanViewer({ planId }: PlanViewerProps) {
   }
 
   // Handle empty plan (no weeks)
-  if (activePlan.weeks.length === 0) {
+  if (planToDisplay && planToDisplay.weeks.length === 0) {
     return (
       <div className="flex h-full items-center justify-center p-4">
         <div className="text-center max-w-lg p-8 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
@@ -72,20 +69,25 @@ export default function PlanViewer({ planId }: PlanViewerProps) {
   }
 
   // Find the relevant data for the selected week or month
-  const weekData = selectedWeek
-    ? activePlan.weeks.find((week) => week.weekNumber === selectedWeek)
+  const weekData = selectedWeek && planToDisplay
+    ? planToDisplay.weeks.find((week) => week.weekNumber === selectedWeek)
     : null
 
-  const monthData = activePlan.monthBlocks.find((block) => block.id === selectedMonth)
+  const monthData = planToDisplay && planToDisplay.monthBlocks.find(
+    (block) => block.id === selectedMonth
+  )
 
   return (
     <>
+      {/* Show mode menu when in edit or view mode */}
+      <PlanModeMenu />
+      
       {/* Content View with bottom padding on mobile */}
       <div className="p-4 pb-20 md:p-6 md:pb-6">
         {viewMode === "week" && weekData ? (
-          <WeeklyView week={weekData} trainingPlan={activePlan} />
+          <WeeklyView week={weekData} trainingPlan={planToDisplay} />
         ) : viewMode === "month" && monthData ? (
-          <BlockView monthBlock={monthData} trainingPlan={activePlan} />
+          <BlockView monthBlock={monthData} trainingPlan={planToDisplay} />
         ) : (
           // Fallback if data is somehow missing
           <div className="text-center p-8 text-muted-foreground">
