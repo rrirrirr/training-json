@@ -9,16 +9,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { usePlanStore } from "@/store/plan-store"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, Save, Copy, Info, Bot } from "lucide-react"
+import { AlertCircle, Save, Copy, Info, Bot, Code } from "lucide-react"
 import CopyNotification from "@/components/copy-notification"
 import CopyForAINotification from "@/components/copy-for-ai-notification"
 import { copyJsonErrorForAI } from "@/utils/copy-for-ai"
 import { useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
+
+// Import syntax highlighting components
+import Editor from 'react-simple-code-editor';
+import { Highlight, themes } from 'prism-react-renderer';
 
 interface JsonEditorProps {
   isOpen: boolean
@@ -28,6 +32,8 @@ interface JsonEditorProps {
 
 export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
   const router = useRouter()
+  const { theme } = useTheme()
+  const isDarkMode = theme === "dark"
   const createPlanFromEdit = usePlanStore((state) => state.createPlanFromEdit)
   const [jsonText, setJsonText] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -144,6 +150,39 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
     )
   }
 
+  // New function to format JSON
+  const formatJson = () => {
+    try {
+      const parsed = JSON.parse(jsonText);
+      const formatted = JSON.stringify(parsed, null, 2);
+      setJsonText(formatted);
+      setError(null);
+    } catch (err) {
+      setError("Cannot format invalid JSON");
+    }
+  };
+
+  // The highlight function for the editor
+  const highlightCode = (code: string) => (
+    <Highlight
+      theme={isDarkMode ? themes.vsDark : themes.vsLight}
+      code={code}
+      language="json"
+    >
+      {({ tokens, getLineProps, getTokenProps }) => (
+        <>
+          {tokens.map((line, i) => (
+            <div key={i} {...getLineProps({ line, key: i })}>
+              {line.map((token, key) => (
+                <span key={key} {...getTokenProps({ token, key })} />
+              ))}
+            </div>
+          ))}
+        </>
+      )}
+    </Highlight>
+  );
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -158,13 +197,22 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
             </div>
             <div className="ml-auto mt-2 sm:mt-0 flex gap-2">
               <Button 
+                onClick={formatJson} 
+                variant="outline" 
+                className="flex items-center gap-2"
+                disabled={!jsonText || isSubmitting}
+              >
+                <Code className="h-4 w-4" />
+                Format
+              </Button>
+              <Button 
                 onClick={handleCopy} 
                 variant="outline" 
                 className="flex items-center gap-2"
                 disabled={!jsonText || isSubmitting}
               >
                 <Copy className="h-4 w-4" />
-                Copy JSON
+                Copy
               </Button>
               {error && (
                 <Button 
@@ -190,20 +238,26 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
             </AlertDescription>
           </Alert>
 
-          <ScrollArea className="flex-1 min-h-[400px] max-h-[60vh] mt-4">
-            <Textarea
+          <ScrollArea className="flex-1 min-h-[400px] max-h-[60vh] mt-4 border rounded-md">
+            {/* Replace the Textarea with the code editor */}
+            <Editor
               value={jsonText}
-              onChange={(e) => {
-                setJsonText(e.target.value)
-                setError(null)
-                setIsSaved(false)
+              onValueChange={(code) => {
+                setJsonText(code);
+                setError(null);
+                setIsSaved(false);
               }}
-              className="min-h-[400px] font-mono text-sm resize-none"
-              placeholder="Loading plan data..."
+              highlight={highlightCode}
+              padding={10}
+              style={{
+                fontFamily: '"Fira code", "Fira Mono", monospace',
+                fontSize: 14,
+                minHeight: "400px",
+              }}
               disabled={isSubmitting}
+              className="w-full"
             />
           </ScrollArea>
-
           {error && (
             <Alert variant="destructive" className="mt-4">
               <AlertCircle className="h-4 w-4" />
