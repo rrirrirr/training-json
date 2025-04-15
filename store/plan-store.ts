@@ -39,6 +39,9 @@ interface PlanState {
     updatedPlan: TrainingPlanData,
     newName?: string
   ) => Promise<string | null>
+  updatePlan: (planId: string, updatedPlan: TrainingPlanData) => Promise<boolean>
+  savePlan: (plan: TrainingPlanData, name?: string) => Promise<string | null>
+  savePlanFromExternal: (plan: TrainingPlanData, name?: string) => Promise<string | null>
   removeLocalPlan: (planId: string) => Promise<boolean>
 
   // View state actions
@@ -519,6 +522,143 @@ export const usePlanStore = create<PlanState>()(
             }
           }
         }
+
+      // Update an existing plan in Supabase
+      updatePlan: async (planId, updatedPlan) => {
+        try {
+          set({ isLoading: true, error: null })
+          
+          // Ensure updatedPlan has proper metadata
+          if (!updatedPlan.metadata) {
+            console.error("[updatePlan] Updated plan is missing metadata")
+            set({ isLoading: false, error: "Plan metadata is missing" })
+            return false
+          }
+          
+          // Update timestamp
+          const now = new Date().toISOString()
+          
+          // Update in Supabase
+          const { error } = await supabase
+            .from("training_plans")
+            .update({
+              plan_data: updatedPlan,
+              last_accessed_at: now
+            })
+            .eq("id", planId)
+          
+          if (error) throw error
+          
+          // Update metadata list
+          const currentMetadata = get().planMetadataList
+          const existingIndex = currentMetadata.findIndex(p => p.id === planId)
+          
+          if (existingIndex >= 0) {
+            const updatedMetadata = {
+              ...currentMetadata[existingIndex],
+              name: updatedPlan.metadata.planName || currentMetadata[existingIndex].name,
+              updatedAt: now
+            }
+            
+            // Create updated list with this plan moved to front
+            const updatedList = [
+              updatedMetadata,
+              ...currentMetadata.filter(p => p.id !== planId)
+            ]
+            
+            set({ planMetadataList: updatedList })
+          }
+          
+          // If this is the active plan, update it
+          if (get().activePlanId === planId) {
+            set({ activePlan: updatedPlan })
+          }
+          
+          set({ isLoading: false })
+          return true
+        } catch (err) {
+          console.error("Error updating plan:", err)
+          set({
+            error: err instanceof Error ? err.message : "Unknown error updating plan",
+            isLoading: false,
+          })
+          return false
+        }
+      },
+      
+      // Save a plan (could be new or a draft)
+      savePlan: async (plan, name) => {
+        try {
+          set({ isLoading: true, error: null })
+          
+          // Ensure plan has metadata
+          if (!plan.metadata) {
+            plan.metadata = {
+              planName: name || "My Training Plan",
+              creationDate: new Date().toISOString()
+            }
+          } else {
+            // Update name if provided
+            if (name) {
+              plan.metadata.planName = name
+            }
+            
+            // Ensure creation date exists
+            if (!plan.metadata.creationDate) {
+              plan.metadata.creationDate = new Date().toISOString()
+            }
+          }
+          
+          // Use the existing createPlan to handle the saving logic
+          const planId = await get().createPlan(
+            plan.metadata.planName,
+            plan
+          )
+          
+          set({ isLoading: false })
+          return planId
+        } catch (err) {
+          console.error("Error in savePlan:", err)
+          set({
+            error: err instanceof Error ? err.message : "Unknown error saving plan",
+            isLoading: false,
+          })
+          return null
+        }
+      },
+      
+      // Save a plan from external source (like from view mode)
+      savePlanFromExternal: async (plan, name) => {
+        try {
+          set({ isLoading: true, error: null })
+          
+          // Create a copy with updated metadata
+          const planToSave = {
+            ...plan,
+            metadata: {
+              ...plan.metadata || {},
+              planName: name || `${plan.metadata?.planName || "Shared Plan"} (Copy)`,
+              creationDate: new Date().toISOString()
+            }
+          }
+          
+          // Use createPlan to handle the saving logic
+          const planId = await get().createPlan(
+            planToSave.metadata.planName,
+            planToSave
+          )
+          
+          set({ isLoading: false })
+          return planId
+        } catch (err) {
+          console.error("Error in savePlanFromExternal:", err)
+          set({
+            error: err instanceof Error ? err.message : "Unknown error saving external plan",
+            isLoading: false,
+          })
+          return null
+        }
+      },
       },
     }),
     // Persist configuration
