@@ -1,0 +1,13 @@
+# Suggested Shell Commands
+
+These commands are considered safe and useful for examining the project structure:
+
+- `find . -type f -name "*.tsx" | grep -v "node_modules"` - Find all .tsx files
+- `find . -type f -name "layout.tsx" | grep -v "node_modules"` - Find layout files
+- `find . -type d -name "app" | grep -v "node_modules"` - Find app directories
+- `grep -r "export default function" --include="*.tsx" . | grep -v "node_modules"` - Find React components
+- `find . -type f -name "*.ts" -o -name "*.tsx" | xargs grep -l "Provider" | grep -v "node_modules"` - Find Provider components
+- `ls -la` - List all files in the current directory
+- `cat package.json` - View package.json contents
+
+Avoid using commands that modify the filesystem like `rm`, `mv`, `cp` without explicit confirmation from the user.
