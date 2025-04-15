@@ -69,7 +69,7 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
   const [showAICopyNotification, setShowAICopyNotification] = useState(false)
   const [copySuccess, setCopySuccess] = useState<boolean>(true)
 
-  // --- Effects and Handler functions (remain unchanged from previous version) ---
+  // --- Effects and Handler functions (remain largely unchanged) ---
   useEffect(() => {
     if (plan?.data) {
       try {
@@ -107,8 +107,8 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
       setIsSubmitting(false)
       return
     }
-    if (error) {
-      setError(`Cannot save: Please fix the error - ${error}`)
+    if (error && !error.startsWith("Invalid JSON")) {
+      setError(`Cannot save: Please fix the existing error - ${error}`)
       return
     }
     setIsSubmitting(true)
@@ -133,8 +133,8 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
         if (!parsedData.metadata.creationDate) {
           parsedData.metadata.creationDate = new Date().toISOString().split("T")[0]
         }
-        newPlanName = parsedData.metadata.planName
         setJsonText(JSON.stringify(parsedData, null, 2))
+        newPlanName = parsedData.metadata.planName
       } else {
         newPlanName = parsedData.metadata.planName as string
         if (!parsedData.metadata.creationDate) {
@@ -192,7 +192,9 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
       setError(null)
       setIsSaved(false)
     } catch (err) {
-      setError("Cannot format invalid JSON. Please fix the errors first.")
+      if (!error || error.startsWith("Invalid JSON")) {
+        setError("Cannot format invalid JSON. Please fix the errors first.")
+      }
     }
   }
   const highlightCode = (code: string) => (
@@ -234,18 +236,6 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
                   rename.
                 </DialogDescription>
               </div>
-              {error && (
-                <Button
-                  onClick={handleCopyForAI}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2 flex-shrink-0"
-                  disabled={isSubmitting}
-                >
-                  <Bot className="h-4 w-4" />
-                  Copy Error for AI
-                </Button>
-              )}
             </div>
           </DialogHeader>
 
@@ -270,36 +260,68 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
 
           {/* Error / Success Feedback Area */}
           <div className="flex-shrink-0 mt-4 space-y-3">
+            {/* --- MODIFIED ERROR ALERT STRUCTURE --- */}
             {error && (
               <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
+                <div className="flex items-start w-full">
+                  {" "}
+                  {/* Ensure outer flex takes full width */}
+                  {/* Icon */}
+                  <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />{" "}
+                  {/* Prevent icon shrinking */}
+                  {/* Content Area: Flex container, changes direction */}
+                  <div className="ml-3 flex-1 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-x-4 gap-y-2">
+                    {" "}
+                    {/* Use gap-x/y for spacing */}
+                    {/* Text Group */}
+                    <div className="flex-grow">
+                      {" "}
+                      {/* Allow text to take available space */}
+                      <AlertTitle>Error</AlertTitle>
+                      <AlertDescription className="mt-1 break-words">
+                        {" "}
+                        {/* Allow long errors to wrap */}
+                        {error}
+                      </AlertDescription>
+                    </div>
+                    {/* Button (Aligned top-right on desktop) */}
+                    <Button
+                      onClick={handleCopyForAI}
+                      variant="outline"
+                      size="sm"
+                      className="flex-shrink-0 self-start sm:self-auto items-center gap-2 border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive" // `self-start` for mobile column alignment
+                      disabled={isSubmitting}
+                    >
+                      <Bot className="h-4 w-4" />
+                      Copy Error for AI
+                    </Button>
+                  </div>
+                </div>
               </Alert>
             )}
+            {/* --- END OF MODIFIED ERROR ALERT --- */}
+
             {isSaved && (
               <Alert className="bg-green-50 border-green-200 text-green-800 dark:bg-green-950 dark:border-green-900 dark:text-green-200">
-                <Save className="h-4 w-4" />
-                <AlertTitle>Success</AlertTitle>
-                <AlertDescription>
-                  Changes saved! Creating new plan and redirecting...
-                </AlertDescription>
+                <div className="flex items-start">
+                  <Save className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <div className="ml-3 flex-1">
+                    <AlertTitle>Success</AlertTitle>
+                    <AlertDescription>
+                      Changes saved! Creating new plan and redirecting...
+                    </AlertDescription>
+                  </div>
+                </div>
               </Alert>
             )}
           </div>
 
-          {/* Dialog Footer: Always row, justify-between */}
+          {/* Dialog Footer: (Unchanged) */}
           <DialogFooter className="mt-4 pt-2 border-t flex-shrink-0 flex flex-row justify-between items-center gap-2">
-            {" "}
-            {/* MODIFIED */}
-            {/* Left Group: Contains mobile dropdown OR desktop buttons */}
+            {/* Left Group */}
             <div className="flex gap-2 justify-start items-center">
-              {" "}
-              {/* Added items-center */}
-              {/* Mobile Dropdown Menu (Opens Upwards) */}
+              {/* Mobile Dropdown */}
               <div className="sm:hidden">
-                {" "}
-                {/* Wrapper hides on sm+ */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon" disabled={isSubmitting}>
@@ -307,7 +329,6 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
                       <span className="sr-only">Actions</span>
                     </Button>
                   </DropdownMenuTrigger>
-                  {/* Added side='top' and sideOffset */}
                   <DropdownMenuContent align="start" side="top" sideOffset={4}>
                     <DropdownMenuItem
                       onSelect={(e) => {
@@ -338,29 +359,25 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
               <Button
                 onClick={formatJson}
                 variant="outline"
-                className="hidden sm:flex items-center gap-2" // Hidden on mobile
+                className="hidden sm:flex items-center gap-2"
                 disabled={!jsonText || isSubmitting || !!error}
               >
-                <Code className="h-4 w-4" />
-                Format
+                <Code className="h-4 w-4" /> Format
               </Button>
               <Button
                 onClick={handleCopy}
                 variant="outline"
-                className="hidden sm:flex items-center gap-2" // Hidden on mobile
+                className="hidden sm:flex items-center gap-2"
                 disabled={!jsonText || isSubmitting}
               >
-                <Copy className="h-4 w-4" />
-                Copy JSON
+                <Copy className="h-4 w-4" /> Copy JSON
               </Button>
             </div>
-            {/* Right Group: Cancel, Save */}
-            {/* Removed w-full sm:w-auto, now uses natural width */}
+            {/* Right Group */}
             <div className="flex gap-2 justify-end items-center">
-              {" "}
-              {/* Added items-center */}
               <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-                Cancel
+                {" "}
+                Cancel{" "}
               </Button>
               <Button
                 onClick={handleSave}
@@ -368,7 +385,26 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
               >
                 {isSubmitting ? (
                   <>
-                    <span className="animate-spin mr-2">⏳</span>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
                     Saving...
                   </>
                 ) : (
