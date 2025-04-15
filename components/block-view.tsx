@@ -82,8 +82,7 @@ export default function BlockView({ monthBlock, trainingPlan }: BlockViewProps) 
         <div className="md:flex md:justify-between md:items-start">
           <div className="mb-3 md:mb-0">
             {/* Apply title styling here */}
-            <h2 className="mb-1 font-oswald font-light uppercase tracking-wide text-2xl">
-              {" "}
+            <h2 className="mb-1 font-oswald font-light uppercase tracking-wide text-3xl underline">
               {/* <-- Applied styles, removed text-xl/font-bold, added text-2xl */}
               {blockDefinition?.name || monthBlock.name}
             </h2>
