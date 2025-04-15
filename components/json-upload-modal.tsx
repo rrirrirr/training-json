@@ -149,7 +149,7 @@ export default function JsonUploadModal({ isOpen, onClose, onImport }: JsonUploa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-dialog-md dialog-content-base">
         <DialogHeader>
           <DialogTitle>Import Training Plan</DialogTitle>
           <DialogDescription>Upload a JSON file or paste JSON data to import your training plan.</DialogDescription>
@@ -170,6 +170,48 @@ export default function JsonUploadModal({ isOpen, onClose, onImport }: JsonUploa
                 setJsonText(e.target.value)
                 setError(null)
               }}
+            />
+            <Button onClick={handleImportFromText} className="mt-4">
+              Import from Text
+            </Button>
+          </TabsContent>
+
+          <TabsContent value="upload" className="mt-4">
+            <div className="border-2 border-dashed rounded-lg p-6 text-center relative">
+              <Upload className="mx-auto h-12 w-12 text-gray-400" />
+              <p className="mt-2 text-sm text-gray-600">Click to browse or drag and drop</p>
+              <input
+                type="file"
+                accept=".json"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                onClick={(e) => e.stopPropagation()}
+                onChange={handleFileChange}
+              />
+              {file && <p className="mt-2 text-sm font-medium text-green-600">Selected: {file.name}</p>}
+            </div>
+            <Button onClick={handleImportFromFile} className="mt-4" disabled={!file}>
+              Import from File
+            </Button>
+          </TabsContent>
+        </Tabs>
+
+        {error && (
+          <Alert variant="destructive" className="mt-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <DialogFooter className="dialog-footer-end">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
             />
             <Button onClick={handleImportFromText} className="mt-4">
               Import from Text

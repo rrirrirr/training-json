@@ -20,7 +20,7 @@ export function InfoDialog() {
 
   return (
     <Dialog open={isInfoDialogOpen} onOpenChange={(open) => !open && closeInfoDialog()}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh]">
+      <DialogContent className="max-w-dialog-lg dialog-content-base">
         <DialogHeader>
           <DialogTitle>About T-JSON</DialogTitle>
           <DialogDescription>
@@ -97,9 +97,9 @@ export function InfoDialog() {
           </ScrollArea>
         </Tabs>
 
-        <DialogFooter className="flex justify-between items-center">
+        <DialogFooter className="dialog-footer-between">
           <Link href="/documentation" passHref>
-            <Button variant="outline" className="flex items-center gap-1">
+            <Button variant="outline" className="dialog-button-icon">
               Documentation <ExternalLink className="ml-1 h-3 w-3" />
             </Button>
           </Link>

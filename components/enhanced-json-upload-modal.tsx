@@ -246,7 +246,7 @@ export default function EnhancedJsonUploadModal({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-scroll">
+        <DialogContent className="max-w-dialog-md dialog-content-base">
           <DialogHeader>
             <DialogTitle>Import Training Plan</DialogTitle>
             <DialogDescription>
@@ -430,14 +430,14 @@ export default function EnhancedJsonUploadModal({
             )}
           </div>
 
-          <DialogFooter className="mt-4 space-x-2">
+          <DialogFooter className="dialog-footer-end">
             <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
             <Link href="/documentation" passHref>
               <Button
                 variant="secondary"
-                className="flex items-center gap-1"
+                className="dialog-button-icon"
                 disabled={isSubmitting}
               >
                 <FileText className="h-4 w-4" />

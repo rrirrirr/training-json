@@ -174,6 +174,11 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      maxWidth: {
+        'dialog-sm': '425px',
+        'dialog-md': '600px',
+        'dialog-lg': '800px',
+      },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         "archivo-black": ["var(--font-archivo-black)", "sans-serif"],

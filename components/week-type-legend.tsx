@@ -67,7 +67,7 @@ export default function WeekTypeLegend({ weekTypes, className }: WeekTypeLegendP
       </div>
       
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-w-dialog-md dialog-content-base">
           <DialogHeader>
             <DialogTitle>Week Type Legend</DialogTitle>
             <DialogDescription>
@@ -96,7 +96,7 @@ export default function WeekTypeLegend({ weekTypes, className }: WeekTypeLegendP
               )
             })}
           </div>
-          <DialogFooter>
+          <DialogFooter className="dialog-footer-end">
             <Button variant="secondary" onClick={() => setOpen(false)}>
               Close
             </Button>

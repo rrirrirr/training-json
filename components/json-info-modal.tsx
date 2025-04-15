@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -97,7 +98,7 @@ export default function JsonInfoModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh]">
+      <DialogContent className="max-w-dialog-lg dialog-content-base">
         <DialogHeader>
           <DialogTitle>Training Plan JSON Format</DialogTitle>
           <DialogDescription>
@@ -570,9 +571,9 @@ export default function JsonInfoModal({
           show={showCopyNotification}
           onHide={() => setShowCopyNotification(false)}
         />
-        <div className="flex justify-end mt-4">
+        <DialogFooter className="dialog-footer-end">
           <Button onClick={onClose}>Close</Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

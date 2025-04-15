@@ -20,12 +20,10 @@ export function SettingsDialog() {
 
   return (
     <Dialog open={isSettingsDialogOpen} onOpenChange={(open) => !open && closeSettingsDialog()}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-dialog-sm dialog-content-base">
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
-          <DialogDescription>
-            Customize your application settings.
-          </DialogDescription>
+          <DialogDescription>Customize your application settings.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid items-center grid-cols-4 gap-4">
@@ -37,7 +35,7 @@ export function SettingsDialog() {
                 variant={theme === "light" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setTheme("light")}
-                className="flex items-center gap-2"
+                className="dialog-button-icon"
               >
                 <Sun className="h-4 w-4" />
                 Light
@@ -46,7 +44,7 @@ export function SettingsDialog() {
                 variant={theme === "dark" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setTheme("dark")}
-                className="flex items-center gap-2"
+                className="dialog-button-icon"
               >
                 <Moon className="h-4 w-4" />
                 Dark
@@ -61,8 +59,10 @@ export function SettingsDialog() {
             </div>
           </div>
         </div>
-        <DialogFooter>
-          <Button onClick={closeSettingsDialog}>Close</Button>
+        <DialogFooter className="dialog-footer-end">
+          <Button variant="outline" onClick={closeSettingsDialog}>
+            Close
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

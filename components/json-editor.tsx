@@ -224,7 +224,7 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-2xl md:max-w-3xl lg:max-w-4xl max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-dialog-lg dialog-content-base flex flex-col">
           {/* Dialog Header */}
           <DialogHeader className="flex-shrink-0">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -317,7 +317,7 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
           </div>
 
           {/* Dialog Footer: (Unchanged) */}
-          <DialogFooter className="mt-4 pt-2 border-t flex-shrink-0 flex flex-row justify-between items-center gap-2">
+          <DialogFooter className="dialog-footer-between flex-shrink-0 flex flex-row items-center gap-2">
             {/* Left Group */}
             <div className="flex gap-2 justify-start items-center">
               {/* Mobile Dropdown */}

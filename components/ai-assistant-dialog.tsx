@@ -70,7 +70,7 @@ function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-sm p-4 sm:max-w-md sm:p-6 md:max-w-lg lg:max-w-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-dialog-md dialog-content-base">
         <DialogHeader>
           <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
             <Wand2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Create Plan with AI Magic!
@@ -176,7 +176,7 @@ function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
           onHide={() => setShowCopyNotification(false)}
         />
 
-        <DialogFooter className="pt-4 border-t sm:justify-center">
+        <DialogFooter className="dialog-footer-center">
           <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
             Close
           </Button>

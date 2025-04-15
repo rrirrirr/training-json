@@ -51,9 +51,11 @@ export default function PlanNameDialog({
     onClose()
   }
 
+  const isDisabled = !name.trim()
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-dialog-sm dialog-content-base">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
@@ -71,6 +73,23 @@ export default function PlanNameDialog({
                   setName(e.target.value)
                   if (error) setError(null)
                 }}
+                autoFocus
+              />
+              {error && <p className="text-sm text-red-500">{error}</p>}
+            </div>
+          </div>
+
+          <DialogFooter className="dialog-footer-end">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isDisabled}>{saveButtonText}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
                 autoFocus
               />
               {error && <p className="text-sm text-red-500">{error}</p>}
