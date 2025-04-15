@@ -25,6 +25,7 @@ import {
   ArrowLeft,
   Bot,
   Loader2,
+  Edit,
 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
@@ -34,6 +35,7 @@ import CopyForAINotification from "@/components/copy-for-ai-notification"
 import { copyJsonErrorForAI } from "@/utils/copy-for-ai"
 import Link from "next/link"
 import { usePlanStore } from "@/store/plan-store"
+import JsonEditor from "@/components/json-editor"
 
 interface EnhancedJsonUploadModalProps {
   isOpen: boolean
@@ -52,6 +54,8 @@ export default function EnhancedJsonUploadModal({
   const [error, setError] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isJsonEditorOpen, setIsJsonEditorOpen] = useState(false)
+  const [jsonDataForEditor, setJsonDataForEditor] = useState<any>(null)
 
   // Get the createPlan function from the Zustand store
   const createPlan = usePlanStore((state) => state.createPlan)
@@ -184,6 +188,61 @@ export default function EnhancedJsonUploadModal({
     })
   }
 
+  const handleOpenJsonEditor = async () => {
+    try {
+      let jsonData = null;
+      
+      if (activeTab === "paste" && jsonText.trim()) {
+        // Use the text input data
+        try {
+          jsonData = JSON.parse(jsonText);
+        } catch (err) {
+          // If it's not valid JSON, create a template
+          jsonData = {
+            metadata: { planName: "New Plan" },
+            weeks: [],
+            monthBlocks: [],
+            exerciseDefinitions: []
+          };
+        }
+      } else if (activeTab === "upload" && file) {
+        // Read from file
+        const text = await file.text();
+        try {
+          jsonData = JSON.parse(text);
+        } catch (err) {
+          setError("Failed to parse file as JSON");
+          return;
+        }
+      } else {
+        // If no data, create a template
+        jsonData = {
+          metadata: { planName: "New Plan" },
+          weeks: [],
+          monthBlocks: [],
+          exerciseDefinitions: []
+        };
+      }
+      
+      // Create a mock plan object for the editor
+      const mockPlan = {
+        id: "temp-editing-id",
+        name: jsonData.metadata?.planName || "Draft Plan",
+        data: jsonData
+      };
+      
+      setJsonDataForEditor(mockPlan);
+      setIsJsonEditorOpen(true);
+    } catch (err) {
+      setError("Failed to prepare data for JSON editor");
+    }
+  }
+
+  const handleJsonEditorClose = () => {
+    setIsJsonEditorOpen(false);
+    setJsonDataForEditor(null);
+  }
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -195,9 +254,6 @@ export default function EnhancedJsonUploadModal({
               include metadata with a plan name.
             </DialogDescription>
           </DialogHeader>
-
-          {/* AI Generation Link - Enhanced with a clearer button */}
-          {/* AI Generation section removed from here - will be moved after JSON editor */}
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
@@ -216,20 +272,21 @@ export default function EnhancedJsonUploadModal({
                 }}
                 disabled={isSubmitting}
               />
-              <Button
-                onClick={handleImportFromText}
-                className="mt-4"
-                disabled={isSubmitting || !jsonText.trim()}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Plan...
-                  </>
-                ) : (
-                  "Import from Text"
-                )}
-              </Button>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button
+                  onClick={handleImportFromText}
+                  disabled={isSubmitting || !jsonText.trim()}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating Plan...
+                    </>
+                  ) : (
+                    "Import from Text"
+                  )}
+                </Button>
+              </div>
             </TabsContent>
 
             <TabsContent value="upload" className="mt-4">
@@ -248,20 +305,21 @@ export default function EnhancedJsonUploadModal({
                   <p className="mt-2 text-sm font-medium text-green-600">Selected: {file.name}</p>
                 )}
               </div>
-              <Button
-                onClick={handleImportFromFile}
-                className="mt-4"
-                disabled={isSubmitting || !file}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Plan...
-                  </>
-                ) : (
-                  "Import from File"
-                )}
-              </Button>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button
+                  onClick={handleImportFromFile}
+                  disabled={isSubmitting || !file}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating Plan...
+                    </>
+                  ) : (
+                    "Import from File"
+                  )}
+                </Button>
+              </div>
             </TabsContent>
           </Tabs>
 
@@ -287,7 +345,7 @@ export default function EnhancedJsonUploadModal({
             </Alert>
           )}
 
-          {/* AI Creation Section - Added below JSON editor with updated text */}
+          {/* AI Creation Section */}
           <div className="bg-primary/10 p-4 rounded-lg my-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -302,6 +360,30 @@ export default function EnhancedJsonUploadModal({
               <Button onClick={handleOpenAiGuide} className="flex items-center gap-1" size="sm">
                 <Bot className="h-4 w-4 mr-1" />
                 AI Assistant
+              </Button>
+            </div>
+          </div>
+
+          {/* JSON Editor section - moved to after AI Assistant */}
+          <div className="bg-primary/5 p-4 rounded-lg my-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Edit className="h-5 w-5 mr-2 text-primary" />
+                <div>
+                  <span className="font-medium block">Want to do some manual editing?</span>
+                  <span className="text-xs text-muted-foreground">
+                    Use our nicer JSON editor for a better editing experience
+                  </span>
+                </div>
+              </div>
+              <Button 
+                onClick={handleOpenJsonEditor} 
+                variant="outline" 
+                className="flex items-center gap-1" 
+                size="sm"
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Open Editor
               </Button>
             </div>
           </div>
@@ -365,6 +447,15 @@ export default function EnhancedJsonUploadModal({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* JSON Editor Modal */}
+      {isJsonEditorOpen && jsonDataForEditor && (
+        <JsonEditor
+          isOpen={isJsonEditorOpen}
+          onClose={handleJsonEditorClose}
+          plan={jsonDataForEditor}
+        />
+      )}
 
       {/* Regular copy notification */}
       <CopyNotification
