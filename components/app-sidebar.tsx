@@ -118,21 +118,9 @@ export default function AppSidebar() {
               <h1 className="text-3xl font-bold text-primary font-archivo-black">T-JSON</h1>
             </Link>
           ) : (
-            // Collapsed: Show icon with tooltip
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link href="/" passHref>
-                  <Button variant="ghost" size="icon" className="h-9 w-9">
-                    {/* Use Home icon or your App's specific logo icon */}
-                    <Home className="h-5 w-5 text-primary" />
-                    <span className="sr-only">T-JSON Home</span>
-                  </Button>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right" align="center">
-                T-JSON Home
-              </TooltipContent>
-            </Tooltip>
+            <div className="h-9 w-9" aria-hidden="true">
+              {/* This div is purely for layout spacing, matching the previous icon button size */}
+            </div>
           )}
         </SidebarHeader>
 
