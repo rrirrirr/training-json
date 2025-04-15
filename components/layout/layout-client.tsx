@@ -30,9 +30,16 @@ export function LayoutClient({ children }: { children: React.ReactNode }) {
 }
 
 function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
-  const { state, isMobile, setOpen } = useSidebar()
+  const { state, isMobile, setOpen, setOpenMobile } = useSidebar()
   const { isSidebarOpen, openSidebar, closeSidebar } = useUIState()
   const panelGroupRef = useRef<ImperativePanelGroupHandle>(null)
+  // Ensure sidebar is expanded when on mobile
+  useEffect(() => {
+    if (isMobile && state === "collapsed") {
+      setOpen(true); // Force expanded state on mobile
+    }
+  }, [isMobile, state, setOpen]);
+
   // No longer need a separate ref for the sidebar panel itself with this approach
 
   // Sync UI Context (Optional)
@@ -103,9 +110,9 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
     // }
   }
 
-  // --- Mobile Layout (No changes needed here) ---
+  // --- Mobile Layout ---
   if (isMobile) {
-    // ... (keep mobile layout as before)
+    // When on mobile, always treat sidebar as expanded
     return (
       <div className="flex min-h-screen w-full bg-background">
         <Sidebar collapsible="icon">
@@ -113,7 +120,10 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
         </Sidebar>
         <div className="flex flex-col flex-1 overflow-hidden">
           <AppHeader
-            onToggleSidebar={() => setOpen((open) => !open)}
+            onToggleSidebar={() => {
+              // Toggle mobile sidebar sheet
+              setOpenMobile(open => !open);
+            }}
             isSidebarOpen={state === "expanded"}
           />
           <main className="flex-1 overflow-auto">{children}</main>
