@@ -63,6 +63,8 @@ export const usePlanStore = create<PlanState>()(
       selectedMonth: 1,
       viewMode: "month",
 
+      // --- Actions ---
+
       // Set the active plan with its ID - Handles adding metadata if missing
       setActivePlan: (plan, planId) => {
         console.log(
@@ -93,34 +95,39 @@ export const usePlanStore = create<PlanState>()(
             updatedAt: new Date().toISOString(),
           }
           // Add to the beginning of the list for ordering by last loaded
-          nextMetadataList = [newPlanMetadata, ...currentMetadataList.filter(p => p.id !== planId)]
+          // Filter ensures no duplicates if called rapidly before state updates fully propagate
+          nextMetadataList = [
+            newPlanMetadata,
+            ...currentMetadataList.filter((p) => p.id !== planId),
+          ]
         } else if (metadataExists) {
           // Update existing plan's updatedAt timestamp and move to the front of the list
-          console.log(
-            `[setActivePlan] Updating last accessed timestamp for plan ID ${planId}.`
-          )
-          
+          console.log(`[setActivePlan] Updating last accessed timestamp for plan ID ${planId}.`)
+
           // Find the existing plan metadata
-          const existingPlanIndex = currentMetadataList.findIndex(p => p.id === planId)
+          const existingPlanIndex = currentMetadataList.findIndex((p) => p.id === planId)
           const existingPlan = currentMetadataList[existingPlanIndex]
-          
+
           // Create updated plan metadata with new timestamp
-          const updatedPlan = {
+          const updatedPlanMeta = {
             ...existingPlan,
-            updatedAt: new Date().toISOString() // Update the timestamp to now
+            // Update name in case it changed in the full plan data being set
+            name: plan?.metadata?.planName || existingPlan.name,
+            updatedAt: new Date().toISOString(), // Update the timestamp to now
           }
-          
+
           // Create new list with updated plan at front
           nextMetadataList = [
-            updatedPlan,
-            ...currentMetadataList.filter(p => p.id !== planId)
+            updatedPlanMeta,
+            ...currentMetadataList.filter((p) => p.id !== planId),
           ]
         } else {
           console.warn(
-            `[setActivePlan] Metadata for plan ID ${planId} not found, but plan object or its metadata field is missing. Cannot add metadata.`
+            `[setActivePlan] Metadata for plan ID ${planId} not found, and plan object or its metadata field is missing. Cannot add/update metadata.`
           )
-          nextMetadataList = currentMetadataList
+          nextMetadataList = currentMetadataList // Keep the list as is
         }
+
         // Update state including the potentially updated list
         set({
           activePlan: plan,
@@ -134,35 +141,58 @@ export const usePlanStore = create<PlanState>()(
           console.log(
             `[setActivePlan] Active plan changed from ${previousActivePlanId} to ${planId}. Resetting view state.`
           )
-          
+
           // Default to the first month block of the new plan, or month 1 if none exist
           const firstMonthId = plan?.monthBlocks?.[0]?.id ?? 1
-          
+
           // Check if we're loading from localStorage (we're visiting a plan we've seen before)
-          const lastViewedPlanId = localStorage.getItem("lastViewedPlanId")
-          const isVisitingFromStorage = lastViewedPlanId === planId
-          
-          if (isVisitingFromStorage) {
-            // If we're revisiting a plan from storage, keep previous behavior
-            // State will be loaded from localStorage's persisted state
-            console.log(`[setActivePlan] Revisiting plan ${planId} from storage, keeping current view state`)
-            set({ selectedMonth: firstMonthId })
+          // Note: This check might be redundant if hydration handles view state correctly, but kept for explicit logic
+          const lastViewedPlanIdFromStorage = localStorage.getItem("lastViewedPlanId")
+          const isRevisitingPersisted =
+            lastViewedPlanIdFromStorage === planId &&
+            get().planMetadataList.some((p) => p.id === planId)
+
+          if (isRevisitingPersisted && get().selectedMonth && get().viewMode) {
+            // If revisiting a known plan AND view state seems valid from persisted state, try to keep it.
+            // However, ensure the selectedMonth actually exists in the newly loaded plan.
+            const monthExists = plan?.monthBlocks?.some((b) => b.id === get().selectedMonth)
+            if (monthExists) {
+              console.log(
+                `[setActivePlan] Revisiting plan ${planId}, keeping persisted view state (Month: ${get().selectedMonth}, View: ${get().viewMode})`
+              )
+              // Optionally re-set it ensure consistency, especially if activePlan data changed
+              set({
+                selectedMonth: get().selectedMonth,
+                viewMode: get().viewMode,
+                selectedWeek: get().selectedWeek,
+              })
+            } else {
+              console.log(
+                `[setActivePlan] Revisiting plan ${planId}, but persisted month ${get().selectedMonth} not found. Resetting view state.`
+              )
+              // Persisted month doesn't exist, fall through to default reset logic below
+              set({ selectedMonth: firstMonthId, selectedWeek: null, viewMode: "month" }) // Reset safely
+            }
           } else {
-            // For new plans, check if we have weeks
+            // For genuinely new plans or when persisted state is invalid/not applicable
             const hasWeeks = Boolean(plan?.weeks?.length)
             const firstWeek = hasWeeks ? plan?.weeks[0]?.weekNumber : null
-            
+
             if (hasWeeks && firstWeek !== null) {
               // If we have weeks, automatically load the first week
-              console.log(`[setActivePlan] New plan has weeks. Auto-selecting first week: ${firstWeek}`)
+              console.log(
+                `[setActivePlan] New/Resetting plan has weeks. Auto-selecting first week: ${firstWeek}`
+              )
               set({
-                selectedMonth: firstMonthId,
+                selectedMonth: firstMonthId, // Ensure month is set too
                 selectedWeek: firstWeek,
                 viewMode: "week", // Switch to week view
               })
             } else {
               // If no weeks available, default to month view with first block
-              console.log(`[setActivePlan] New plan has no weeks or first week is null. Defaulting to month view`)
+              console.log(
+                `[setActivePlan] New/Resetting plan has no weeks or first week is null. Defaulting to month view`
+              )
               set({
                 selectedMonth: firstMonthId,
                 selectedWeek: null,
@@ -174,6 +204,11 @@ export const usePlanStore = create<PlanState>()(
           console.log(
             `[setActivePlan] Active plan ID ${planId} is the same as before. Not resetting view state.`
           )
+          // Even if ID is same, plan *data* might have updated, ensure metadata name reflects it
+          const potentiallyUpdatedMetadataList = get().planMetadataList.map((meta) =>
+            meta.id === planId ? { ...meta, name: plan?.metadata?.planName || meta.name } : meta
+          )
+          set({ planMetadataList: potentiallyUpdatedMetadataList })
         }
       },
 
@@ -197,9 +232,10 @@ export const usePlanStore = create<PlanState>()(
             set({ isLoading: true, error: null })
 
             // Select only necessary fields for metadata to reduce payload
+            // Using alias for clarity
             const { data, error } = await supabase
               .from("training_plans")
-              .select("id, plan_data->metadata->planName, created_at, last_accessed_at") // Select nested properties directly
+              .select("id, planName:plan_data->metadata->planName, created_at, last_accessed_at")
               .order("last_accessed_at", { ascending: false, nullsFirst: false }) // Order by most recently accessed
 
             if (error) throw error
@@ -207,7 +243,7 @@ export const usePlanStore = create<PlanState>()(
             // Ensure data is not null before mapping
             const planMetadata: PlanMetadata[] = (data ?? []).map((plan: any) => ({
               id: plan.id,
-              name: plan.planName || "Unnamed Plan", // Access the selected nested property
+              name: plan.planName || "Unnamed Plan", // Access the selected aliased property
               createdAt: plan.created_at,
               updatedAt: plan.last_accessed_at || plan.created_at, // Use last accessed if available
             }))
@@ -297,10 +333,8 @@ export const usePlanStore = create<PlanState>()(
             updatedPlan.metadata = { planName, creationDate: new Date().toISOString() }
           } else {
             updatedPlan.metadata.planName = planName
-            // Keep original creationDate if it exists, otherwise set new one
-            if (!updatedPlan.metadata.creationDate) {
-              updatedPlan.metadata.creationDate = new Date().toISOString()
-            }
+            // Set a new creationDate for the copy
+            updatedPlan.metadata.creationDate = new Date().toISOString()
           }
 
           // Insert as a new plan in Supabase
@@ -340,42 +374,165 @@ export const usePlanStore = create<PlanState>()(
         }
       },
 
+      // Update an existing plan in Supabase
+      updatePlan: async (planId, updatedPlan) => {
+        try {
+          set({ isLoading: true, error: null })
+
+          // Ensure updatedPlan has proper metadata
+          if (!updatedPlan.metadata) {
+            console.error("[updatePlan] Updated plan is missing metadata")
+            set({ isLoading: false, error: "Plan metadata is missing" })
+            return false
+          }
+
+          // Update timestamp
+          const now = new Date().toISOString()
+
+          // Update in Supabase
+          const { error } = await supabase
+            .from("training_plans")
+            .update({
+              plan_data: updatedPlan,
+              last_accessed_at: now,
+            })
+            .eq("id", planId)
+
+          if (error) throw error
+
+          // Update metadata list
+          const currentMetadata = get().planMetadataList
+          const existingIndex = currentMetadata.findIndex((p) => p.id === planId)
+
+          if (existingIndex >= 0) {
+            const updatedMetadata = {
+              ...currentMetadata[existingIndex],
+              name: updatedPlan.metadata.planName || currentMetadata[existingIndex].name,
+              updatedAt: now,
+            }
+
+            // Create updated list with this plan moved to front
+            const updatedList = [updatedMetadata, ...currentMetadata.filter((p) => p.id !== planId)]
+
+            set({ planMetadataList: updatedList })
+          } else {
+            // If for some reason metadata wasn't found, fetch fresh list to be safe? Or log warning?
+            console.warn(
+              `[updatePlan] Metadata for updated plan ID ${planId} not found in local list. List might be stale.`
+            )
+            // Optionally trigger fetchPlanMetadata(true) here?
+          }
+
+          // If this is the active plan, update it in the store
+          if (get().activePlanId === planId) {
+            set({ activePlan: updatedPlan })
+          }
+
+          set({ isLoading: false })
+          return true
+        } catch (err) {
+          console.error("Error updating plan:", err)
+          set({
+            error: err instanceof Error ? err.message : "Unknown error updating plan",
+            isLoading: false,
+          })
+          return false
+        }
+      },
+
+      // Save a plan (could be new or a draft - essentially creates a new entry)
+      savePlan: async (plan, name) => {
+        try {
+          set({ isLoading: true, error: null })
+
+          // Ensure plan has metadata, prepare it for creation
+          const planToCreate = { ...plan } // Create a copy to avoid mutating input directly
+          if (!planToCreate.metadata) {
+            planToCreate.metadata = {
+              planName: name || "My Training Plan",
+              creationDate: new Date().toISOString(),
+            }
+          } else {
+            // Update name if provided, ensure creation date
+            planToCreate.metadata = {
+              ...planToCreate.metadata,
+              planName: name || planToCreate.metadata.planName || "My Training Plan",
+              creationDate: planToCreate.metadata.creationDate || new Date().toISOString(),
+            }
+          }
+
+          // Use the existing createPlan to handle the saving logic
+          const planId = await get().createPlan(
+            planToCreate.metadata.planName,
+            planToCreate // Pass the prepared copy
+          )
+
+          set({ isLoading: false })
+          return planId
+        } catch (err) {
+          console.error("Error in savePlan:", err)
+          set({
+            error: err instanceof Error ? err.message : "Unknown error saving plan",
+            isLoading: false,
+          })
+          return null
+        }
+      },
+
+      // Save a plan from external source (like from view mode - creates a new entry)
+      savePlanFromExternal: async (plan, name) => {
+        try {
+          set({ isLoading: true, error: null })
+
+          // Create a copy with updated metadata for creation
+          const planToSave = {
+            ...plan,
+            metadata: {
+              ...(plan.metadata || {}), // Preserve existing metadata if any
+              planName: name || `${plan.metadata?.planName || "Shared Plan"} (Copy)`,
+              creationDate: new Date().toISOString(), // Always set a new creation date for the copy
+            },
+          }
+
+          // Use createPlan to handle the saving logic
+          const planId = await get().createPlan(planToSave.metadata.planName, planToSave)
+
+          set({ isLoading: false })
+          return planId
+        } catch (err) {
+          console.error("Error in savePlanFromExternal:", err)
+          set({
+            error: err instanceof Error ? err.message : "Unknown error saving external plan",
+            isLoading: false,
+          })
+          return null
+        }
+      },
+
       // Remove a plan from local state only (not from Supabase)
       removeLocalPlan: async (planId) => {
         console.log(`[removeLocalPlan] START - Removing plan ID: ${planId}`)
         const state = get() // Get current state once
         console.log(`[removeLocalPlan] Initial activePlanId: ${state.activePlanId}`)
         let wasActive = state.activePlanId === planId
-        let clearedActive = false
 
         try {
           // Filter the list first
           const listBeforeFilter = state.planMetadataList
-          console.log(
-            `[removeLocalPlan] List BEFORE filter (${listBeforeFilter.length}):`,
-            listBeforeFilter.map((p) => p.id).join(", ")
-          )
           const listAfterFilter = listBeforeFilter.filter((p) => p.id !== planId)
-          console.log(
-            `[removeLocalPlan] List AFTER filter (${listAfterFilter.length}):`,
-            listAfterFilter.map((p) => p.id).join(", ")
-          )
 
-          // Check if filtering worked (optional but good sanity check)
           if (
             listAfterFilter.length === listBeforeFilter.length &&
             listBeforeFilter.some((p) => p.id === planId)
           ) {
             console.error(
-              `[removeLocalPlan] FILTERING FAILED for ID ${planId}! The plan was in the list but not removed.`
+              `[removeLocalPlan] FILTERING FAILED for ID ${planId}! Plan was present but not removed.`
             )
-            // Decide how to handle this - maybe throw an error or return false early
-          } else if (listAfterFilter.length < listBeforeFilter.length) {
-            console.log(`[removeLocalPlan] Filtering appears successful for ID ${planId}.`)
-          } else if (!listBeforeFilter.some((p) => p.id === planId)) {
-            console.warn(
-              `[removeLocalPlan] Plan ID ${planId} was already not in the list before filtering.`
-            )
+            // Potentially set an error state here or return false early
+            set({ error: `Failed to locally remove plan ${planId}` })
+            return false
+          } else {
+            console.log(`[removeLocalPlan] Filtering successful or plan ${planId} was not present.`)
           }
 
           if (wasActive) {
@@ -397,27 +554,16 @@ export const usePlanStore = create<PlanState>()(
               viewMode: "month",
               error: null,
             })
-            clearedActive = true
-            // Log state *after* the single set call
-            console.log(
-              `[removeLocalPlan] State updated. New activePlanId (via get()): ${get().activePlanId}`
-            )
-            if (get().activePlanId !== null) {
-              console.error(
-                `[removeLocalPlan] CRITICAL: activePlanId is NOT NULL after combined set!`
-              )
-            }
           } else {
             console.log(`[removeLocalPlan] Plan ${planId} was not active. Only updating list.`)
             // Only update the list if the plan wasn't active
             set({
               planMetadataList: listAfterFilter,
+              error: null, // Clear any previous errors as well
             })
           }
 
-          console.log(
-            `[removeLocalPlan] END - State set. Returning true. Active plan was cleared: ${clearedActive}`
-          )
+          console.log(`[removeLocalPlan] END - State set. Returning true.`)
           return true // Indicate success
         } catch (err) {
           console.error("[removeLocalPlan] Error during execution:", err)
@@ -428,17 +574,23 @@ export const usePlanStore = create<PlanState>()(
         }
       },
 
-      // No longer need the separate clearActivePlan call inside removeLocalPlan
-      // Keep the clearActivePlan action itself if it's used elsewhere directly.
+      // Explicitly clear the active plan state
       clearActivePlan: () => {
         console.log(
           `[clearActivePlan] START - Clearing active plan. Current activePlanId: ${get().activePlanId}`
         )
         const currentId = get().activePlanId
-        localStorage.removeItem("lastViewedPlanId")
-        console.log(
-          `[clearActivePlan] Removed 'lastViewedPlanId' from localStorage (was for ID: ${currentId}).`
-        )
+        if (currentId) {
+          localStorage.removeItem("lastViewedPlanId")
+          console.log(
+            `[clearActivePlan] Removed 'lastViewedPlanId' from localStorage (was for ID: ${currentId}).`
+          )
+        } else {
+          console.log(
+            `[clearActivePlan] No active plan ID found, nothing to remove from localStorage.`
+          )
+        }
+
         set({
           activePlan: null,
           activePlanId: null,
@@ -447,33 +599,34 @@ export const usePlanStore = create<PlanState>()(
           viewMode: "month",
           error: null,
         })
-        console.log(
-          `[clearActivePlan] END - State updated. New activePlanId (via get()): ${get().activePlanId}`
-        )
-        if (get().activePlanId !== null) {
-          console.error(`[clearActivePlan] CRITICAL: activePlanId is NOT NULL after set!`)
-        }
+        console.log(`[clearActivePlan] END - State updated.`)
       },
 
       // Set the selected week
       selectWeek: (weekNumber) => {
-        set({ selectedWeek: weekNumber })
+        const currentWeek = get().selectedWeek
+        const currentViewMode = get().viewMode
 
-        // If setting a specific week, ensure view mode is "week"
-        if (weekNumber !== null) {
-          set({ viewMode: "week" })
+        // Only update if week changes or view mode needs changing
+        if (currentWeek !== weekNumber || (weekNumber !== null && currentViewMode !== "week")) {
+          set({ selectedWeek: weekNumber })
 
-          // Find the month block this week belongs to and ensure selectedMonth is correct
-          const activePlan = get().activePlan
-          if (activePlan) {
-            const monthBlock = activePlan.monthBlocks.find(
-              (block) => block.weeks.includes(weekNumber as number) // Ensure weekNumber is treated as number
-            )
-            if (monthBlock && get().selectedMonth !== monthBlock.id) {
-              console.log(
-                `[selectWeek] Auto-selecting month ${monthBlock.id} for week ${weekNumber}`
+          // If setting a specific week, ensure view mode is "week"
+          if (weekNumber !== null) {
+            set({ viewMode: "week" })
+
+            // Find the month block this week belongs to and ensure selectedMonth is correct
+            const activePlan = get().activePlan
+            if (activePlan?.monthBlocks) {
+              const monthBlock = activePlan.monthBlocks.find(
+                (block) => block.weeks.includes(weekNumber as number) // Ensure weekNumber is treated as number
               )
-              set({ selectedMonth: monthBlock.id })
+              if (monthBlock && get().selectedMonth !== monthBlock.id) {
+                console.log(
+                  `[selectWeek] Auto-selecting month ${monthBlock.id} for week ${weekNumber}`
+                )
+                set({ selectedMonth: monthBlock.id })
+              }
             }
           }
         }
@@ -510,7 +663,7 @@ export const usePlanStore = create<PlanState>()(
             const activePlan = get().activePlan
             const selectedMonth = get().selectedMonth
 
-            if (activePlan) {
+            if (activePlan?.monthBlocks) {
               const monthBlock = activePlan.monthBlocks.find((b) => b.id === selectedMonth)
               if (monthBlock && monthBlock.weeks.length > 0) {
                 console.log(
@@ -518,149 +671,28 @@ export const usePlanStore = create<PlanState>()(
                 )
                 // Automatically select the first week of the currently selected month
                 set({ selectedWeek: monthBlock.weeks[0] })
+              } else {
+                // If current month has no weeks, maybe select first week of the *plan*?
+                const firstWeekOfPlan = activePlan.weeks?.[0]?.weekNumber
+                if (firstWeekOfPlan !== null && firstWeekOfPlan !== undefined) {
+                  console.log(
+                    `[setViewMode] Current month ${selectedMonth} has no weeks. Auto-selecting first week of plan (${firstWeekOfPlan})`
+                  )
+                  // Also need to find the month for this week
+                  const firstWeekMonthBlock = activePlan.monthBlocks.find((b) =>
+                    b.weeks.includes(firstWeekOfPlan)
+                  )
+                  set({
+                    selectedWeek: firstWeekOfPlan,
+                    selectedMonth: firstWeekMonthBlock?.id ?? get().selectedMonth, // Keep month if not found? Or set to first month?
+                  })
+                }
               }
             }
           }
         }
-
-      // Update an existing plan in Supabase
-      updatePlan: async (planId, updatedPlan) => {
-        try {
-          set({ isLoading: true, error: null })
-          
-          // Ensure updatedPlan has proper metadata
-          if (!updatedPlan.metadata) {
-            console.error("[updatePlan] Updated plan is missing metadata")
-            set({ isLoading: false, error: "Plan metadata is missing" })
-            return false
-          }
-          
-          // Update timestamp
-          const now = new Date().toISOString()
-          
-          // Update in Supabase
-          const { error } = await supabase
-            .from("training_plans")
-            .update({
-              plan_data: updatedPlan,
-              last_accessed_at: now
-            })
-            .eq("id", planId)
-          
-          if (error) throw error
-          
-          // Update metadata list
-          const currentMetadata = get().planMetadataList
-          const existingIndex = currentMetadata.findIndex(p => p.id === planId)
-          
-          if (existingIndex >= 0) {
-            const updatedMetadata = {
-              ...currentMetadata[existingIndex],
-              name: updatedPlan.metadata.planName || currentMetadata[existingIndex].name,
-              updatedAt: now
-            }
-            
-            // Create updated list with this plan moved to front
-            const updatedList = [
-              updatedMetadata,
-              ...currentMetadata.filter(p => p.id !== planId)
-            ]
-            
-            set({ planMetadataList: updatedList })
-          }
-          
-          // If this is the active plan, update it
-          if (get().activePlanId === planId) {
-            set({ activePlan: updatedPlan })
-          }
-          
-          set({ isLoading: false })
-          return true
-        } catch (err) {
-          console.error("Error updating plan:", err)
-          set({
-            error: err instanceof Error ? err.message : "Unknown error updating plan",
-            isLoading: false,
-          })
-          return false
-        }
-      },
-      
-      // Save a plan (could be new or a draft)
-      savePlan: async (plan, name) => {
-        try {
-          set({ isLoading: true, error: null })
-          
-          // Ensure plan has metadata
-          if (!plan.metadata) {
-            plan.metadata = {
-              planName: name || "My Training Plan",
-              creationDate: new Date().toISOString()
-            }
-          } else {
-            // Update name if provided
-            if (name) {
-              plan.metadata.planName = name
-            }
-            
-            // Ensure creation date exists
-            if (!plan.metadata.creationDate) {
-              plan.metadata.creationDate = new Date().toISOString()
-            }
-          }
-          
-          // Use the existing createPlan to handle the saving logic
-          const planId = await get().createPlan(
-            plan.metadata.planName,
-            plan
-          )
-          
-          set({ isLoading: false })
-          return planId
-        } catch (err) {
-          console.error("Error in savePlan:", err)
-          set({
-            error: err instanceof Error ? err.message : "Unknown error saving plan",
-            isLoading: false,
-          })
-          return null
-        }
-      },
-      
-      // Save a plan from external source (like from view mode)
-      savePlanFromExternal: async (plan, name) => {
-        try {
-          set({ isLoading: true, error: null })
-          
-          // Create a copy with updated metadata
-          const planToSave = {
-            ...plan,
-            metadata: {
-              ...plan.metadata || {},
-              planName: name || `${plan.metadata?.planName || "Shared Plan"} (Copy)`,
-              creationDate: new Date().toISOString()
-            }
-          }
-          
-          // Use createPlan to handle the saving logic
-          const planId = await get().createPlan(
-            planToSave.metadata.planName,
-            planToSave
-          )
-          
-          set({ isLoading: false })
-          return planId
-        } catch (err) {
-          console.error("Error in savePlanFromExternal:", err)
-          set({
-            error: err instanceof Error ? err.message : "Unknown error saving external plan",
-            isLoading: false,
-          })
-          return null
-        }
-      },
-      },
-    }),
+      }, // <<< Note: No comma needed here as it's the last property
+    }), // End of the object returned by (set, get)
     // Persist configuration
     {
       name: "training-plan-storage", // Key used in localStorage
@@ -672,6 +704,9 @@ export const usePlanStore = create<PlanState>()(
         viewMode: state.viewMode,
         // Do NOT persist: activePlan (can be large), activePlanId (use localStorage directly), isLoading, error
       }),
+      // Optional: Add migration logic here if state shape changes over time
+      // version: 1, // example
+      // migrate: (persistedState, version) => { ... }
     }
-  )
-)
+  ) // End of persist()
+) // End of create()

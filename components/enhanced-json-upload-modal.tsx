@@ -1,5 +1,4 @@
 "use client"
-
 import type React from "react"
 import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -36,6 +35,7 @@ import { copyJsonErrorForAI } from "@/utils/copy-for-ai"
 import Link from "next/link"
 import { usePlanStore } from "@/store/plan-store"
 import JsonEditor from "@/components/json-editor"
+import { usePlanMode } from "@/contexts/plan-mode-context"
 
 interface EnhancedJsonUploadModalProps {
   isOpen: boolean
@@ -59,6 +59,9 @@ export default function EnhancedJsonUploadModal({
 
   // Get the createPlan function from the Zustand store
   const createPlan = usePlanStore((state) => state.createPlan)
+  
+  // Get the enterEditMode function from the plan mode context
+  const { enterEditMode } = usePlanMode()
 
   // Separate notification states for regular copy and AI copy
   const [showCopyNotification, setShowCopyNotification] = useState(false)
@@ -127,23 +130,16 @@ export default function EnhancedJsonUploadModal({
           // The parent component will decide what to do with it
           onImport(data)
         } else {
-          // No onImport callback, so create the plan directly
-          const newPlanId = await createPlan(planName, data)
-
-          if (newPlanId) {
-            // Reset form state
-            setJsonText("")
-            setFile(null)
-            setError(null)
-
-            // Close the modal
-            onClose()
-
-            // Redirect to the new plan page
-            router.push(`/plan/${newPlanId}`)
-          } else {
-            throw new Error("Failed to create plan. Please try again.")
-          }
+          // Instead of immediately saving to Supabase, enter edit mode
+          enterEditMode(data)
+          
+          // Reset form state
+          setJsonText("")
+          setFile(null)
+          setError(null)
+          
+          // Close the modal
+          onClose()
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Invalid JSON format")
@@ -151,7 +147,7 @@ export default function EnhancedJsonUploadModal({
         setIsSubmitting(false)
       }
     },
-    [createPlan, onImport, onClose, router]
+    [enterEditMode, onImport, onClose]
   )
 
   const handleImportFromText = () => {
@@ -251,7 +247,7 @@ export default function EnhancedJsonUploadModal({
             <DialogTitle>Import Training Plan</DialogTitle>
             <DialogDescription>
               Upload a JSON file or paste JSON data to import your training plan. The JSON must
-              include metadata with a plan name.
+              include metadata with a plan name. You'll be able to make changes before saving.
             </DialogDescription>
           </DialogHeader>
 
@@ -280,10 +276,10 @@ export default function EnhancedJsonUploadModal({
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating Plan...
+                      Validating...
                     </>
                   ) : (
-                    "Import from Text"
+                    "Continue to Editor"
                   )}
                 </Button>
               </div>
@@ -313,10 +309,10 @@ export default function EnhancedJsonUploadModal({
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating Plan...
+                      Validating...
                     </>
                   ) : (
-                    "Import from File"
+                    "Continue to Editor"
                   )}
                 </Button>
               </div>
