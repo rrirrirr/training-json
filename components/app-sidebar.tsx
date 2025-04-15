@@ -8,7 +8,8 @@ import {
   Info,
   Download,
   ExternalLink,
-  Home, // Make sure Home is imported if used for the header icon
+  Home,
+  Settings, // Make sure Home is imported if used for the header icon
   // Settings // Import Settings if used elsewhere
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -114,9 +115,21 @@ export default function AppSidebar() {
         >
           {isOpen ? (
             // Expanded: Show full title
-            <Link href="/" passHref>
-              <h1 className="text-3xl font-bold text-primary font-archivo-black">T-JSON</h1>
-            </Link>
+            <div className="relative flex justify-center items-center w-full">
+              <Link href="/" passHref>
+                <h1 className="text-3xl font-bold text-primary font-archivo-black">T-JSON</h1>
+              </Link>
+              <div className="block md:hidden absolute right-0 top-0 bottom-0 flex items-center">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={openSettingsDialog}
+                  aria-label="Settings"
+                >
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
           ) : (
             <div className="h-9 w-9" aria-hidden="true">
               {/* This div is purely for layout spacing, matching the previous icon button size */}

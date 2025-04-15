@@ -16,8 +16,8 @@ interface HeaderProps {
 
 export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
   const { isMobile } = useSidebar()
-  const { openMobileNav, openSettingsDialog } = useUIState() 
-  
+  const { openMobileNav, openSettingsDialog } = useUIState()
+
   // Get data for navigation display from the Zustand store
   const selectedMonth = usePlanStore((state) => state.selectedMonth)
   const selectedWeek = usePlanStore((state) => state.selectedWeek)
@@ -25,10 +25,16 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
 
   // Display text for the navigation button
   const mainButtonText = selectedWeek !== null ? `Vecka ${selectedWeek}` : `Block ${selectedMonth}`
-  
+
   // Determine navigation button style based on view mode
-  const navButtonColor = viewMode === "week" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-violet-50 text-violet-700 border-violet-200"
-  const darkModeNavButtonColor = viewMode === "week" ? "dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800" : "dark:bg-violet-900/20 dark:text-violet-300 dark:border-violet-800"
+  const navButtonColor =
+    viewMode === "week"
+      ? "bg-blue-50 text-blue-700 border-blue-200"
+      : "bg-violet-50 text-violet-700 border-violet-200"
+  const darkModeNavButtonColor =
+    viewMode === "week"
+      ? "dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800"
+      : "dark:bg-violet-900/20 dark:text-violet-300 dark:border-violet-800"
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-2 bg-background px-3 sm:px-6 justify-between shadow-sm">
@@ -41,14 +47,18 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
           onClick={onToggleSidebar}
           aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
         >
-          {isSidebarOpen ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
+          {isSidebarOpen ? (
+            <PanelLeftClose className="h-5 w-5" />
+          ) : (
+            <PanelLeft className="h-5 w-5" />
+          )}
         </Button>
       </div>
 
       {/* Mobile Navigation Trigger - Enhanced styling */}
       {isMobile && (
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className={cn(
             "flex-1 mx-2 flex items-center justify-between px-4 py-2",
             navButtonColor,
@@ -65,18 +75,13 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
       )}
 
       {/* Right Side Actions */}
-      <div className="flex items-center gap-2">
+      <div className="hidden md:block flex items-center gap-2">
         {/* Settings Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={openSettingsDialog}
-          aria-label="Settings"
-        >
+        <Button variant="ghost" size="icon" onClick={openSettingsDialog} aria-label="Settings">
           <Settings className="h-5 w-5" />
         </Button>
       </div>
-      
+
       {/* Mobile Navigation Panel */}
       <MobileNav />
     </header>
