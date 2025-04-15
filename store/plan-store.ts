@@ -74,7 +74,7 @@ export const usePlanStore = create<PlanState>()(
         const currentMetadataList = get().planMetadataList
         const metadataExists = currentMetadataList.some((p) => p.id === planId)
 
-        let nextMetadataList = currentMetadataList
+        let nextMetadataList = []
 
         // Add metadata if it doesn't exist AND we have valid plan data/metadata
         if (!metadataExists && plan?.metadata) {
@@ -89,14 +89,35 @@ export const usePlanStore = create<PlanState>()(
             // Use current time for updatedAt, indicating when it was last loaded/activated
             updatedAt: new Date().toISOString(),
           }
-          // Add to the beginning of the list for visibility
-          nextMetadataList = [newPlanMetadata, ...currentMetadataList]
-        } else if (!metadataExists) {
+          // Add to the beginning of the list for ordering by last loaded
+          nextMetadataList = [newPlanMetadata, ...currentMetadataList.filter(p => p.id !== planId)]
+        } else if (metadataExists) {
+          // Update existing plan's updatedAt timestamp and move to the front of the list
+          console.log(
+            `[setActivePlan] Updating last accessed timestamp for plan ID ${planId}.`
+          )
+          
+          // Find the existing plan metadata
+          const existingPlanIndex = currentMetadataList.findIndex(p => p.id === planId)
+          const existingPlan = currentMetadataList[existingPlanIndex]
+          
+          // Create updated plan metadata with new timestamp
+          const updatedPlan = {
+            ...existingPlan,
+            updatedAt: new Date().toISOString() // Update the timestamp to now
+          }
+          
+          // Create new list with updated plan at front
+          nextMetadataList = [
+            updatedPlan,
+            ...currentMetadataList.filter(p => p.id !== planId)
+          ]
+        } else {
           console.warn(
             `[setActivePlan] Metadata for plan ID ${planId} not found, but plan object or its metadata field is missing. Cannot add metadata.`
           )
+          nextMetadataList = currentMetadataList
         }
-
         // Update state including the potentially updated list
         set({
           activePlan: plan,

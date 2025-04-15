@@ -121,10 +121,8 @@ export function PlanSwitcher() {
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="start" className="w-[240px]">
-          {/* Render items directly from planMetadataList. Order is OLD->NEW. */}
-          {/* Most recent will appear last in the list visually. */}
           {planMetadataList.length > 0 ? (
-            planMetadataList.map((plan) => (
+            [...planMetadataList].slice(0, 10).map((plan) => (
               <DropdownMenuItem
                 key={plan.id}
                 onClick={() => handleSelectPlan(plan.id)}
