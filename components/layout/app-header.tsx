@@ -2,11 +2,18 @@
 
 import React from "react"
 import { Button } from "@/components/ui/button"
-import { PanelLeft, PanelLeftClose, PanelBottom, Settings, ChevronDown } from "lucide-react"
+import { PanelLeft, PanelLeftClose, PanelBottom, Settings, ChevronDown, Copy, MoreVertical } from "lucide-react"
 import { usePlanStore } from "@/store/plan-store"
 import { useSidebar } from "@/components/ui/sidebar"
+import { useToast } from "@/components/ui/use-toast"
 import { useUIState } from "@/contexts/ui-context"
 import { MobileNav } from "../mobile-nav"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 
 interface HeaderProps {
@@ -17,6 +24,18 @@ interface HeaderProps {
 export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
   const { isMobile } = useSidebar()
   const { openMobileNav, openSettingsDialog } = useUIState()
+  const { toast } = useToast()
+  
+  // Function to copy the current URL to clipboard
+  const copyUrlToClipboard = () => {
+    if (typeof window !== "undefined") {
+      navigator.clipboard.writeText(window.location.href)
+      toast({
+        title: "URL Copied",
+        description: "The link has been copied to your clipboard",
+      })
+    }
+  }
 
   // Get data for navigation display from the Zustand store
   const selectedMonth = usePlanStore((state) => state.selectedMonth)
@@ -73,13 +92,29 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
           <ChevronDown className="h-4 w-4 ml-1 opacity-70" />
         </Button>
       )}
-
       {/* Right Side Actions */}
-      <div className="hidden md:block flex items-center gap-2">
-        {/* Settings Button */}
-        <Button variant="ghost" size="icon" onClick={openSettingsDialog} aria-label="Settings">
-          <Settings className="h-5 w-5" />
-        </Button>
+      <div className="flex items-center gap-2">
+        {/* Settings Button - only visible on desktop */}
+        <div className="hidden md:block">
+          <Button variant="ghost" size="icon" onClick={openSettingsDialog} aria-label="Settings">
+            <Settings className="h-5 w-5" />
+          </Button>
+        </div>
+        
+        {/* Dropdown Menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="More options">
+              <MoreVertical className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={copyUrlToClipboard}>
+              <Copy className="mr-2 h-4 w-4" />
+              <span>Copy URL</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Mobile Navigation Panel */}
