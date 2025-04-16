@@ -27,35 +27,61 @@ export default function PlanViewer({ planId }: PlanViewerProps) {
   const selectWeek = usePlanStore((state) => state.selectWeek)
   const selectMonth = usePlanStore((state) => state.selectMonth)
   const setViewMode = usePlanStore((state) => state.setViewMode)
-  
+
   // Get plan mode data from context
   const { mode, draftPlan } = usePlanMode()
 
   // Determine which plan to show based on mode
   const planToDisplay = mode !== "normal" ? draftPlan : activePlan
-  
+
   // Effect to select default view when entering edit/view mode with a draft plan
   useEffect(() => {
     if (mode !== "normal" && draftPlan) {
-      console.log("[PlanViewer] Setting default view for draft plan in", mode, "mode");
-      
+      console.log("[PlanViewer] Setting default view for draft plan in", mode, "mode")
+
       // If plan has weeks, select the first week
       if (draftPlan.weeks && draftPlan.weeks.length > 0) {
-        const firstWeek = draftPlan.weeks[0].weekNumber;
-        console.log("[PlanViewer] Selecting first week:", firstWeek);
-        selectWeek(firstWeek);
-      } 
+        const firstWeek = draftPlan.weeks[0].weekNumber
+        console.log("[PlanViewer] Selecting first week:", firstWeek)
+        selectWeek(firstWeek)
+      }
       // Otherwise select the first month block
       else if (draftPlan.monthBlocks && draftPlan.monthBlocks.length > 0) {
-        const firstMonthId = draftPlan.monthBlocks[0].id;
-        console.log("[PlanViewer] Selecting first month:", firstMonthId);
-        selectMonth(firstMonthId);
+        const firstMonthId = draftPlan.monthBlocks[0].id
+        console.log("[PlanViewer] Selecting first month:", firstMonthId)
+        selectMonth(firstMonthId)
       }
     }
-  }, [mode, draftPlan, selectWeek, selectMonth]);
+  }, [mode, draftPlan, selectWeek, selectMonth])
 
   // Handle loading state
-  if (isLoading || (!planToDisplay && mode === "normal")) {
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center p-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  // Handle case when no plan is active
+  if (!planToDisplay && mode === "normal") {
+    console.log("[PlanViewer] No plan to display, redirecting to home page.")
+    
+    // Clear localStorage to ensure no attempt to restore a deleted plan
+    try {
+      localStorage.removeItem("planModeDraft_mode")
+      localStorage.removeItem("planModeDraft_plan")
+      localStorage.removeItem("planModeDraft_originalId")
+      localStorage.removeItem("lastViewedPlanId") 
+      console.log("[PlanViewer] Cleared PlanModeContext keys from localStorage.")
+    } catch (error) {
+      console.error("Error clearing localStorage keys:", error)
+    }
+    
+    // Force a complete reload rather than using router.push
+    // This ensures we don't get stuck in any lingering state
+    window.location.href = "/"
+    
     return (
       <div className="flex h-full items-center justify-center p-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -93,13 +119,13 @@ export default function PlanViewer({ planId }: PlanViewerProps) {
   }
 
   // Find the relevant data for the selected week or month
-  const weekData = selectedWeek && planToDisplay
-    ? planToDisplay.weeks.find((week) => week.weekNumber === selectedWeek)
-    : null
+  const weekData =
+    selectedWeek && planToDisplay
+      ? planToDisplay.weeks.find((week) => week.weekNumber === selectedWeek)
+      : null
 
-  const monthData = planToDisplay && planToDisplay.monthBlocks.find(
-    (block) => block.id === selectedMonth
-  )
+  const monthData =
+    planToDisplay && planToDisplay.monthBlocks.find((block) => block.id === selectedMonth)
 
   // Debug information
   console.log("[PlanViewer] Rendering with:", {
@@ -109,14 +135,14 @@ export default function PlanViewer({ planId }: PlanViewerProps) {
     selectedMonth,
     viewMode,
     weekData: !!weekData,
-    monthData: !!monthData
-  });
+    monthData: !!monthData,
+  })
 
   return (
     <>
       {/* Show mode menu when in edit or view mode */}
       <PlanModeMenu />
-      
+
       {/* Content View with bottom padding on mobile */}
       <div className="p-4 pb-20 md:p-6 md:pb-6">
         {viewMode === "week" && weekData ? (
@@ -129,12 +155,18 @@ export default function PlanViewer({ planId }: PlanViewerProps) {
             Please select a week or block to view.
             <pre className="mt-4 p-4 bg-muted rounded text-xs text-left overflow-auto">
               Debug:{"\n"}
-              Mode: {mode}{"\n"}
-              View Mode: {viewMode}{"\n"}
-              Selected Week: {selectedWeek}{"\n"}
-              Selected Month: {selectedMonth}{"\n"}
-              Has Plan Data: {!!planToDisplay}{"\n"}
-              Weeks Count: {planToDisplay ? planToDisplay.weeks.length : 0}{"\n"}
+              Mode: {mode}
+              {"\n"}
+              View Mode: {viewMode}
+              {"\n"}
+              Selected Week: {selectedWeek}
+              {"\n"}
+              Selected Month: {selectedMonth}
+              {"\n"}
+              Has Plan Data: {!!planToDisplay}
+              {"\n"}
+              Weeks Count: {planToDisplay ? planToDisplay.weeks.length : 0}
+              {"\n"}
               Blocks Count: {planToDisplay ? planToDisplay.monthBlocks.length : 0}
             </pre>
           </div>

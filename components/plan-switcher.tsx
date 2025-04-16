@@ -195,12 +195,45 @@ export function PlanSwitcher() {
   const handleConfirmDelete = async () => {
     if (planToDelete) {
       const deletedPlanId = planToDelete.id
+      const deletedPlanName = planToDelete.name
       const wasActive = usePlanStore.getState().activePlanId === deletedPlanId
+
+      // Use the mode and originalPlanId from the component scope
+      // (they were already obtained via usePlanMode at the top level)
+
+      // First, capture whether we're in edit/view mode for this plan
+      const isEditingOrViewingThisPlan = mode !== "normal" && originalPlanId === deletedPlanId
+
+      // If we're in edit/view mode for this plan, exit the mode
+      // This will clear the localStorage and state
+      if (isEditingOrViewingThisPlan) {
+        console.log("[PlanSwitcher] Exiting plan mode before deleting active plan")
+        exitMode()
+      }
+
+      // Always explicitly clear PlanModeContext localStorage keys to ensure clean state
+      try {
+        localStorage.removeItem("planModeDraft_mode")
+        localStorage.removeItem("planModeDraft_plan")
+        localStorage.removeItem("planModeDraft_originalId")
+        localStorage.removeItem("lastViewedPlanId") // Clear this key also to prevent auto-loading
+        console.log("[PlanSwitcher] Explicitly cleared PlanModeContext keys from localStorage.")
+      } catch (error) {
+        console.error("Error clearing PlanModeContext localStorage keys:", error)
+      }
+
+      // Now remove the plan from the store
       await removeLocalPlan(deletedPlanId)
+
+      // Close the dialog
       setPlanToDelete(null)
       setIsDeleteDialogOpen(false)
+
+      // Redirect to home if this was the active plan
       if (wasActive) {
-        router.push("/")
+        // Force a reload instead of using router.push
+        // This ensures all state is completely fresh when we land on the home page
+        window.location.href = "/"
       }
     }
   }

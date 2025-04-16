@@ -52,20 +52,31 @@ export function PlanModeProvider({ children }: { children: React.ReactNode }) {
       // Only restore if mode is edit/view and plan data exists
       if (persistedMode && persistedMode !== "normal" && persistedPlanJson) {
         const persistedPlan = JSON.parse(persistedPlanJson) as TrainingPlanData
-        console.log("[PlanModeContext Init] Restoring state:", {
-          persistedMode,
-          persistedPlan,
-          persistedOriginalId,
-        })
-        setModeState(persistedMode)
-        setDraftPlanState(persistedPlan)
-        setOriginalPlanIdState(persistedOriginalId)
-      } else {
-        console.log("[PlanModeContext Init] No valid persisted state found or mode was 'normal'.")
-        // Ensure local storage is clean if we start in normal mode
-        localStorage.removeItem(DRAFT_MODE_KEY)
-        localStorage.removeItem(DRAFT_PLAN_KEY)
-        localStorage.removeItem(DRAFT_ORIGINAL_ID_KEY)
+
+        // Validate that the plan still exists in the metadata list if we have an original ID
+        const planMetadataList = usePlanStore.getState().planMetadataList
+        const planStillExists = persistedOriginalId
+          ? planMetadataList.some((plan) => plan.id === persistedOriginalId)
+          : true // If there's no original ID, we can't validate
+
+        if (planStillExists) {
+          console.log("[PlanModeContext Init] Restoring state:", {
+            persistedMode,
+            persistedPlan,
+            persistedOriginalId,
+          })
+          setModeState(persistedMode)
+          setDraftPlanState(persistedPlan)
+          setOriginalPlanIdState(persistedOriginalId)
+        } else {
+          console.log(
+            "[PlanModeContext Init] Persisted plan no longer exists in metadata list. Resetting state."
+          )
+          // Clear localStorage and reset state
+          localStorage.removeItem(DRAFT_MODE_KEY)
+          localStorage.removeItem(DRAFT_PLAN_KEY)
+          localStorage.removeItem(DRAFT_ORIGINAL_ID_KEY)
+        }
       }
     } catch (error) {
       console.error("Error reading draft state from localStorage:", error)
