@@ -35,6 +35,7 @@ import { usePlanStore } from "@/store/plan-store" // Adjust path if needed
 import { useExportModal } from "@/components/modals/export-modal" // Adjust path if needed
 import { PlanSwitcher } from "./plan-switcher" // Adjust path if needed
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip" // Adjust path if needed
+import { usePlanMode } from "@/contexts/plan-mode-context" // Import the plan mode context
 
 export default function AppSidebar() {
   const router = useRouter()
@@ -51,6 +52,9 @@ export default function AppSidebar() {
   const planMetadataList = usePlanStore((state) => state.planMetadataList)
   const fetchPlanMetadata = usePlanStore((state) => state.fetchPlanMetadata)
 
+  // --- Plan Mode Context State ---
+  const { mode, draftPlan } = usePlanMode()
+
   // --- UI Context State ---
   const { openInfoDialog, openSettingsDialog } = useUIState() // Keep openSettingsDialog if used
 
@@ -65,6 +69,9 @@ export default function AppSidebar() {
   const uploadModalStore = useUploadModal() // Keep if used elsewhere
   const exportModalStore = useExportModal()
 
+  // --- Determine which plan to use ---
+  const planToDisplay = mode !== "normal" ? draftPlan : activePlan
+  
   // --- Effects ---
   // Load plan metadata when necessary
   useEffect(() => {
@@ -73,19 +80,19 @@ export default function AppSidebar() {
     }
   }, [planMetadataList, fetchPlanMetadata])
 
-  // Get week types from active plan
+  // Get week types from the plan being displayed
   useEffect(() => {
-    if (activePlan?.weekTypes && Array.isArray(activePlan.weekTypes)) {
-      setWeekTypes(activePlan.weekTypes)
+    if (planToDisplay?.weekTypes && Array.isArray(planToDisplay.weekTypes)) {
+      setWeekTypes(planToDisplay.weekTypes)
     } else {
       setWeekTypes([])
     }
-  }, [activePlan])
+  }, [planToDisplay])
 
   // --- Helper Functions ---
-  // Function to get week info for displaying week badges
+  // Function to get week info for displaying week badges - use planToDisplay instead of activePlan
   const getWeekInfo = (weekNumber: number) => {
-    const weekData = activePlan?.weeks.find((w) => w.weekNumber === weekNumber)
+    const weekData = planToDisplay?.weeks.find((w) => w.weekNumber === weekNumber)
     if (!weekData) return { type: "", weekTypeIds: [], colorName: undefined }
     return {
       type: weekData.weekType || "",
@@ -223,19 +230,19 @@ export default function AppSidebar() {
                 )}
               </Tooltip>
 
-              {/* Week/Block Selectors (Only when expanded and plan active) */}
-              {isOpen && activePlan && (
+              {/* Week/Block Selectors (Only when expanded and plan available) */}
+              {isOpen && planToDisplay && (
                 <div className="mt-2 w-full">
                   {viewMode === "month" ? (
                     <BlockSelector
-                      blocks={activePlan.monthBlocks || []}
+                      blocks={planToDisplay.monthBlocks || []}
                       selectedBlockId={selectedMonth}
                       onSelectBlock={(id) => selectMonth(id)}
                       variant="sidebar"
                     />
                   ) : (
                     <WeekSelector
-                      weeks={activePlan.weeks.map((w) => w.weekNumber) || []}
+                      weeks={planToDisplay.weeks.map((w) => w.weekNumber) || []}
                       selectedWeek={selectedWeek}
                       onSelectWeek={(num) => selectWeek(num)}
                       variant="sidebar"
@@ -298,12 +305,12 @@ export default function AppSidebar() {
               <Button
                 variant="ghost"
                 size={isOpen ? "sm" : "icon"}
-                onClick={() => activePlan && exportModalStore.open()}
+                onClick={() => planToDisplay && exportModalStore.open()}
                 className={cn(
                   "w-full h-9", // Consistent height
                   isOpen ? "justify-start" : "justify-center"
                 )}
-                disabled={!activePlan}
+                disabled={!planToDisplay}
                 aria-label="Export JSON"
               >
                 <Download className={cn("h-4 w-4", isOpen && "mr-2")} />

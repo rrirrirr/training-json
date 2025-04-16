@@ -8,6 +8,7 @@ import BlockView from "@/components/block-view"
 import { MobileScrollNav } from "@/components/mobile-scroll-nav"
 import { PlanModeMenu } from "@/components/plan-mode-menu"
 import { usePlanMode } from "@/contexts/plan-mode-context"
+import { useEffect } from "react"
 
 interface PlanViewerProps {
   planId: string
@@ -23,12 +24,35 @@ export default function PlanViewer({ planId }: PlanViewerProps) {
   const viewMode = usePlanStore((state) => state.viewMode)
   const isLoading = usePlanStore((state) => state.isLoading)
   const error = usePlanStore((state) => state.error)
+  const selectWeek = usePlanStore((state) => state.selectWeek)
+  const selectMonth = usePlanStore((state) => state.selectMonth)
+  const setViewMode = usePlanStore((state) => state.setViewMode)
   
   // Get plan mode data from context
   const { mode, draftPlan } = usePlanMode()
 
   // Determine which plan to show based on mode
   const planToDisplay = mode !== "normal" ? draftPlan : activePlan
+  
+  // Effect to select default view when entering edit/view mode with a draft plan
+  useEffect(() => {
+    if (mode !== "normal" && draftPlan) {
+      console.log("[PlanViewer] Setting default view for draft plan in", mode, "mode");
+      
+      // If plan has weeks, select the first week
+      if (draftPlan.weeks && draftPlan.weeks.length > 0) {
+        const firstWeek = draftPlan.weeks[0].weekNumber;
+        console.log("[PlanViewer] Selecting first week:", firstWeek);
+        selectWeek(firstWeek);
+      } 
+      // Otherwise select the first month block
+      else if (draftPlan.monthBlocks && draftPlan.monthBlocks.length > 0) {
+        const firstMonthId = draftPlan.monthBlocks[0].id;
+        console.log("[PlanViewer] Selecting first month:", firstMonthId);
+        selectMonth(firstMonthId);
+      }
+    }
+  }, [mode, draftPlan, selectWeek, selectMonth]);
 
   // Handle loading state
   if (isLoading || (!planToDisplay && mode === "normal")) {
@@ -77,6 +101,17 @@ export default function PlanViewer({ planId }: PlanViewerProps) {
     (block) => block.id === selectedMonth
   )
 
+  // Debug information
+  console.log("[PlanViewer] Rendering with:", {
+    mode,
+    planToDisplay: !!planToDisplay,
+    selectedWeek,
+    selectedMonth,
+    viewMode,
+    weekData: !!weekData,
+    monthData: !!monthData
+  });
+
   return (
     <>
       {/* Show mode menu when in edit or view mode */}
@@ -92,6 +127,16 @@ export default function PlanViewer({ planId }: PlanViewerProps) {
           // Fallback if data is somehow missing
           <div className="text-center p-8 text-muted-foreground">
             Please select a week or block to view.
+            <pre className="mt-4 p-4 bg-muted rounded text-xs text-left overflow-auto">
+              Debug:{"\n"}
+              Mode: {mode}{"\n"}
+              View Mode: {viewMode}{"\n"}
+              Selected Week: {selectedWeek}{"\n"}
+              Selected Month: {selectedMonth}{"\n"}
+              Has Plan Data: {!!planToDisplay}{"\n"}
+              Weeks Count: {planToDisplay ? planToDisplay.weeks.length : 0}{"\n"}
+              Blocks Count: {planToDisplay ? planToDisplay.monthBlocks.length : 0}
+            </pre>
           </div>
         )}
       </div>

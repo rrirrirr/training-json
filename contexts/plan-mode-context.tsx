@@ -37,10 +37,21 @@ export function PlanModeProvider({ children }: { children: React.ReactNode }) {
   
   // Enter edit mode with a draft plan
   const enterEditMode = useCallback((plan: TrainingPlanData, originalId?: string) => {
-    setDraftPlan(plan)
-    setMode("edit")
+    console.log("[PlanModeContext] enterEditMode called with:", plan, originalId);
+    if (!plan) {
+      console.error("[PlanModeContext] enterEditMode called with null/undefined plan");
+      return;
+    }
+    
+    setDraftPlan(plan);
+    console.log("[PlanModeContext] draftPlan set");
+    
+    setMode("edit");
+    console.log("[PlanModeContext] mode set to edit");
+    
     if (originalId) {
-      setOriginalPlanId(originalId)
+      setOriginalPlanId(originalId);
+      console.log("[PlanModeContext] originalPlanId set to", originalId);
     }
   }, [])
   

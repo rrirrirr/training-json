@@ -61,7 +61,11 @@ export default function EnhancedJsonUploadModal({
   const createPlan = usePlanStore((state) => state.createPlan)
   
   // Get the enterEditMode function from the plan mode context
-  const { enterEditMode } = usePlanMode()
+  const { mode, enterEditMode } = usePlanMode()
+  
+  // Log initial state
+  console.log("[EnhancedJsonUploadModal] Initial mode:", mode);
+  console.log("[EnhancedJsonUploadModal] enterEditMode function exists:", !!enterEditMode);
 
   // Separate notification states for regular copy and AI copy
   const [showCopyNotification, setShowCopyNotification] = useState(false)
@@ -115,9 +119,16 @@ export default function EnhancedJsonUploadModal({
 
         // Get the plan name from metadata
         const planName = data.metadata.planName.trim()
-
+        
+        console.log("[validateAndImport] Validated plan data:", { 
+          name: planName,
+          weeksCount: data.weeks.length,
+          monthsCount: data.monthBlocks.length
+        });
+        
         // If there's an onImport callback, call it with the data and let the parent handle plan creation
         if (typeof onImport === "function") {
+          console.log("[validateAndImport] Using onImport callback");
           // Reset form state
           setJsonText("")
           setFile(null)
@@ -130,16 +141,33 @@ export default function EnhancedJsonUploadModal({
           // The parent component will decide what to do with it
           onImport(data)
         } else {
+          console.log("[validateAndImport] No onImport callback - entering edit mode directly");
+          console.log("[validateAndImport] Current mode before entering edit mode:", mode);
+          console.log("[validateAndImport] enterEditMode function type:", typeof enterEditMode);
+          
           // Instead of immediately saving to Supabase, enter edit mode
-          enterEditMode(data)
+          try {
+            enterEditMode(data);
+            console.log("[validateAndImport] Successfully entered edit mode");
+            console.log("[validateAndImport] Mode after enterEditMode called:", mode);
+          } catch (editModeError) {
+            console.error("[validateAndImport] Error entering edit mode:", editModeError);
+            setError("Error entering edit mode: " + 
+              (editModeError instanceof Error ? editModeError.message : "Unknown error"));
+            setIsSubmitting(false);
+            return;
+          }
           
           // Reset form state
-          setJsonText("")
-          setFile(null)
-          setError(null)
+          setJsonText("");
+          setFile(null);
+          setError(null);
           
           // Close the modal
-          onClose()
+          onClose();
+          
+          // Log after modal is closed
+          console.log("[validateAndImport] Modal closed, edit mode should be active now");
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Invalid JSON format")

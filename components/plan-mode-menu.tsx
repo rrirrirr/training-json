@@ -14,11 +14,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import DraftJsonEditor from "@/components/draft-json-editor"
 
 export function PlanModeMenu() {
   const { 
     mode, 
     draftPlan, 
+    originalPlanId,
     exitMode, 
     saveDraftPlan, 
     saveViewedPlanToMyPlans 
@@ -26,6 +28,7 @@ export function PlanModeMenu() {
   
   const [isSaving, setIsSaving] = useState(false)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
+  const [isJsonEditorOpen, setIsJsonEditorOpen] = useState(false)
   
   // Only show menu in edit or view mode
   if (mode === "normal") return null
@@ -59,6 +62,12 @@ export function PlanModeMenu() {
     exitMode()
   }
   
+  const handleOpenJsonEditor = () => {
+    if (draftPlan) {
+      setIsJsonEditorOpen(true)
+    }
+  }
+  
   return (
     <>
       <div className="bg-muted/60 border-b px-4 py-2 flex items-center justify-between">
@@ -87,10 +96,10 @@ export function PlanModeMenu() {
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => {/* Additional edit action if needed */}}
+              onClick={handleOpenJsonEditor}
             >
               <Edit className="h-4 w-4 mr-2" />
-              Edit
+              Edit JSON
             </Button>
           )}
           
@@ -115,6 +124,7 @@ export function PlanModeMenu() {
         </div>
       </div>
       
+      {/* Alert Dialog for confirming exit */}
       <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -131,6 +141,19 @@ export function PlanModeMenu() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      {/* Draft JSON Editor Modal */}
+      {isJsonEditorOpen && draftPlan && (
+        <DraftJsonEditor 
+          isOpen={isJsonEditorOpen}
+          onClose={() => setIsJsonEditorOpen(false)}
+          plan={{
+            id: originalPlanId || "draft-plan",
+            name: draftPlan.metadata?.planName || "Draft Plan",
+            data: draftPlan
+          }}
+        />
+      )}
     </>
   )
 }

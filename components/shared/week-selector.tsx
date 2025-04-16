@@ -5,6 +5,7 @@ import { usePlanStore } from "@/store/plan-store"
 import type { WeekType } from "@/types/training-plan"
 import { useTheme } from "next-themes"
 import { getThemeAwareColorClasses } from "@/utils/color-utils"
+import { usePlanMode } from "@/contexts/plan-mode-context"
 
 interface WeekSelectorProps {
   weeks: number[]
@@ -27,13 +28,19 @@ export default function WeekSelector({
 }: WeekSelectorProps) {
   // Get active plan directly from Zustand store
   const activePlan = usePlanStore((state) => state.activePlan)
-  const trainingData = activePlan?.weeks || []
+  
+  // Get plan mode data from context
+  const { mode, draftPlan } = usePlanMode()
+  
+  // Determine which plan to use
+  const planToDisplay = mode !== "normal" ? draftPlan : activePlan
+  const trainingData = planToDisplay?.weeks || []
   
   const { theme } = useTheme()
 
   // Mapping function to get week type by ID
   const getWeekTypeById = (typeId: string): WeekType | undefined => {
-    return activePlan?.weekTypes?.find((type) => type.id === typeId)
+    return planToDisplay?.weekTypes?.find((type) => type.id === typeId)
   }
 
   // Default week info function if not provided

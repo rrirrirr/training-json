@@ -4,6 +4,7 @@
 import React, { useEffect, useRef } from "react"
 import AppSidebar from "@/components/app-sidebar"
 import { AppHeader } from "@/components/layout/app-header"
+import { PlanModeIndicator } from "@/components/plan-mode-indicator"
 import { Sidebar, SidebarProvider, useSidebar } from "@/components/ui/sidebar"
 import {
   ResizablePanelGroup,
@@ -126,6 +127,7 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
             }}
             isSidebarOpen={state === "expanded"}
           />
+          <PlanModeIndicator />
           <main className="flex-1 overflow-auto">{children}</main>
         </div>
       </div>
@@ -171,6 +173,7 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
           <div className="flex flex-col h-full">
             <AppHeader onToggleSidebar={handleToggleSidebar} isSidebarOpen={state === "expanded"} />{" "}
             {/* Use context state for button icon */}
+            <PlanModeIndicator />
             <main className="flex-1 overflow-auto">{children}</main>
           </div>
         </ResizablePanel>

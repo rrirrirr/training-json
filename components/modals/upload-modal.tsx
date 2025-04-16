@@ -22,15 +22,20 @@ export const useUploadModal = create<UploadModalStore>((set) => ({
 export function UploadModal() {
   const { isOpen, close, onImportCallback } = useUploadModal()
   
-  const handleImport = (data: TrainingPlanData) => {
-    // If a callback was provided, execute it
-    if (onImportCallback) {
-      onImportCallback(data)
-    }
-    
-    // Close the modal
-    close()
-  }
+  // Only create a handler if a callback was provided, otherwise pass null
+  // This allows the EnhancedJsonUploadModal to enter edit mode directly
+  const handleImport = onImportCallback 
+    ? (data: TrainingPlanData) => {
+        console.log("[UploadModal] Import handler called with callback");
+        // If a callback was provided, execute it
+        onImportCallback(data)
+        
+        // Close the modal
+        close()
+      }
+    : null
+  
+  console.log("[UploadModal] Rendering with onImport callback:", !!handleImport);
   
   return (
     <EnhancedJsonUploadModal 
