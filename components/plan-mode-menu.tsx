@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog" // Assuming Shadcn AlertDialog path
-import DraftJsonEditor from "@/components/draft-json-editor" // Assuming component path
+import JsonEditor from "@/components/json-editor" // Updated import path
 
 export function PlanModeMenu() {
   const { mode, draftPlan, originalPlanId, exitMode, saveDraftPlan, saveViewedPlanToMyPlans } =
@@ -161,9 +161,9 @@ export function PlanModeMenu() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      {/* Draft JSON Editor Modal (no changes needed) */}
+      {/* JSON Editor Modal */}
       {isJsonEditorOpen && draftPlan && (
-        <DraftJsonEditor
+        <JsonEditor
           isOpen={isJsonEditorOpen}
           onClose={() => setIsJsonEditorOpen(false)}
           plan={{
