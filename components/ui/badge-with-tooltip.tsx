@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils"
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
@@ -26,15 +25,13 @@ export function BadgeWithTooltip({
   ...badgeProps
 }: BadgeWithTooltipProps) {
   return (
-    <TooltipProvider>
-      <Tooltip delayDuration={delayDuration}>
-        <TooltipTrigger asChild>
-          <Badge className={cn("select-none", className)} {...badgeProps}>{children}</Badge>
-        </TooltipTrigger>
-        <TooltipContent side={tooltipSide} align={tooltipAlign}>
-          {tooltipContent}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip delayDuration={delayDuration}>
+      <TooltipTrigger asChild>
+        <Badge className={cn("select-none", className)} {...badgeProps}>{children}</Badge>
+      </TooltipTrigger>
+      <TooltipContent side={tooltipSide} align={tooltipAlign}>
+        {tooltipContent}
+      </TooltipContent>
+    </Tooltip>
   )
 }

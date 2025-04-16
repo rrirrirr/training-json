@@ -36,7 +36,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { TooltipProvider } from "@/components/ui/tooltip"
 import { usePlanStore, type PlanMetadata } from "@/store/plan-store"
 import { useEffect, useState } from "react"
 import { useNewPlanModal } from "@/components/modals/new-plan-modal"
@@ -347,9 +346,8 @@ export function PlanSwitcher() {
 
       {/* Desktop View: Dropdown */}
       <div className="hidden md:block">
-        <TooltipProvider delayDuration={200}>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
                 size="sm"
@@ -390,7 +388,7 @@ export function PlanSwitcher() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </TooltipProvider>
+
       </div>
 
       {/* JSON Editor Dialog */}

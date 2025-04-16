@@ -22,7 +22,6 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
@@ -127,7 +126,6 @@ export default function PlanSelector() {
                   <div className="text-xs text-gray-500">Updated: {formatDate(plan.updatedAt)}</div>
                 </div>
                 <div className="flex items-center">
-                  <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
@@ -145,9 +143,7 @@ export default function PlanSelector() {
                         <p>Edit JSON</p>
                       </TooltipContent>
                     </Tooltip>
-                  </TooltipProvider>
                   
-                  <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
@@ -165,7 +161,6 @@ export default function PlanSelector() {
                         <p>Delete Plan</p>
                       </TooltipContent>
                     </Tooltip>
-                  </TooltipProvider>
                 </div>
               </div>
             ))}

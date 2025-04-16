@@ -34,7 +34,7 @@ import { useRouter } from "next/navigation"
 import { usePlanStore } from "@/store/plan-store" // Adjust path if needed
 import { useExportModal } from "@/components/modals/export-modal" // Adjust path if needed
 import { PlanSwitcher } from "./plan-switcher" // Adjust path if needed
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip" // Adjust path if needed
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip" // Adjust path if needed
 import { usePlanMode } from "@/contexts/plan-mode-context" // Import the plan mode context
 
 export default function AppSidebar() {
@@ -110,9 +110,8 @@ export default function AppSidebar() {
 
   // --- Render ---
   return (
-    // Wrap with TooltipProvider to enable tooltips globally within the sidebar
-    <TooltipProvider delayDuration={100}>
-      <>
+    // Tooltips are now provided by the global TooltipProvider in the layout
+    <>
         {/* === HEADER === */}
         <SidebarHeader
           className={cn(
@@ -368,6 +367,5 @@ export default function AppSidebar() {
           */}
         </SidebarFooter>
       </>
-    </TooltipProvider>
   )
 }

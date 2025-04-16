@@ -8,7 +8,7 @@ import { combineExerciseData } from "@/utils/exercise-utils"
 import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
 import { getSessionStyling } from "@/utils/session-utils"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip" // Assuming path is correct
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip" // Assuming path is correct
 import { getThemeAwareColorClasses } from "@/utils/color-utils"
 
 // Helper component for load display with theme-aware styling
@@ -119,18 +119,16 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
             )}
           </CardDescription>
         </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="absolute top-3 right-3 text-muted-foreground">
-                {showDetails ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {showDetails ? "Details Visible" : "Details Hidden"}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="absolute top-3 right-3 text-muted-foreground">
+              {showDetails ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {showDetails ? "Details Visible" : "Details Hidden"}
+          </TooltipContent>
+        </Tooltip>
       </CardHeader>
 
       {/* Use sessionName in ID - this could also error */}

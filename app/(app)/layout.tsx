@@ -6,6 +6,7 @@ import { PlanEventHandler } from "@/components/plan-event-handler"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { PlanModeProvider } from "@/contexts/plan-mode-context"
 import { UIProvider } from "@/contexts/ui-context"
+import { TooltipProvider } from "@/components/ui/tooltip"
 
 export const metadata: Metadata = {
   title: "T-JSON",
@@ -20,15 +21,17 @@ export default function AppLayout({
   return (
     <PlanModeProvider>
       <UIProvider>
-        <SidebarProvider>
-          <PlanEventHandler>
-            <LayoutClient>
-              {children}
-              <ModalProvider />
-              <DialogProvider />
-            </LayoutClient>
-          </PlanEventHandler>
-        </SidebarProvider>
+        <TooltipProvider delayDuration={100}>
+          <SidebarProvider>
+            <PlanEventHandler>
+              <LayoutClient>
+                {children}
+                <ModalProvider />
+                <DialogProvider />
+              </LayoutClient>
+            </PlanEventHandler>
+          </SidebarProvider>
+        </TooltipProvider>
       </UIProvider>
     </PlanModeProvider>
   )
