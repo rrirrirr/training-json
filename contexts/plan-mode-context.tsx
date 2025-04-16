@@ -1,5 +1,3 @@
-// contexts/plan-mode-context.tsx
-
 "use client"
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
@@ -132,6 +130,10 @@ export function PlanModeProvider({ children }: { children: React.ReactNode }) {
   // Exit any special mode and clear storage
   const exitMode = useCallback(() => {
     console.log("[PlanModeContext] Exiting mode and clearing draft storage.")
+
+    // Store originalPlanId before clearing it (for navigation if needed)
+    const planIdToNavigateTo = originalPlanId
+
     try {
       localStorage.removeItem(DRAFT_MODE_KEY)
       localStorage.removeItem(DRAFT_PLAN_KEY)
@@ -140,10 +142,21 @@ export function PlanModeProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error("Error clearing draft state from localStorage:", error)
     }
+
     setMode("normal") // Uses the wrapper function
     setDraftPlan(null) // Uses the wrapper function
     setOriginalPlanId(null) // Uses the wrapper function
-  }, [setMode, setDraftPlan, setOriginalPlanId]) // Add setters as dependencies
+
+    // Only navigate if this function is called directly (not from save functions)
+    // This is detected by checking if we're on the edit page
+    if (typeof window !== "undefined" && window.location.pathname === "/plan/edit") {
+      if (planIdToNavigateTo) {
+        router.push(`/plan/${planIdToNavigateTo}`)
+      } else {
+        router.push("/") // Navigate to home if no original plan
+      }
+    }
+  }, [setMode, setDraftPlan, setOriginalPlanId, originalPlanId, router]) // Add setters as dependencies
 
   // Enter edit mode with a draft plan
   const enterEditMode = useCallback(
@@ -161,8 +174,11 @@ export function PlanModeProvider({ children }: { children: React.ReactNode }) {
       setDraftPlan(plan)
       setMode("edit")
       setOriginalPlanId(originalId ?? null) // Ensure null if undefined
+
+      // Navigate to the dedicated edit page
+      router.push("/plan/edit")
     },
-    [setMode, setDraftPlan, setOriginalPlanId]
+    [setMode, setDraftPlan, setOriginalPlanId, router]
   ) // Use setters as dependencies
 
   // Enter view mode for an external plan
@@ -206,10 +222,30 @@ export function PlanModeProvider({ children }: { children: React.ReactNode }) {
     const planId = await createPlan(planToSave.metadata.planName, planToSave)
 
     if (planId) {
-      console.log(
-        `[PlanModeContext] Draft saved successfully. New Plan ID: ${planId}. Exiting mode.`
-      )
-      exitMode() // Clear state and localStorage
+      console.log(`[PlanModeContext] Draft saved successfully. New Plan ID: ${planId}.`)
+
+      // Get the setActivePlan function from the store
+      const setActivePlan = usePlanStore.getState().setActivePlan
+
+      // Explicitly set the plan as active before navigation
+      setActivePlan(planToSave, planId)
+
+      // Clear the edit mode state
+      try {
+        localStorage.removeItem(DRAFT_MODE_KEY)
+        localStorage.removeItem(DRAFT_PLAN_KEY)
+        localStorage.removeItem(DRAFT_ORIGINAL_ID_KEY)
+        console.log("[PlanModeContext] Cleared all draft keys from localStorage.")
+      } catch (error) {
+        console.error("Error clearing draft state from localStorage:", error)
+      }
+
+      // Reset the context state
+      setMode("normal")
+      setDraftPlan(null)
+      setOriginalPlanId(null)
+
+      // Navigate to the new plan
       router.push(`/plan/${planId}`)
     } else {
       console.error(
@@ -218,7 +254,7 @@ export function PlanModeProvider({ children }: { children: React.ReactNode }) {
     }
 
     return planId
-  }, [draftPlan, createPlan, exitMode, router]) // Add exitMode dependency
+  }, [draftPlan, createPlan, setMode, setDraftPlan, setOriginalPlanId, router]) // Add exitMode dependency
 
   // Save a viewed plan to user's storage
   const saveViewedPlanToMyPlans = useCallback(async () => {
@@ -242,10 +278,30 @@ export function PlanModeProvider({ children }: { children: React.ReactNode }) {
     const planId = await createPlan(planToSave.metadata.planName, planToSave)
 
     if (planId) {
-      console.log(
-        `[PlanModeContext] Viewed plan saved successfully. New Plan ID: ${planId}. Exiting mode.`
-      )
-      exitMode() // Clear state and localStorage
+      console.log(`[PlanModeContext] Viewed plan saved successfully. New Plan ID: ${planId}.`)
+
+      // Get the setActivePlan function from the store
+      const setActivePlan = usePlanStore.getState().setActivePlan
+
+      // Explicitly set the plan as active before navigation
+      setActivePlan(planToSave, planId)
+
+      // Clear the edit mode state
+      try {
+        localStorage.removeItem(DRAFT_MODE_KEY)
+        localStorage.removeItem(DRAFT_PLAN_KEY)
+        localStorage.removeItem(DRAFT_ORIGINAL_ID_KEY)
+        console.log("[PlanModeContext] Cleared all draft keys from localStorage.")
+      } catch (error) {
+        console.error("Error clearing draft state from localStorage:", error)
+      }
+
+      // Reset the context state
+      setMode("normal")
+      setDraftPlan(null)
+      setOriginalPlanId(null)
+
+      // Navigate to the new plan
       router.push(`/plan/${planId}`)
     } else {
       console.error(
@@ -254,7 +310,7 @@ export function PlanModeProvider({ children }: { children: React.ReactNode }) {
     }
 
     return planId
-  }, [draftPlan, createPlan, exitMode, router]) // Add exitMode dependency
+  }, [draftPlan, createPlan, setMode, setDraftPlan, setOriginalPlanId, router]) // Add exitMode dependency
 
   // Discard draft plan without saving
   const discardDraftPlan = useCallback(() => {
