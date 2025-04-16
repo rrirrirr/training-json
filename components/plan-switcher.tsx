@@ -1,4 +1,3 @@
-// components/plan-switcher.tsx
 "use client"
 
 import { useRouter } from "next/navigation"
@@ -26,6 +25,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog" // Adjust path
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog" // Add alert dialog imports
 // Tooltip components are no longer needed inside PlanItemContent but might still be used elsewhere
 import { TooltipProvider } from "@/components/ui/tooltip" // Adjust path
 import { usePlanStore, type PlanMetadata } from "@/store/plan-store" // Adjust path
@@ -33,7 +42,7 @@ import { useEffect, useState } from "react"
 import { useNewPlanModal } from "@/components/modals/new-plan-modal" // Adjust path
 import JsonEditor from "./json-editor" // Adjust path
 import { cn } from "@/lib/utils" // Adjust path
-
+import { usePlanMode } from "@/contexts/plan-mode-context" // Add plan mode context
 // Reusable component to render the content of a plan item using the "..." menu
 const PlanItemContent = ({
   plan,
@@ -115,6 +124,7 @@ const PlanItemContent = ({
 export function PlanSwitcher() {
   const router = useRouter()
   const { open: openNewPlanModal } = useNewPlanModal()
+  const { mode, draftPlan, originalPlanId, exitMode } = usePlanMode()
 
   const activePlanId = usePlanStore((state) => state.activePlanId)
   const planMetadataList = usePlanStore((state) => state.planMetadataList)
@@ -126,6 +136,8 @@ export function PlanSwitcher() {
   const [isJsonEditorOpen, setIsJsonEditorOpen] = useState(false)
   const [planToDelete, setPlanToDelete] = useState<PlanMetadata | null>(null)
   const [planToViewJson, setPlanToViewJson] = useState<any | null>(null)
+  const [isSwitchWarningOpen, setIsSwitchWarningOpen] = useState(false)
+  const [planToSwitchTo, setPlanToSwitchTo] = useState<string | null>(null)
 
   useEffect(() => {
     if (planMetadataList.length === 0) {
@@ -135,7 +147,28 @@ export function PlanSwitcher() {
 
   const handleSelectPlan = (planId: string) => {
     if (planId === activePlanId) return
+
+    // If we're in edit mode, show a warning before switching
+    if (mode === "edit") {
+      setPlanToSwitchTo(planId)
+      setIsSwitchWarningOpen(true)
+      return
+    }
+
+    // Otherwise just navigate to the plan
     router.push(`/plan/${planId}`)
+  }
+
+  const handleConfirmSwitch = () => {
+    if (planToSwitchTo) {
+      // Exit edit mode
+      exitMode()
+      // Navigate to the new plan
+      router.push(`/plan/${planToSwitchTo}`)
+      // Reset state
+      setIsSwitchWarningOpen(false)
+      setPlanToSwitchTo(null)
+    }
   }
 
   // Updated handlers now receive the plan directly from PlanItemContent's menu items
@@ -185,8 +218,25 @@ export function PlanSwitcher() {
     }
   }
 
-  const currentPlanMeta = planMetadataList.find((p) => p.id === activePlanId)
-  const currentPlanName = currentPlanMeta?.name || (activePlanId ? `Plan...` : "Select Plan")
+  // Determine the current plan name based on mode
+  let currentPlanName = ""
+  let switcherClassName = ""
+
+  if (mode === "edit") {
+    // In edit mode, show the draft plan name
+    currentPlanName = `Editing: ${draftPlan?.metadata?.planName || "Unnamed Plan"}`
+    switcherClassName =
+      "bg-[var(--edit-mode-bg)] border-[var(--edit-mode-border)] text-[var(--edit-mode-text)]"
+  } else if (mode === "view") {
+    // In view mode, show the viewed plan name
+    currentPlanName = `Viewing: ${draftPlan?.metadata?.planName || "Unnamed Plan"}`
+    switcherClassName =
+      "bg-[var(--view-mode-bg)] border-[var(--view-mode-border)] text-[var(--view-mode-text)]"
+  } else {
+    // In normal mode, show the active plan name
+    const currentPlanMeta = planMetadataList.find((p) => p.id === activePlanId)
+    currentPlanName = currentPlanMeta?.name || (activePlanId ? `Plan...` : "Select Plan")
+  }
 
   const mobileListItems = planMetadataList.slice(0, 5)
   const desktopListItems = planMetadataList.slice(0, 10)
@@ -194,7 +244,12 @@ export function PlanSwitcher() {
   return (
     <>
       {/* Mobile View: List */}
-      <div className="w-full md:hidden border rounded-md p-1">
+      <div
+        className={cn(
+          "w-full md:hidden border rounded-md p-1",
+          mode !== "normal" && switcherClassName
+        )}
+      >
         <h3 className="text-sm font-semibold px-2 py-1.5 text-muted-foreground">Recent Plans</h3>
         {mobileListItems.length > 0 ? (
           <div className="flex flex-col">
@@ -240,7 +295,11 @@ export function PlanSwitcher() {
         <TooltipProvider delayDuration={200}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="w-[180px] justify-between">
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn("w-[220px] justify-between", mode !== "normal" && switcherClassName)}
+              >
                 <span className="truncate">{currentPlanName}</span>
                 <ChevronDown className="h-4 w-4 opacity-50" />
               </Button>
@@ -314,6 +373,35 @@ export function PlanSwitcher() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Plan Switch Warning Dialog */}
+      <AlertDialog open={isSwitchWarningOpen} onOpenChange={setIsSwitchWarningOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You're currently editing a plan. Switching to another plan will discard all your
+              unsaved changes. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setIsSwitchWarningOpen(false)
+                setPlanToSwitchTo(null)
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmSwitch}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Discard changes & switch
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
