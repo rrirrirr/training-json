@@ -47,16 +47,16 @@ interface Plan {
   [key: string]: any
 }
 
-interface DraftJsonEditorProps {
+interface JsonEditorProps {
   isOpen: boolean
   onClose: () => void
   plan: Plan | null | undefined
 }
 
-export default function DraftJsonEditor({ isOpen, onClose, plan }: DraftJsonEditorProps) {
+export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
   const { theme } = useTheme()
   const isDarkMode = theme === "dark"
-  const { updateDraftPlan } = usePlanMode()
+  const { updateDraftPlan, mode } = usePlanMode()
 
   const [jsonText, setJsonText] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -69,7 +69,6 @@ export default function DraftJsonEditor({ isOpen, onClose, plan }: DraftJsonEdit
   const [copySuccess, setCopySuccess] = useState<boolean>(true)
 
   // --- Effects and Handler functions ---
-  // ... (useEffect, handleSave, handleCopy, etc. remain the same) ...
   useEffect(() => {
     if (plan?.data) {
       try {
@@ -149,8 +148,10 @@ export default function DraftJsonEditor({ isOpen, onClose, plan }: DraftJsonEdit
       // Update the JSON text with any fixes we made
       setJsonText(JSON.stringify(parsedData, null, 2))
 
-      // Update the draft plan in the context
-      updateDraftPlan(parsedData)
+      // Update the draft plan in the context only if we're in edit or view mode
+      if (mode === "edit" || mode === "view") {
+        updateDraftPlan(parsedData)
+      }
 
       // Show success message
       setIsSaved(true)
@@ -163,11 +164,8 @@ export default function DraftJsonEditor({ isOpen, onClose, plan }: DraftJsonEdit
     } catch (err) {
       console.error("Save error:", err)
       setError(err instanceof Error ? err.message : "An unexpected error occurred during save")
-      setIsSubmitting(false)
     } finally {
-      // Ensure submitting state is reset even on error
-      // Although it's set inside the catch, adding a finally guarantees it
-      //setIsSubmitting(false); // Optionally add this if needed
+      setIsSubmitting(false)
     }
   }
 
@@ -212,24 +210,7 @@ export default function DraftJsonEditor({ isOpen, onClose, plan }: DraftJsonEdit
     }
   }
 
-  // Original highlighting function (kept for reference or future use)
-  const highlightCode = (code: string) => (
-    <Highlight theme={isDarkMode ? themes.vsDark : themes.vsLight} code={code} language="json">
-      {({ tokens, getLineProps, getTokenProps }) => (
-        <>
-          {tokens.map((line, i) => (
-            <div key={`line-${i}`} {...getLineProps({ line, key: i })}>
-              {line.map((token, key) => (
-                <span key={`token-${i}-${key}`} {...getTokenProps({ token, key })} />
-              ))}
-            </div>
-          ))}
-        </>
-      )}
-    </Highlight>
-  )
-
-  // --- NEW: Simple highlight function that does nothing complex ---
+  // Simple highlight function that does nothing complex
   const noHighlight = (code: string) => <pre style={{ margin: 0 }}>{code}</pre>
   // Using <pre> helps preserve whitespace without needing Prism
 
@@ -242,19 +223,32 @@ export default function DraftJsonEditor({ isOpen, onClose, plan }: DraftJsonEdit
   }
   // --- End of Effects and Handlers ---
 
+  // Determine dialog title and description based on mode
+  let dialogTitle = "Edit JSON"
+  let dialogDescription = "Make changes to the plan's JSON data. Click Update to apply your changes."
+  let saveButtonText = "Update Plan"
+  
+  if (mode === "view") {
+    dialogTitle = "View Plan JSON"
+    dialogDescription = "View or make changes to this plan's JSON data."
+    saveButtonText = "Update Draft"
+  } else if (mode !== "edit") {
+    // Normal mode or any other mode
+    dialogTitle = "View Plan JSON"
+    dialogDescription = "View this plan's JSON data."
+    saveButtonText = "Update"
+  }
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-dialog-lg dialog-content-base flex flex-col">
-          {/* ... DialogHeader ... */}
+          {/* DialogHeader */}
           <DialogHeader className="flex-shrink-0">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
               <div>
-                <DialogTitle>Edit Draft Plan JSON</DialogTitle>
-                <DialogDescription>
-                  Make changes to the draft plan's JSON data. Click Save to update the plan you're
-                  editing.
-                </DialogDescription>
+                <DialogTitle>{dialogTitle}</DialogTitle>
+                <DialogDescription>{dialogDescription}</DialogDescription>
               </div>
             </div>
           </DialogHeader>
@@ -264,7 +258,7 @@ export default function DraftJsonEditor({ isOpen, onClose, plan }: DraftJsonEdit
             <Editor
               value={jsonText}
               onValueChange={handleEditorChange}
-              highlight={noHighlight} // <--- USE THE NEW noHighlight function
+              highlight={noHighlight} // Using noHighlight to not format on every keystroke
               padding={12}
               style={{
                 fontFamily: '"Fira code", "Fira Mono", monospace',
@@ -278,7 +272,7 @@ export default function DraftJsonEditor({ isOpen, onClose, plan }: DraftJsonEdit
             />
           </div>
 
-          {/* ... Error / Success Feedback Area ... */}
+          {/* Error / Success Feedback Area */}
           <div className="flex-shrink-0 mt-4 space-y-3">
             {error && (
               <Alert variant="destructive">
@@ -318,7 +312,7 @@ export default function DraftJsonEditor({ isOpen, onClose, plan }: DraftJsonEdit
             )}
           </div>
 
-          {/* ... Dialog Footer ... */}
+          {/* Dialog Footer */}
           <DialogFooter className="dialog-footer-between flex-shrink-0 flex flex-row items-center gap-2">
             {/* Left Group */}
             <div className="flex gap-2 justify-start items-center">
@@ -406,14 +400,14 @@ export default function DraftJsonEditor({ isOpen, onClose, plan }: DraftJsonEdit
                     Saving...
                   </>
                 ) : (
-                  "Update Draft Plan"
+                  saveButtonText
                 )}
               </Button>
             </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* ... Notifications ... */}
+      {/* Notifications */}
       <CopyNotification
         show={showCopyNotification}
         onHide={() => setShowCopyNotification(false)}
