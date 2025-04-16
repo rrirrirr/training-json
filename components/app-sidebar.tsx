@@ -273,7 +273,7 @@ export default function AppSidebar() {
           {/* Documentation Button */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <Link href="/documentation" passHref className="w-full">
+              <Link href="/documentation" target="_blank" passHref className="w-full">
                 <Button
                   variant="ghost"
                   size={isOpen ? "sm" : "icon"}
