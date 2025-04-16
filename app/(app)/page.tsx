@@ -11,32 +11,9 @@ import { supabase } from "@/lib/supa-client"
 
 export default function HomePage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false) // Changed from true to false as we don't need initial loading
   const [creatingPlan, setCreatingPlan] = useState(false)
-  
-  // Check for plans in local storage on mount
-  useEffect(() => {
-    const checkForExistingPlans = async () => {
-      try {
-        // Check localStorage first
-        const storedPlanId = localStorage.getItem("lastViewedPlanId")
-        
-        if (storedPlanId) {
-          // If we have a recently viewed plan ID, redirect to it
-          router.push(`/plan/${storedPlanId}`)
-          return
-        }
-        
-        // No stored plan, let the user choose what to do
-        setLoading(false)
-      } catch (error) {
-        console.error("Error checking for existing plans:", error)
-        setLoading(false)
-      }
-    }
-
-    checkForExistingPlans()
-  }, [router])
+  // Removed the useEffect that checked localStorage and redirected
 
   // Handler for loading example
   const handleLoadExample = async () => {
@@ -114,18 +91,14 @@ export default function HomePage() {
     }
   }, [])
 
-  if (loading || creatingPlan) {
+  if (creatingPlan) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary/70" />
-          <h2 className="text-xl font-medium">
-            {creatingPlan ? "Creating Plan..." : "Loading..."}
-          </h2>
+          <h2 className="text-xl font-medium">Creating Plan...</h2>
           <p className="text-muted-foreground">
-            {creatingPlan
-              ? "Please wait while we set up your training plan"
-              : "Looking for existing plans"}
+            Please wait while we set up your training plan
           </p>
         </div>
       </div>

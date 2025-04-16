@@ -8,14 +8,15 @@ import BlockView from "@/components/block-view"
 import { MobileScrollNav } from "@/components/mobile-scroll-nav"
 import { PlanModeMenu } from "@/components/plan-mode-menu"
 import { usePlanMode } from "@/contexts/plan-mode-context"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 interface PlanViewerProps {
   planId: string
 }
-
 export default function PlanViewer({ planId }: PlanViewerProps) {
   const router = useRouter()
+  // State to add delay before checking for missing plan
+  const [hasCheckedForMissingPlan, setHasCheckedForMissingPlan] = useState(false);
 
   // Get data and actions from Zustand store
   const activePlan = usePlanStore((state) => state.activePlan)
@@ -62,10 +63,23 @@ export default function PlanViewer({ planId }: PlanViewerProps) {
       </div>
     )
   }
+  // Handle case when no plan is active - only redirect if this is a plan page, not the root page
+  // Don't redirect during initial load of external plans (which might briefly have no plan data)
+  // Add a small delay to allow view mode to be properly initialized for external plans
+  useEffect(() => {
+    // Only run this check after a short delay to allow view mode to initialize
+    if (!hasCheckedForMissingPlan && !planToDisplay && mode === "normal") {
+      const timer = setTimeout(() => {
+        setHasCheckedForMissingPlan(true);
+      }, 300); // 300ms delay to allow view mode to initialize
+      return () => clearTimeout(timer);
+    }
+  }, [hasCheckedForMissingPlan, planToDisplay, mode]);
 
-  // Handle case when no plan is active
-  if (!planToDisplay && mode === "normal") {
-    console.log("[PlanViewer] No plan to display, redirecting to home page.")
+  if (hasCheckedForMissingPlan && !planToDisplay && mode === "normal" && 
+      planId !== "edit-mode-draft" && typeof window !== "undefined" && 
+      window.location.pathname.startsWith("/plan/")) {
+    console.log("[PlanViewer] No plan to display after delay, redirecting to home page.")
     
     // Clear localStorage to ensure no attempt to restore a deleted plan
     try {
