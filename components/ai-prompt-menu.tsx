@@ -41,55 +41,160 @@ interface AIPromptMenuProps {
 const usePromptController = () => {
   const [showCopyNotification, setShowCopyNotification] = useState(false)
 
-  // --- CRITICAL: Define Your JSON Structure Here ---
-  const yourJsonStructure = `
+  const detailedJsonStructureGuide = `
+# REQUIRED T-JSON OUTPUT STRUCTURE
+
+**IMPORTANT:** Generate the final plan *only* as a valid JSON object adhering strictly to the structure below. Do not include any introductory text, explanations, or markdown formatting outside the JSON code block itself.
+
 \`\`\`json
 {
-  "scheduleName": "Training Plan",
-  "durationWeeks": 8,
-  "goal": "User-defined goal",
-  "level": "User-defined level",
-  "daysPerWeek": 3,
+  // Optional: High-level plan information
+  "metadata": {
+    "planName": "string (Required)", // Name of the training plan
+    "creationDate": "string (ISO 8601 Format, e.g., 2025-04-16T12:00:00Z)", // Date plan was created
+    "description": "string (Optional)", // Brief description
+    "author": "string (Optional)", // Who created the plan
+    "version": "string (Optional)" // e.g., "1.0"
+  },
+
+  // Optional: Define session types used (Gym, Rest, Barmark, etc.)
+  "sessionTypes": [
+    {
+      "id": "string (Unique ID, e.g., 'gym')", // REQUIRED
+      "name": "string (Display name, e.g., 'Gym')", // REQUIRED
+      "defaultStyle": { // Optional default styling for this session type
+        "colorName": "ColorName (Optional, e.g., 'blue')" // Tailwind color name
+      }
+    }
+    // ... more session types
+  ],
+
+  // Optional: Define distinct training blocks/phases
+  "blocks": [
+    {
+      "id": "string | number (Unique ID, e.g., 'block-1')", // REQUIRED
+      "name": "string (Display name, e.g., 'Foundation Phase')", // REQUIRED
+      "focus": "string (Main focus, e.g., 'Hypertrophy')", // REQUIRED
+      "durationWeeks": "number (Expected length in weeks)", // REQUIRED
+      "description": "string (Optional)",
+      "style": { // Optional styling for block header/overview
+        "colorName": "ColorName (Optional, e.g., 'violet')"
+      }
+    }
+    // ... more block definitions
+  ],
+
+  // REQUIRED: Define special week types (Deload, Test, Competition, etc.)
+  "weekTypes": [
+    {
+      "id": "string (Unique ID, e.g., 'deload')", // REQUIRED
+      "name": "string (Display name, e.g., 'DELOAD')", // REQUIRED
+      "colorName": "ColorName (e.g., 'yellow')", // REQUIRED - Tailwind color name
+      "description": "string (Optional, e.g., 'Recovery week')"
+    }
+    // ... more week type definitions (MUST include definitions for ALL IDs used in weeks.weekTypeIds)
+  ],
+
+  // REQUIRED: Define all unique exercises used in the plan
+  "exerciseDefinitions": [
+    {
+      "id": "string | number (Unique ID, e.g., 'sq', 'bp')", // REQUIRED
+      "name": "string (Full name, e.g., 'Squat')", // REQUIRED
+      "isMainLift": "boolean (Optional, default false)",
+      "isAccessory": "boolean (Optional, default false)",
+      "targetMuscles": ["string", "... (Optional array)"],
+      "videoUrl": "string (Optional URL)",
+      "generalTips": "string (Optional general cues)"
+    }
+    // ... more exercise definitions
+  ],
+
+  // REQUIRED: Array detailing each week's schedule
   "weeks": [
     {
-      "weekNumber": 1,
-      "days": [
+      "weekNumber": "number (Sequential week number)", // REQUIRED
+      "blockId": "string | number (Links to blocks.id)", // REQUIRED
+      "weekTypeIds": ["string", "... (Links to weekTypes.id, empty array [] if normal week)"], // REQUIRED
+      "gymDays": "number (Optional, informational)",
+      "barmarkDays": "number (Optional, informational)",
+      "weekStyle": { // Optional styling for the week header/badge
+        "styleClass": "string (Optional CSS class)",
+        "note": "string (Optional note)",
+        "colorName": "ColorName (Optional, overrides block/type color)"
+      },
+      "tm": { // Optional: Training Maxes for the week
+        "LIFT_ID": "number (e.g., { 'SQ': 100 })"
+      },
+      "sessions": [ // REQUIRED: Array of sessions for the week
         {
-          "dayOfWeek": "Monday",
-          "focus": "Workout Focus",
-          "warmup": [ /* ... */ ],
-          "exercises": [
+          "sessionName": "string (e.g., 'Day 1: Upper Body')", // REQUIRED
+          "sessionTypeId": "string (Links to sessionTypes.id)", // REQUIRED
+          "sessionStyle": { // Optional styling for the session card
+            "styleClass": "string (Optional CSS class)",
+            "icon": "string (Optional icon name)",
+            "note": "string (Optional note)",
+            "colorName": "ColorName (Optional, overrides session type default)"
+          },
+          "exercises": [ // REQUIRED: Array of exercises for the session
             {
-              "name": "Exercise Name",
-              "sets": 3,
-              "reps": "8-12",
-              "rest": "60s",
-              "notes": ""
+              "exerciseId": "string | number (Links to exerciseDefinitions.id)", // REQUIRED
+              "sets": "number | string (e.g., 3, '3-4')", // REQUIRED
+              "reps": "string | number (e.g., 10, '8-12', 'AMRAP')", // REQUIRED
+              "load": "string (Weight, RPE, %, description, e.g., '75% 1RM', 'RPE 8', 'Light')", // REQUIRED
+              "comment": "string (Optional notes for this instance)",
+              "loadStyle": { // Optional styling for the load text
+                "strong": "boolean (Optional, make bold)",
+                "color": "ColorName (Optional, e.g., 'red')"
+              },
+              "commentStyle": { // Optional styling for the comment text
+                "color": "ColorName (Optional, e.g., 'gray')",
+                "fontStyle": "string (Optional, e.g., 'italic')"
+              },
+              "targetRPE": "number (Optional)",
+              "tips": "string (Optional, specific tips for this instance)"
             }
-            // ... more exercises
-          ],
-          "cooldown": [ /* ... */ ]
+            // ... more exercise instances
+          ]
         }
-        // ... more days
+        // ... more sessions
       ]
     }
     // ... more weeks
+  ],
+
+  // REQUIRED: Define groupings of weeks for navigation/overview
+  "monthBlocks": [
+    {
+      "id": "number (Unique ID for the block/month)", // REQUIRED
+      "name": "string (Display name, e.g., 'Month 1 (Weeks 1-4)')", // REQUIRED
+      "weeks": ["number", "... (Array of week numbers in this block)"], // REQUIRED
+      "style": { // Optional styling for the tab/selector
+        "colorName": "ColorName (Optional, e.g., 'blue')"
+      }
+    }
+    // ... more month blocks (MUST cover all weeks defined in the 'weeks' array)
   ]
 }
 \`\`\`
+
+Key requirements:
+- **All Required Fields:** Ensure all fields marked as REQUIRED are present.
+- **Valid References:** 'blockId', 'sessionTypeId', 'exerciseId', and 'weekTypeIds' must correctly reference IDs defined in their respective definition arrays ('blocks', 'sessionTypes', 'exerciseDefinitions', 'weekTypes').
+- **Complete Week Coverage:** Every 'weekNumber' in the 'weeks' array must be included in exactly one entry within the 'monthBlocks' array.
+- **Valid JSON:** The final output must be syntactically correct JSON.
+- **Color Names:** Use standard Tailwind CSS color names (e.g., 'red', 'blue', 'green', 'yellow', 'indigo', 'pink', 'gray', etc.) when specifying 'colorName'.
+
+Please generate the plan based on our discussion and output *only* the final JSON object.
 `
-  // Base instruction focusing on the JSON output - appended where needed
-  const jsonOutputInstruction = `\n\nIMPORTANT: Once the plan is finalized, generate it *only* in the following JSON format. Do not include any introduction, explanation, or text outside the JSON structure itself.
 
-The required JSON structure is:
-${yourJsonStructure}`
+  // Use the detailed guide for the main instruction
+  const jsonOutputInstruction = detailedJsonStructureGuide
 
-  // --- Define the 6 prompt templates with LONGER DESCRIPTIONS ---
+  // Define the prompt templates
   const promptTemplates: PromptTemplate[] = [
     {
       id: "novice-interview",
       title: "Start Interview (Beginner)",
-      // Longer Description:
       description:
         "Ideal if you're new to exercise! This starts a friendly chat where the AI asks questions step-by-step to understand your goals, available time, and limits before suggesting a safe and simple starting plan tailored to you.",
       icon: MessageSquare,
@@ -109,7 +214,6 @@ ${yourJsonStructure}`
     {
       id: "goal-oriented-request",
       title: "Create Plan from Details",
-      // Longer Description:
       description:
         "Choose this if you generally know what you want. You'll provide key details like your main goal (e.g., muscle gain, run 5k), experience level, available days/time, and equipment, and the AI will generate a structured plan.",
       icon: Target,
@@ -130,7 +234,6 @@ ${yourJsonStructure}`
     {
       id: "experienced-optimizer",
       title: "Optimize My Routine",
-      // Longer Description:
       description:
         "Best for seasoned exercisers seeking refinement. Use this to fine-tune your current program, break plateaus, design advanced periodization (like block or conjugate), or get a peaking plan. Provide your current routine details and optimization goals.",
       icon: SlidersHorizontal,
@@ -148,7 +251,6 @@ ${yourJsonStructure}`
     {
       id: "constraint-focused",
       title: "Plan with Constraints",
-      // Longer Description:
       description:
         "Perfect for busy schedules or minimal gear. Clearly state your constraints (e.g., 'only 20 minutes a day', 'bodyweight exercises only', 'hotel room workout') and your fitness goal. The AI will create the most effective plan possible within those limits.",
       icon: Clock,
@@ -166,7 +268,6 @@ ${yourJsonStructure}`
     {
       id: "modify-plan",
       title: "Modify My Existing Plan",
-      // Longer Description:
       description:
         "Already have a plan but need to change something? Use this option. You'll first provide the existing plan, then clearly state the specific adjustments you need (e.g., swap exercises, change days/duration, adapt for travel/equipment changes).",
       icon: Replace,
@@ -182,7 +283,6 @@ ${yourJsonStructure}`
     {
       id: "format-plan",
       title: "Format My Plan to JSON",
-      // Longer Description:
       description:
         "Essential for the visualizer! If you have a plan written down anywhere (text, notes, spreadsheet data), use this to convert it accurately into the specific JSON format required by this tool. The AI will only reformat, not change the content.",
       icon: FileJson,
@@ -200,13 +300,13 @@ ${yourJsonStructure}`
         * **Output ONLY the JSON object.** No extra text before or after.
 
         The required JSON structure is:
-        ${yourJsonStructure}
+        ${jsonOutputInstruction} // CORRECTED: Use the detailed guide variable
 
         **(User: Remember to paste your plan text right after sending this!)**`,
     },
   ]
 
-  // ... copyPrompt function remains the same ...
+  // Copy prompt function
   const copyPrompt = async (prompt: string, onCopy?: (prompt: string) => void) => {
     try {
       await navigator.clipboard.writeText(prompt)
@@ -217,6 +317,7 @@ ${yourJsonStructure}`
       }
     } catch (error) {
       console.error("Failed to copy prompt:", error)
+      // Optionally show an error notification to the user
     }
   }
 
@@ -227,7 +328,7 @@ ${yourJsonStructure}`
   }
 }
 
-// Presenter: UI component (No changes needed in the JSX structure)
+// Presenter: UI component
 export function AIPromptMenu({ onCopy }: AIPromptMenuProps) {
   const { promptTemplates, showCopyNotification, copyPrompt } = usePromptController()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -237,8 +338,6 @@ export function AIPromptMenu({ onCopy }: AIPromptMenuProps) {
     setIsMenuOpen(false)
   }
 
-  // --- The JSX return statement remains exactly the same as the previous version ---
-  // It already handles rendering the 'description' field correctly.
   return (
     <>
       <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
@@ -263,29 +362,24 @@ export function AIPromptMenu({ onCopy }: AIPromptMenuProps) {
                 <Button
                   key={template.id}
                   variant="outline"
-                  // Use Flexbox for layout within the button, allow height to grow
-                  className="h-auto w-full p-3 text-left justify-start items-center flex gap-3" // Text alignment corrected
+                  className="h-auto w-full p-3 text-left justify-start items-center flex gap-3"
                   onClick={() => handleItemClick(template.prompt)}
                 >
-                  {/* Icon Area - Render conditionally */}
+                  {/* Icon Area */}
                   {IconComponent && (
                     <div className="flex-shrink-0 p-1 bg-muted rounded-sm self-start mt-0.5">
-                      {" "}
-                      {/* Align icon top-left */}
                       <IconComponent className="h-5 w-5 text-muted-foreground" />
                     </div>
                   )}
                   {/* Text Content Area */}
                   <div className="flex flex-col flex-grow">
                     <div className="font-medium mb-0.5">{template.title}</div>
-                    {/* Description is now LONGER */}
                     <div className="text-xs text-muted-foreground whitespace-normal">
                       {template.description}
                     </div>
                   </div>
                   {/* Copy Icon */}
-                  <Copy className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-auto self-start mt-0.5" />{" "}
-                  {/* Align icon top-right */}
+                  <Copy className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-auto self-start mt-0.5" />
                 </Button>
               )
             })}
@@ -296,7 +390,7 @@ export function AIPromptMenu({ onCopy }: AIPromptMenuProps) {
       {/* Copy Notification */}
       <CopyNotification
         show={showCopyNotification}
-        onHide={() => {}}
+        onHide={() => setShowCopyNotification(false)} // Corrected hide logic
         message="Prompt copied to clipboard!"
       />
     </>
