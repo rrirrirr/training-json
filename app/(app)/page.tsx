@@ -7,12 +7,24 @@ import WelcomeScreen from "@/components/welcome-screen"
 import type { TrainingPlanData } from "@/types/training-plan"
 import { exampleTrainingPlan } from "@/utils/example-training-plan"
 import { usePlanStore } from "@/store/plan-store"
+import { usePlanMode } from "@/contexts/plan-mode-context"
 import { supabase } from "@/lib/supa-client"
 
 export default function HomePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false) // Changed from true to false as we don't need initial loading
   const [creatingPlan, setCreatingPlan] = useState(false)
+  
+  // Import exitMode from usePlanMode context
+  const { mode, exitMode } = usePlanMode()
+  
+  // Exit view/edit mode when navigating to home page
+  useEffect(() => {
+    if (mode !== "normal") {
+      console.log("[HomePage] Exiting non-normal mode:", mode)
+      exitMode()
+    }
+  }, [mode, exitMode])
   // Removed the useEffect that checked localStorage and redirected
 
   // Handler for loading example

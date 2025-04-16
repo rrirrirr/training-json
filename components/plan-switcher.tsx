@@ -1,22 +1,23 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import {
   ChevronDown,
   Check,
   Plus,
   FileText,
   Trash2,
-  MoreHorizontal, // Import the ellipsis icon
+  MoreHorizontal,
 } from "lucide-react"
-import { Button } from "@/components/ui/button" // Adjust path
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu" // Adjust path
+} from "@/components/ui/dropdown-menu"
 import {
   Dialog,
   DialogContent,
@@ -24,7 +25,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog" // Adjust path
+} from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,15 +35,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog" // Add alert dialog imports
-// Tooltip components are no longer needed inside PlanItemContent but might still be used elsewhere
-import { TooltipProvider } from "@/components/ui/tooltip" // Adjust path
-import { usePlanStore, type PlanMetadata } from "@/store/plan-store" // Adjust path
+} from "@/components/ui/alert-dialog"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { usePlanStore, type PlanMetadata } from "@/store/plan-store"
 import { useEffect, useState } from "react"
-import { useNewPlanModal } from "@/components/modals/new-plan-modal" // Adjust path
-import JsonEditor from "./json-editor" // Adjust path
-import { cn } from "@/lib/utils" // Adjust path
-import { usePlanMode } from "@/contexts/plan-mode-context" // Add plan mode context
+import { useNewPlanModal } from "@/components/modals/new-plan-modal"
+import JsonEditor from "./json-editor"
+import { cn } from "@/lib/utils"
+import { usePlanMode } from "@/contexts/plan-mode-context"
+
 // Reusable component to render the content of a plan item using the "..." menu
 const PlanItemContent = ({
   plan,
@@ -50,76 +51,95 @@ const PlanItemContent = ({
   onViewJson,
   onDelete,
   formatDate,
+  onLinkClick,
 }: {
   plan: PlanMetadata
   isActive: boolean
-  // Explicitly allow MouseEvent or TouchEvent for broader compatibility if needed, though React handles most cases
   onViewJson: (plan: PlanMetadata, e: React.MouseEvent | React.TouchEvent) => void
   onDelete: (plan: PlanMetadata, e: React.MouseEvent | React.TouchEvent) => void
   formatDate: (dateString: string | null | undefined) => string
-}) => (
-  <div className="flex w-full items-center p-2 group/item relative overflow-hidden min-h-[52px]">
-    {/* Ensure min height */}
-    {/* Checkmark */}
-    <div className="mr-2 flex h-5 w-5 items-center justify-center min-w-[20px] self-center">
-      {/* Align self */}
-      {isActive && <Check className="h-4 w-4 text-primary" />}
-    </div>
-    {/* Info */}
-    <div className="flex flex-col flex-1 min-w-0 mr-2 self-center">
-      {/* Align self */}
-      <span className="text-sm font-medium truncate">{plan.name}</span>
-      <span className="text-xs text-muted-foreground">Loaded: {formatDate(plan.updatedAt)}</span>
-    </div>
-    {/* Actions Menu Button ("...") */}
-    <div className="ml-auto pl-1 self-center">
-      {" "}
-      {/* Align self */}
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          asChild
-          // Stop propagation: Prevents selecting the plan item when clicking the menu trigger
-          onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()} // Also useful for preventing focus side-effects
-        >
-          <Button
-            variant="ghost"
-            size="icon"
-            // Slightly larger tap target, visual feedback on open
-            className="h-8 w-8 text-muted-foreground data-[state=open]:bg-accent focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0"
-            aria-label={`Actions for ${plan.name}`}
+  onLinkClick?: (e: React.MouseEvent, planId: string) => void
+}) => {
+  // The content inside
+  const content = (
+    <>
+      {/* Checkmark */}
+      <div className="mr-2 flex h-5 w-5 items-center justify-center min-w-[20px] self-center">
+        {isActive && <Check className="h-4 w-4 text-primary" />}
+      </div>
+      
+      {/* Info */}
+      <div className="flex flex-col flex-1 min-w-0 mr-2 self-center">
+        <span className="text-sm font-medium truncate">{plan.name}</span>
+        <span className="text-xs text-muted-foreground">Loaded: {formatDate(plan.updatedAt)}</span>
+      </div>
+      
+      {/* Actions Menu Button ("...") */}
+      <div className="ml-auto pl-1 self-center">
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            asChild
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
           >
-            <MoreHorizontal className="h-4 w-4" />
-            <span className="sr-only">Plan Actions</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="end" // Align menu to the right
-          // Stop propagation: Prevents selecting the plan item when clicking inside the menu
-          onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          <DropdownMenuItem
-            // Pass the event if needed by the handler, ensure plan is passed
-            onClick={(e) => onViewJson(plan, e)}
-            className="cursor-pointer flex items-center"
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground data-[state=open]:bg-accent focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0"
+              aria-label={`Actions for ${plan.name}`}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+              <span className="sr-only">Plan Actions</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
           >
-            <FileText className="mr-2 h-4 w-4" />
-            <span>View JSON</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            // Pass the event if needed by the handler, ensure plan is passed
-            onClick={(e) => onDelete(plan, e)}
-            className="cursor-pointer flex items-center text-destructive focus:text-destructive focus:bg-destructive/10"
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            <span>Delete Plan</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-  </div>
-)
+            <DropdownMenuItem
+              onClick={(e) => onViewJson(plan, e)}
+              className="cursor-pointer flex items-center"
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              <span>View JSON</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={(e) => onDelete(plan, e)}
+              className="cursor-pointer flex items-center text-destructive focus:text-destructive focus:bg-destructive/10"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              <span>Delete Plan</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </>
+  );
+
+  // The class names for the wrapper div are the same whether it's inside a link or not
+  const wrapperClassName = "flex w-full items-center p-2 group/item relative overflow-hidden min-h-[52px]";
+
+  // If onLinkClick is provided, wrap in a Link with the click handler
+  if (onLinkClick) {
+    return (
+      <Link
+        href={`/plan/${plan.id}`}
+        onClick={(e) => onLinkClick(e, plan.id)}
+        className="block w-full"
+      >
+        <div className={wrapperClassName}>{content}</div>
+      </Link>
+    );
+  }
+  
+  // If there's no onLinkClick handler, still use a Link but without a click handler
+  return (
+    <Link href={`/plan/${plan.id}`} className="block w-full">
+      <div className={wrapperClassName}>{content}</div>
+    </Link>
+  );
+};
 
 export function PlanSwitcher() {
   const router = useRouter()
@@ -145,18 +165,24 @@ export function PlanSwitcher() {
     }
   }, [planMetadataList.length, fetchPlanMetadata])
 
-  const handleSelectPlan = (planId: string) => {
-    if (planId === activePlanId) return
+  // This function handles clicks on the plan links 
+  const handlePlanLinkClick = (e: React.MouseEvent, planId: string) => {
+    if (planId === activePlanId) {
+      // If clicking the already active plan, prevent navigation
+      e.preventDefault()
+      return
+    }
 
-    // If we're in edit mode, show a warning before switching
+    // Only show warning dialog in edit mode
     if (mode === "edit") {
+      e.preventDefault() // Prevent the default link navigation
       setPlanToSwitchTo(planId)
       setIsSwitchWarningOpen(true)
       return
     }
-
-    // Otherwise just navigate to the plan
-    router.push(`/plan/${planId}`)
+    
+    // For view mode or normal mode, let the default link navigation happen
+    // The page component will handle exiting view mode if needed
   }
 
   const handleConfirmSwitch = () => {
@@ -289,20 +315,17 @@ export function PlanSwitcher() {
             {mobileListItems.map((plan) => (
               <div
                 key={plan.id}
-                onClick={() => handleSelectPlan(plan.id)}
                 className={cn(
-                  "cursor-pointer rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background" // Adjusted offset
+                  "cursor-pointer rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
                 )}
-                // Prevent focus outline if clicking the menu button inside
-                // Using onMouseDown for trigger inside PlanItemContent is preferred
               >
-                {/* Use the updated PlanItemContent */}
                 <PlanItemContent
                   plan={plan}
                   isActive={plan.id === activePlanId}
                   onViewJson={handleViewJsonClick}
                   onDelete={handleDeleteClick}
                   formatDate={formatDate}
+                  onLinkClick={handlePlanLinkClick}
                 />
               </div>
             ))}
@@ -324,7 +347,6 @@ export function PlanSwitcher() {
 
       {/* Desktop View: Dropdown */}
       <div className="hidden md:block">
-        {/* TooltipProvider might be useful for the main trigger button */}
         <TooltipProvider delayDuration={200}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -341,22 +363,17 @@ export function PlanSwitcher() {
             <DropdownMenuContent align="start" className="w-[240px]">
               {desktopListItems.length > 0 ? (
                 desktopListItems.map((plan) => (
-                  // Container Item - still clickable for selection
                   <div
                     key={plan.id}
-                    onClick={() => handleSelectPlan(plan.id)}
                     className="cursor-pointer relative flex select-none items-center rounded-sm outline-none transition-colors focus:bg-accent hover:bg-accent data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-                    // We wrap PlanItemContent instead of putting it directly in DropdownMenuItem
-                    // to better control the click area vs the action menu trigger area.
-                    // The outer div handles the main selection click.
                   >
-                    {/* Use the updated PlanItemContent */}
                     <PlanItemContent
                       plan={plan}
                       isActive={plan.id === activePlanId}
                       onViewJson={handleViewJsonClick}
                       onDelete={handleDeleteClick}
                       formatDate={formatDate}
+                      onLinkClick={handlePlanLinkClick}
                     />
                   </div>
                 ))
@@ -376,7 +393,7 @@ export function PlanSwitcher() {
         </TooltipProvider>
       </div>
 
-      {/* JSON Editor Dialog (remains the same) */}
+      {/* JSON Editor Dialog */}
       <JsonEditor
         isOpen={isJsonEditorOpen}
         onClose={() => {
@@ -386,7 +403,7 @@ export function PlanSwitcher() {
         plan={planToViewJson}
       />
 
-      {/* Delete Confirmation Dialog (remains the same) */}
+      {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -407,14 +424,13 @@ export function PlanSwitcher() {
         </DialogContent>
       </Dialog>
 
-      {/* Plan Switch Warning Dialog */}
+      {/* Plan Switch Warning Dialog - Only shown in edit mode */}
       <AlertDialog open={isSwitchWarningOpen} onOpenChange={setIsSwitchWarningOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
             <AlertDialogDescription>
-              You're currently editing a plan. Switching to another plan will discard all your
-              unsaved changes. This action cannot be undone.
+              You're currently editing a plan. Switching to another plan will discard all your unsaved changes. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
