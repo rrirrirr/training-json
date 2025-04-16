@@ -18,15 +18,15 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle, Save, Copy, Bot, Code, MoreVertical } from "lucide-react"
-import CopyNotification from "./copy-notification"
-import CopyForAINotification from "./copy-for-ai-notification"
-import { copyJsonErrorForAI } from "@/utils/copy-for-ai"
+import CopyNotification from "./copy-notification" // Assuming this component exists
+import CopyForAINotification from "./copy-for-ai-notification" // Assuming this component exists
+import { copyJsonErrorForAI } from "@/utils/copy-for-ai" // Assuming this utility exists
 import { useTheme } from "next-themes"
-import { usePlanMode } from "@/contexts/plan-mode-context"
+import { usePlanMode } from "@/contexts/plan-mode-context" // Keep for updateDraftPlan
 
 // Import syntax highlighting components
 import Editor from "react-simple-code-editor"
-import { Highlight, themes } from "prism-react-renderer" // Keep this import for the original function
+import { Highlight, themes } from "prism-react-renderer" // Ensure this is installed
 
 // Define the expected shape of the plan prop
 interface PlanData {
@@ -47,16 +47,19 @@ interface Plan {
   [key: string]: any
 }
 
+// --- Removed 'mode' prop ---
 interface JsonEditorProps {
   isOpen: boolean
   onClose: () => void
   plan: Plan | null | undefined
 }
 
+// --- Removed 'mode' from function signature ---
 export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
   const { theme } = useTheme()
   const isDarkMode = theme === "dark"
-  const { updateDraftPlan, mode } = usePlanMode()
+  // --- Keep usePlanMode only for updateDraftPlan ---
+  const { updateDraftPlan } = usePlanMode()
 
   const [jsonText, setJsonText] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -81,9 +84,9 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
         setJsonText('{\n  "error": "Could not load plan data"\n}')
       }
     } else {
-      setJsonText('{\n  "error": "No plan data provided or plan is invalid"\n}')
-      setError("No plan data provided or plan is invalid")
+      setJsonText('{\n  "message": "No plan data provided or plan is invalid."\n}')
     }
+    setIsSaved(false)
   }, [plan])
 
   useEffect(() => {
@@ -95,8 +98,8 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
   }, [isOpen])
 
   const handleSave = async () => {
-    if (!plan?.data) {
-      setError("Cannot save: Plan information is missing.")
+    if (isSubmitting || !plan) {
+      setError("Cannot save: Plan information is missing or submission in progress.")
       return
     }
 
@@ -112,6 +115,7 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
 
     if (error && !error.startsWith("Invalid JSON")) {
       setError(`Cannot save: Please fix the existing error - ${error}`)
+      setIsSubmitting(false)
       return
     }
 
@@ -119,17 +123,22 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
     setIsSaved(false)
 
     try {
-      // Validate the JSON structure
+      // Basic JSON Structure Validation
+      if (typeof parsedData !== "object" || parsedData === null) {
+        throw new Error("JSON must be an object.")
+      }
       if (!parsedData.weeks || !Array.isArray(parsedData.weeks)) {
-        throw new Error("JSON validation failed: must contain a 'weeks' array")
+        throw new Error("JSON validation failed: must contain a 'weeks' array.")
       }
       if (!parsedData.monthBlocks || !Array.isArray(parsedData.monthBlocks)) {
-        throw new Error("JSON validation failed: must contain a 'monthBlocks' array")
+        throw new Error("JSON validation failed: must contain a 'monthBlocks' array.")
       }
 
-      // Ensure the metadata is valid
+      // Ensure Metadata Exists and is Valid
       if (!parsedData.metadata) {
         parsedData.metadata = {}
+      } else if (typeof parsedData.metadata !== "object" || parsedData.metadata === null) {
+        throw new Error("JSON validation failed: 'metadata' must be an object.")
       }
 
       if (
@@ -137,33 +146,42 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
         typeof parsedData.metadata.planName !== "string" ||
         parsedData.metadata.planName.trim() === ""
       ) {
-        // Use the current plan name if available
         parsedData.metadata.planName = plan.name || "Draft Plan"
       }
 
-      if (!parsedData.metadata.creationDate) {
-        parsedData.metadata.creationDate = new Date().toISOString()
+      if (
+        !parsedData.metadata.creationDate ||
+        typeof parsedData.metadata.creationDate !== "string"
+      ) {
+        parsedData.metadata.creationDate =
+          plan.data?.metadata?.creationDate || new Date().toISOString()
       }
 
-      // Update the JSON text with any fixes we made
-      setJsonText(JSON.stringify(parsedData, null, 2))
-
-      // Update the draft plan in the context only if we're in edit or view mode
-      if (mode === "edit" || mode === "view") {
-        updateDraftPlan(parsedData)
+      const potentiallyUpdatedJson = JSON.stringify(parsedData, null, 2)
+      if (potentiallyUpdatedJson !== jsonText) {
+        setJsonText(potentiallyUpdatedJson)
       }
 
-      // Show success message
+      // --- Always update the draft plan on successful save ---
+      console.log("Updating draft plan with:", parsedData) // Debug log
+      updateDraftPlan(parsedData)
+
       setIsSaved(true)
       setError(null)
 
-      // Close the editor after a short delay
       setTimeout(() => {
-        onClose()
+        if (isOpen) {
+          onClose()
+        }
       }, 1000)
     } catch (err) {
       console.error("Save error:", err)
-      setError(err instanceof Error ? err.message : "An unexpected error occurred during save")
+      setError(
+        err instanceof Error
+          ? `Validation/Save Error: ${err.message}`
+          : "An unexpected error occurred during save."
+      )
+      setIsSaved(false)
     } finally {
       setIsSubmitting(false)
     }
@@ -201,7 +219,9 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
       const parsed = JSON.parse(jsonText)
       const formatted = JSON.stringify(parsed, null, 2)
       setJsonText(formatted)
-      setError(null)
+      if (error?.startsWith("Invalid JSON")) {
+        setError(null)
+      }
       setIsSaved(false)
     } catch (err) {
       if (!error || error.startsWith("Invalid JSON")) {
@@ -210,10 +230,6 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
     }
   }
 
-  // Simple highlight function that does nothing complex
-  const noHighlight = (code: string) => <pre style={{ margin: 0 }}>{code}</pre>
-  // Using <pre> helps preserve whitespace without needing Prism
-
   const handleEditorChange = (code: string) => {
     setJsonText(code)
     setIsSaved(false)
@@ -221,54 +237,67 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
       setError(null)
     }
   }
-  // --- End of Effects and Handlers ---
 
-  // Determine dialog title and description based on mode
-  let dialogTitle = "Edit JSON"
-  let dialogDescription = "Make changes to the plan's JSON data. Click Update to apply your changes."
-  let saveButtonText = "Update Plan"
-  
-  if (mode === "view") {
-    dialogTitle = "View Plan JSON"
-    dialogDescription = "View or make changes to this plan's JSON data."
-    saveButtonText = "Update Draft"
-  } else if (mode !== "edit") {
-    // Normal mode or any other mode
-    dialogTitle = "View Plan JSON"
-    dialogDescription = "View this plan's JSON data."
-    saveButtonText = "Update"
-  }
+  const highlightCode = (code: string) => (
+    <Highlight theme={isDarkMode ? themes.vsDark : themes.github} code={code} language="json">
+      {({ className, style, tokens, getLineProps, getTokenProps }) => (
+        <pre
+          style={{ ...style, margin: 0, padding: 0, background: "transparent" }}
+          className={className}
+        >
+          {tokens.map((line, i) => (
+            <div key={i} {...getLineProps({ line })}>
+              {line.map((token, key) => (
+                <span key={key} {...getTokenProps({ token })} />
+              ))}
+            </div>
+          ))}
+        </pre>
+      )}
+    </Highlight>
+  )
+
+  // --- Define static labels and button text (no mode check) ---
+  const dialogTitle = "Edit Plan JSON"
+  const dialogDescription =
+    "Make changes to the plan's JSON data. Click Update Plan to apply your changes."
+  const saveButtonText = "Update Plan" // Always use this text
+
+  // --- Simplified disable states (no mode check) ---
+  const disableSave = isSubmitting || !jsonText || !!error
+  const disableFormat = isSubmitting || !jsonText || !!error?.startsWith("Invalid JSON")
 
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-dialog-lg dialog-content-base flex flex-col">
+        <DialogContent className="max-w-dialog-lg max-h-[90vh] dialog-content-base flex flex-col">
           {/* DialogHeader */}
           <DialogHeader className="flex-shrink-0">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
               <div>
+                {/* Use static title/description */}
                 <DialogTitle>{dialogTitle}</DialogTitle>
                 <DialogDescription>{dialogDescription}</DialogDescription>
               </div>
             </div>
           </DialogHeader>
 
-          {/* Editor Area */}
-          <div className="flex-grow mt-4 overflow-auto border rounded-md bg-background">
+          {/* Editor Area Container */}
+          <div className="flex-grow mt-4 border rounded-md bg-background overflow-auto">
             <Editor
               value={jsonText}
               onValueChange={handleEditorChange}
-              highlight={noHighlight} // Using noHighlight to not format on every keystroke
+              highlight={highlightCode}
               padding={12}
               style={{
                 fontFamily: '"Fira code", "Fira Mono", monospace',
                 fontSize: 14,
-                minHeight: "300px",
+                minHeight: "400px",
                 outline: "none",
               }}
               disabled={isSubmitting}
               className="w-full focus-visible:outline-none"
-              textareaClassName="outline-none focus:outline-none"
+              textareaClassName="outline-none focus:outline-none caret-black dark:caret-white block"
             />
           </div>
 
@@ -288,7 +317,7 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
                       variant="outline"
                       size="sm"
                       className="flex-shrink-0 self-start sm:self-auto items-center gap-2 border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      disabled={isSubmitting}
+                      disabled={!jsonText && !error}
                     >
                       <Bot className="h-4 w-4" />
                       Copy Error for AI
@@ -303,18 +332,17 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
                   <Save className="h-4 w-4 mt-0.5 flex-shrink-0" />
                   <div className="ml-3 flex-1">
                     <AlertTitle>Success</AlertTitle>
-                    <AlertDescription>
-                      Changes saved! Your draft plan has been updated.
-                    </AlertDescription>
+                    {/* Simplified success message */}
+                    <AlertDescription>Plan updated successfully!</AlertDescription>
                   </div>
                 </div>
               </Alert>
             )}
           </div>
 
-          {/* Dialog Footer */}
-          <DialogFooter className="dialog-footer-between flex-shrink-0 flex flex-row items-center gap-2">
-            {/* Left Group */}
+          {/* Dialog Footer (Original Simple Layout) */}
+          <DialogFooter className="dialog-footer-between flex-shrink-0 flex flex-row items-center gap-2 pt-4">
+            {/* Left Group (Actions) */}
             <div className="flex gap-2 justify-start items-center">
               {/* Mobile Dropdown */}
               <div className="sm:hidden">
@@ -331,7 +359,7 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
                         e.preventDefault()
                         formatJson()
                       }}
-                      disabled={!jsonText || isSubmitting || !!error}
+                      disabled={disableFormat}
                       className="flex items-center gap-2 cursor-pointer"
                     >
                       <Code className="h-4 w-4" />
@@ -356,7 +384,7 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
                 onClick={formatJson}
                 variant="outline"
                 className="hidden sm:flex items-center gap-2"
-                disabled={!jsonText || isSubmitting || !!error}
+                disabled={disableFormat}
               >
                 <Code className="h-4 w-4" /> Format
               </Button>
@@ -369,12 +397,15 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
                 <Copy className="h-4 w-4" /> Copy JSON
               </Button>
             </div>
-            {/* Right Group */}
+
+            {/* Right Group (Save/Cancel) */}
             <div className="flex gap-2 justify-end items-center">
+              {/* Always show Cancel button */}
               <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button onClick={handleSave} disabled={isSubmitting || !jsonText || !!error}>
+              {/* --- Always show Update Plan button (no mode check) --- */}
+              <Button onClick={handleSave} disabled={disableSave}>
                 {isSubmitting ? (
                   <>
                     <svg
@@ -400,6 +431,7 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
                     Saving...
                   </>
                 ) : (
+                  // --- Use static button text ---
                   saveButtonText
                 )}
               </Button>
@@ -407,7 +439,8 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* Notifications */}
+
+      {/* Notification Components */}
       <CopyNotification
         show={showCopyNotification}
         onHide={() => setShowCopyNotification(false)}
