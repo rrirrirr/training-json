@@ -1,17 +1,11 @@
 import type { Metadata } from "next"
-import type { Metadata } from "next"
 import { Inter, Archivo_Black, Oswald } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "next-themes"
-import { SidebarProvider } from "@/components/ui/sidebar"
-import { LayoutClient } from "@/components/layout/layout-client"
 import { Toaster } from "@/components/ui/toaster"
-import { ModalProvider } from "@/components/modals/modal-provider"
-import { UIProvider } from "@/contexts/ui-context"
-import { DialogProvider } from "@/components/dialogs/dialog-provider"
-import { PlanEventHandler } from "@/components/plan-event-handler"
-import { PlanModeProvider } from "@/contexts/plan-mode-context"
-import { cn } from "@/lib/utils" // Import cn utility
+import { cn } from "@/lib/utils"
+
+// Font definitions
 const fontSans = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -59,19 +53,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <PlanModeProvider>
-            <UIProvider>
-              <SidebarProvider>
-                <PlanEventHandler>
-                  <LayoutClient>
-                    {children}
-                    <ModalProvider />
-                    <DialogProvider />
-                  </LayoutClient>
-                </PlanEventHandler>
-              </SidebarProvider>
-            </UIProvider>
-          </PlanModeProvider>
+          {children}
         </ThemeProvider>
         <Toaster />
       </body>
