@@ -37,9 +37,9 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
   // Ensure sidebar is expanded when on mobile
   useEffect(() => {
     if (isMobile && state === "collapsed") {
-      setOpen(true); // Force expanded state on mobile
+      setOpen(true) // Force expanded state on mobile
     }
-  }, [isMobile, state, setOpen]);
+  }, [isMobile, state, setOpen])
 
   // No longer need a separate ref for the sidebar panel itself with this approach
 
@@ -123,7 +123,7 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
           <AppHeader
             onToggleSidebar={() => {
               // Toggle mobile sidebar sheet
-              setOpenMobile(open => !open);
+              setOpenMobile((open) => !open)
             }}
             isSidebarOpen={state === "expanded"}
           />
@@ -141,20 +141,18 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
         ref={panelGroupRef}
         direction="horizontal"
         onLayout={handleLayout} // Use updated handler
-        // Optional: Restore layout
-        // initialLayout={loadLayout()}
+        className="h-screen" // Add height constraint
       >
         {/* Sidebar Panel */}
         <ResizablePanel
-          // No need for ref={sidebarPanelRef} anymore
           id="sidebar-panel"
           defaultSize={SIDEBAR_DEFAULT_SIZE_PERCENT}
-          minSize={SIDEBAR_COLLAPSED_SIZE_PERCENT} // Use the same value
+          minSize={SIDEBAR_COLLAPSED_SIZE_PERCENT}
           maxSize={30}
           collapsible={true}
-          collapsedSize={SIDEBAR_COLLAPSED_SIZE_PERCENT} // Define collapsed size explicitly
-          order={1} // Explicit order can sometimes help
-          className="!overflow-auto transition-all duration-300 flex flex-col h-full"
+          collapsedSize={SIDEBAR_COLLAPSED_SIZE_PERCENT}
+          order={1}
+          className="!overflow-y-hidden transition-all duration-300 flex flex-col h-full" // Changed from !overflow-auto to !overflow-y-hidden
         >
           <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
             <AppSidebar />
@@ -168,37 +166,17 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
         <ResizablePanel
           id="main-panel"
           defaultSize={100 - SIDEBAR_DEFAULT_SIZE_PERCENT}
-          order={2} // Explicit order
+          order={2}
+          className="h-screen flex flex-col overflow-hidden" // Add height constraint and hide overflow
         >
           <div className="flex flex-col h-full">
-            <AppHeader onToggleSidebar={handleToggleSidebar} isSidebarOpen={state === "expanded"} />{" "}
-            {/* Use context state for button icon */}
+            <AppHeader onToggleSidebar={handleToggleSidebar} isSidebarOpen={state === "expanded"} />
             <PlanModeIndicator />
-            <main className="flex-1 overflow-auto">{children}</main>
+            <main className="flex-1 overflow-auto">{children}</main>{" "}
+            {/* This will scroll independently */}
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>
   )
 }
-
-// Example loadLayout function (optional)
-// function loadLayout() {
-//   try {
-//     const layout = localStorage.getItem("react-resizable-panels-layout");
-//     if (layout) {
-//       const parsedLayout = JSON.parse(layout);
-//       // Basic validation
-//       if (Array.isArray(parsedLayout) && parsedLayout.length === 2 && typeof parsedLayout[0] === 'number' && typeof parsedLayout[1] === 'number') {
-//          // Ensure sizes add up roughly to 100
-//          if (Math.abs(parsedLayout[0] + parsedLayout[1] - 100) < 1) {
-//             return parsedLayout;
-//          }
-//       }
-//     }
-//   } catch (error) {
-//      console.error("Failed to load or parse layout:", error)
-//   }
-//   // Return default if loading fails
-//   return [SIDEBAR_DEFAULT_SIZE_PERCENT, 100 - SIDEBAR_DEFAULT_SIZE_PERCENT];
-// }
