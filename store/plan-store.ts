@@ -543,6 +543,15 @@ export const usePlanStore = create<PlanState>()(
             localStorage.removeItem("lastViewedPlanId")
             console.log(`[removeLocalPlan] Removed 'lastViewedPlanId' from localStorage.`)
 
+            try {
+              // Keys are defined in /contexts/plan-mode-context.tsx
+              localStorage.removeItem("planModeDraft_mode")
+              localStorage.removeItem("planModeDraft_plan")
+              localStorage.removeItem("planModeDraft_originalId")
+              console.log("[removeLocalPlan] Cleared PlanModeContext keys from localStorage.")
+            } catch (error) {
+              console.error("Error clearing PlanModeContext localStorage keys:", error)
+            }
             // Set all changes atomically
             set({
               activePlan: null,
@@ -585,6 +594,16 @@ export const usePlanStore = create<PlanState>()(
           console.log(
             `[clearActivePlan] Removed 'lastViewedPlanId' from localStorage (was for ID: ${currentId}).`
           )
+          
+          try {
+            // Keys are defined in /contexts/plan-mode-context.tsx
+            localStorage.removeItem("planModeDraft_mode")
+            localStorage.removeItem("planModeDraft_plan")
+            localStorage.removeItem("planModeDraft_originalId")
+            console.log("[clearActivePlan] Cleared PlanModeContext keys from localStorage.")
+          } catch (error) {
+            console.error("Error clearing PlanModeContext localStorage keys:", error)
+          }
         } else {
           console.log(
             `[clearActivePlan] No active plan ID found, nothing to remove from localStorage.`
