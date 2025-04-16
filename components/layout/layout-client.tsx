@@ -1,26 +1,22 @@
-// src/components/layout/layout-client.tsx (or wherever LayoutWithSidebar is)
 "use client"
 
 import React, { useEffect, useRef } from "react"
-import AppSidebar from "@/components/app-sidebar"
-import { AppHeader } from "@/components/layout/app-header"
-import { PlanModeIndicator } from "@/components/plan-mode-indicator"
-import { Sidebar, SidebarProvider, useSidebar } from "@/components/ui/sidebar"
+import { usePathname } from "next/navigation" // <--- Import usePathname
+import AppSidebar from "@/components/app-sidebar" // [cite: 188]
+import { AppHeader } from "@/components/layout/app-header" // [cite: 167]
+import { PlanModeIndicator } from "@/components/plan-mode-indicator" // [cite: 190]
+import { Sidebar, SidebarProvider, useSidebar } from "@/components/ui/sidebar" // [cite: 179, 411]
 import {
   ResizablePanelGroup,
   ResizablePanel,
   ResizableHandle,
-  // Remove if not used directly: PanelGroupOnLayout,
   ImperativePanelGroupHandle,
-  // You might need this type if you were getting a ref to the panel:
-  // ImperativePanelHandle
-} from "@/components/ui/resizable"
-import { cn } from "@/lib/utils"
-import { useUIState } from "@/contexts/ui-context"
+} from "@/components/ui/resizable" // [cite: 179]
+import { cn } from "@/lib/utils" // [cite: 179]
+import { useUIState } from "@/contexts/ui-context" // [cite: 179]
 
 const SIDEBAR_DEFAULT_SIZE_PERCENT = 20
-// Use the actual collapsed size defined on the panel
-const SIDEBAR_COLLAPSED_SIZE_PERCENT = 5 // Ensure this matches collapsedSize prop
+const SIDEBAR_COLLAPSED_SIZE_PERCENT = 5
 
 export function LayoutClient({ children }: { children: React.ReactNode }) {
   return (
@@ -31,17 +27,18 @@ export function LayoutClient({ children }: { children: React.ReactNode }) {
 }
 
 function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
-  const { state, isMobile, setOpen, setOpenMobile } = useSidebar()
-  const { isSidebarOpen, openSidebar, closeSidebar } = useUIState()
-  const panelGroupRef = useRef<ImperativePanelGroupHandle>(null)
-  // Ensure sidebar is expanded when on mobile
+  const { state, isMobile, setOpen, setOpenMobile } = useSidebar() // [cite: 179]
+  const { isSidebarOpen, openSidebar, closeSidebar } = useUIState() // [cite: 179]
+  const panelGroupRef = useRef<ImperativePanelGroupHandle>(null) // [cite: 179]
+  const pathname = usePathname() // <--- Get the current pathname
+
+  // Sync UI Context and other effects (keep existing useEffects)
+  // ... (Keep existing useEffect hooks) ...
   useEffect(() => {
     if (isMobile && state === "collapsed") {
-      setOpen(true) // Force expanded state on mobile
+      setOpen(true) // Force expanded state on mobile [cite: 180]
     }
   }, [isMobile, state, setOpen])
-
-  // No longer need a separate ref for the sidebar panel itself with this approach
 
   // Sync UI Context (Optional)
   useEffect(() => {
@@ -49,16 +46,12 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
       panelGroupRef.current?.getLayout()[0] <= SIDEBAR_COLLAPSED_SIZE_PERCENT + 0.1 // Check layout size
     const contextSaysCollapsed = state === "collapsed"
 
-    // Sync context if needed based on visual state after initial render/resize
-    // Be careful with dependencies to avoid infinite loops if setOpen triggers resize/layout events
-    // This sync might be better handled purely by handleLayout and handleToggleSidebar updating context
-
     if (isVisuallyCollapsed && !contextSaysCollapsed) {
       // console.log("Sync: Visual collapsed, context not -> updating context");
-      // setOpen(false); // Potentially causes loops, disable if problematic
+      // setOpen(false); // Potentially causes loops, disable if problematic [cite: 182]
     } else if (!isVisuallyCollapsed && contextSaysCollapsed) {
       // console.log("Sync: Visual expanded, context not -> updating context");
-      // setOpen(true); // Potentially causes loops, disable if problematic
+      // setOpen(true); // Potentially causes loops, disable if problematic [cite: 183]
     }
 
     // Keep the simpler UI state sync if it works for your needs elsewhere
@@ -67,67 +60,65 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
     } else if (state === "expanded" && !isSidebarOpen) {
       openSidebar()
     }
-  }, [state, isSidebarOpen, openSidebar, closeSidebar, setOpen]) // Add setOpen if enabling the commented-out lines
+  }, [state, isSidebarOpen, openSidebar, closeSidebar, setOpen])
 
-  // Handle sidebar toggle button click
+  // Handle sidebar toggle button click (keep existing handler)
   const handleToggleSidebar = () => {
+    // [cite: 184]
     const group = panelGroupRef.current
     if (!group) return
 
     const currentLayout = group.getLayout()
     const currentSidebarSize = currentLayout[0]
 
-    // Check if current size is close to collapsed size (allow for float precision)
     if (currentSidebarSize <= SIDEBAR_COLLAPSED_SIZE_PERCENT + 0.1) {
-      // Expand
       group.setLayout([SIDEBAR_DEFAULT_SIZE_PERCENT, 100 - SIDEBAR_DEFAULT_SIZE_PERCENT])
-      setOpen(true) // Update context state
-    } else {
-      // Collapse
-      group.setLayout([SIDEBAR_COLLAPSED_SIZE_PERCENT, 100 - SIDEBAR_COLLAPSED_SIZE_PERCENT])
-      setOpen(false) // Update context state
-    }
-  }
-
-  // Handle resize event to update context state if needed
-  const handleLayout = (sizes: number[]) => {
-    const sidebarSize = sizes[0]
-    const isVisuallyCollapsed = sidebarSize <= SIDEBAR_COLLAPSED_SIZE_PERCENT + 0.1 // Add small tolerance
-
-    // Update context based on resize result
-    if (isVisuallyCollapsed && state === "expanded") {
-      // console.log("Layout Handler: Detected Collapse -> updating context");
-      setOpen(false)
-    } else if (!isVisuallyCollapsed && state === "collapsed") {
-      // console.log("Layout Handler: Detected Expand -> updating context");
       setOpen(true)
+    } else {
+      group.setLayout([SIDEBAR_COLLAPSED_SIZE_PERCENT, 100 - SIDEBAR_COLLAPSED_SIZE_PERCENT])
+      setOpen(false) // [cite: 185]
     }
-
-    // Optional: Persist layout
-    // try {
-    //   localStorage.setItem("react-resizable-panels-layout", JSON.stringify(sizes));
-    // } catch (error) {
-    //   console.error("Failed to save layout:", error)
-    // }
   }
 
-  // --- Mobile Layout ---
+  // Handle resize event (keep existing handler)
+  const handleLayout = (sizes: number[]) => {
+    //
+    const sidebarSize = sizes[0]
+    const isVisuallyCollapsed = sidebarSize <= SIDEBAR_COLLAPSED_SIZE_PERCENT + 0.1
+
+    if (isVisuallyCollapsed && state === "expanded") {
+      setOpen(false) // [cite: 186]
+    } else if (!isVisuallyCollapsed && state === "collapsed") {
+      setOpen(true) // [cite: 187]
+    }
+  }
+
+  // --- Mobile Layout --- (Keep existing logic)
   if (isMobile) {
-    // When on mobile, always treat sidebar as expanded
+    // [cite: 189]
     return (
       <div className="flex min-h-screen w-full bg-background">
+        {/* Add the conditional background div here as well for mobile */}
+        {pathname === "/" && (
+          <div
+            className={cn(
+              "fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat",
+              "bg-[url('/light-bg1.jpg')]", // Light mode background
+              "dark:bg-[url('/dark-bg1.jpg')] " // Dark mode background
+            )}
+          />
+        )}
         <Sidebar collapsible="icon">
           <AppSidebar />
         </Sidebar>
         <div className="flex flex-col flex-1 overflow-hidden">
-          <AppHeader
+          <AppHeader // [cite: 189]
             onToggleSidebar={() => {
-              // Toggle mobile sidebar sheet
               setOpenMobile((open) => !open)
             }}
             isSidebarOpen={state === "expanded"}
           />
-          <PlanModeIndicator />
+          <PlanModeIndicator /> // [cite: 190]
           <main className="flex-1 overflow-auto">{children}</main>
         </div>
       </div>
@@ -136,12 +127,24 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
 
   // --- Desktop Layout ---
   return (
-    <div className="flex min-h-screen w-full bg-background">
+    <div className="flex min-h-screen w-full bg-transparent">
+      {/* === Conditional Background Div === */}
+      {pathname === "/" && (
+        <div
+          className={cn(
+            "fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat", // Position fixed, behind content, cover viewport
+            "bg-[url('/light-bg1.jpg')]", // Default (light mode) background
+            "dark:bg-[url('/dark-bg1.jpeg')] " // Dark mode background
+          )}
+        />
+      )}
+      {/* === End Conditional Background Div === */}
+
       <ResizablePanelGroup
         ref={panelGroupRef}
         direction="horizontal"
-        onLayout={handleLayout} // Use updated handler
-        className="h-screen" // Add height constraint
+        onLayout={handleLayout}
+        className="h-screen" // [cite: 191]
       >
         {/* Sidebar Panel */}
         <ResizablePanel
@@ -152,7 +155,7 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
           collapsible={true}
           collapsedSize={SIDEBAR_COLLAPSED_SIZE_PERCENT}
           order={1}
-          className="!overflow-y-hidden transition-all duration-300 flex flex-col h-full" // Changed from !overflow-auto to !overflow-y-hidden
+          className="!overflow-y-hidden transition-all duration-300 flex flex-col h-full" // [cite: 192]
         >
           <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
             <AppSidebar />
@@ -167,13 +170,12 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
           id="main-panel"
           defaultSize={100 - SIDEBAR_DEFAULT_SIZE_PERCENT}
           order={2}
-          className="h-screen flex flex-col overflow-hidden" // Add height constraint and hide overflow
+          className="h-screen flex flex-col overflow-hidden" // [cite: 193]
         >
           <div className="flex flex-col h-full">
             <AppHeader onToggleSidebar={handleToggleSidebar} isSidebarOpen={state === "expanded"} />
-            <PlanModeIndicator />
+            <PlanModeIndicator /> {/* [cite: 194] */}
             <main className="flex-1 overflow-auto">{children}</main>{" "}
-            {/* This will scroll independently */}
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
