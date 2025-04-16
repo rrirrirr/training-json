@@ -166,7 +166,7 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
                 {/* Row 2: Intensity */}
                 <div className="text-sm mb-2">
                   <span className="font-medium text-xs text-muted-foreground uppercase mr-2">
-                    Intensitet:
+                    Intensity:
                   </span>
                   <LoadDisplay load={exercise.load} loadStyle={exercise.loadStyle} />
                 </div>
@@ -175,7 +175,7 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
                 {!compact && exercise.comment && (
                   <div className="text-sm mb-2">
                     <span className="font-medium text-xs text-muted-foreground uppercase mr-2">
-                      Kommentar:
+                      Comment:
                     </span>
                     <CommentDisplay
                       comment={exercise.comment}
@@ -189,7 +189,7 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
                   <div className="mt-3 pt-3 border-t text-xs space-y-1 text-muted-foreground">
                     {compact && exercise.comment && (
                       <div>
-                        <span className="font-semibold text-foreground">Kommentar:</span>{" "}
+                        <span className="font-semibold text-foreground">Comment:</span>{" "}
                         <CommentDisplay
                           comment={exercise.comment}
                           commentStyle={exercise.commentStyle}
@@ -198,13 +198,13 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
                     )}
                     {combinedData.targetMuscles && combinedData.targetMuscles.length > 0 && (
                       <div>
-                        <span className="font-semibold text-foreground">Målmuskler:</span>{" "}
+                        <span className="font-semibold text-foreground">Target muscles:</span>{" "}
                         {combinedData.targetMuscles.join(", ")}
                       </div>
                     )}
                     {exercise.targetRPE && (
                       <div>
-                        <span className="font-semibold text-foreground">Mål RPE:</span>{" "}
+                        <span className="font-semibold text-foreground">Target RPE:</span>{" "}
                         {exercise.targetRPE}
                       </div>
                     )}
@@ -222,7 +222,7 @@ export default function SessionCard({ session, trainingPlan, compact = false }: 
                           rel="noopener noreferrer"
                           className="text-primary hover:text-primary/90 inline-flex items-center font-medium"
                         >
-                          Se video <span className="ml-1">→</span>
+                          Watch video <span className="ml-1">→</span>
                         </a>
                       </div>
                     )}
