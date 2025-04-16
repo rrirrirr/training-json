@@ -55,6 +55,14 @@
       --chart-4: oklch(95.21% 0.016 301.57); /* Lighter version of secondary */
       --chart-5: oklch(54.35% 0.206 301.35); /* Slightly higher chroma than primary */
 
+      /* Plan mode colors */
+      --edit-mode-bg: oklch(97% 0.04 120);   /* Light green-tinted background */
+      --edit-mode-border: oklch(80% 0.1 120); /* Green-tinted border */
+      --edit-mode-text: oklch(40% 0.2 120);   /* Green-tinted text */
+      --view-mode-bg: oklch(97% 0.04 250);    /* Light blue-tinted background */
+      --view-mode-border: oklch(80% 0.1 250); /* Blue-tinted border */
+      --view-mode-text: oklch(40% 0.2 250);   /* Blue-tinted text */
+
    --sidebar-foreground: oklch(0.141 0.005 285.823);
    --sidebar-background: oklch(1 0 0);
    --sidebar-primary: oklch(0.606 0.25 292.717);
@@ -98,6 +106,15 @@
   --chart-2: oklch(0.77 0.152 259.5); /* HSL: 225.45 71.22% 72.75% */
   --chart-3: oklch(0.17 0.025 268.3);  /* HSL: 234.55 17.83% 9.47% */
   --chart-4: oklch(0.8 0.151 259.5);  /* HSL: 225.45 71.22% 75.75% */
+  --chart-5: oklch(0.85 0.003 25.3); /* HSL: 0 3% 82.75% (Near Gray) */
+  
+  /* Plan mode colors for dark mode */
+  --edit-mode-bg: oklch(0.22 0.06 120);  /* Dark green-tinted background */
+  --edit-mode-border: oklch(0.4 0.15 120); /* Green-tinted border */
+  --edit-mode-text: oklch(0.7 0.2 120);    /* Green-tinted text */
+  --view-mode-bg: oklch(0.22 0.06 250);   /* Dark blue-tinted background */
+  --view-mode-border: oklch(0.4 0.15 250); /* Blue-tinted border */
+  --view-mode-text: oklch(0.7 0.2 250);    /* Blue-tinted text */
   --chart-5: oklch(0.85 0.003 25.3); /* HSL: 0 3% 82.75% (Near Gray) */
 
     /* Sidebar variables for dark mode */
