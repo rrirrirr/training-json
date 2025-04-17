@@ -6,6 +6,8 @@ import type { TrainingPlanData } from "@/types/training-plan"
 import { useUploadModal } from "@/components/modals/upload-modal"
 import { useAiInfoModal } from "@/components/modals/ai-info-modal"
 import Link from "next/link"
+import TJsonTitle from "@/components/t-json-title"
+import { FlickeringButton } from "./flickering-button"
 
 interface WelcomeScreenProps {
   onLoadExample: () => void
@@ -20,24 +22,28 @@ export default function WelcomeScreen({ onLoadExample, onImportData }: WelcomeSc
   return (
     <div className="flex flex-col min-h-screen">
       <div className="bg-primary/5 py-12 px-4 sm:px-6 lg:px-8 flex-1 flex items-center justify-center">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto w-full">
           {/* Main Header */}
-          <div className="text-center mb-10">
-            <h1 className="text-4xl font-bold text-primary sm:text-5xl md:text-6xl mb-4">T-JSON</h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <div className="text-center mb-12 sm:mb-20">
+            {/* TJsonTitle now takes space based on its H1 content */}
+            {/* Add margin bottom if needed */}
+            <div className="mb-4">
+              {/* Wrapper to control spacing */}
+              <TJsonTitle />
+            </div>
+
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
               JSON-based training plan visualization tool. Create, manage, and visualize your
               training plans easily with T-JSON.
             </p>
           </div>
-
           {/* Primary Call to Action */}
           <div className="mb-12 flex justify-center">
-            <Button
+            <FlickeringButton
+              size="lg"
               onClick={() => {
-                // Direct call to open function
                 aiInfoModalStore.open()
               }}
-              size="lg"
               className="w-full sm:w-auto sm:min-w-[320px] flex items-center justify-between py-8 px-6 text-lg shadow-md"
             >
               <div className="flex items-center">
@@ -45,7 +51,7 @@ export default function WelcomeScreen({ onLoadExample, onImportData }: WelcomeSc
                 <span>Create AI-Powered Plan</span>
               </div>
               <ChevronRight className="h-5 w-5 opacity-80" />
-            </Button>
+            </FlickeringButton>
           </div>
 
           {/* Documentation Link */}
@@ -56,7 +62,6 @@ export default function WelcomeScreen({ onLoadExample, onImportData }: WelcomeSc
               </Button>
             </Link>
           </div>
-
           {/* Secondary Options */}
           <div className="text-center mb-6">
             <p className="text-base text-muted-foreground mb-4">
@@ -91,7 +96,6 @@ export default function WelcomeScreen({ onLoadExample, onImportData }: WelcomeSc
               </Button>
             </div>
           </div>
-
           {/* Info Text Footer */}
           <div className="mt-12 text-center">
             <p className="text-sm text-muted-foreground">
