@@ -1,61 +1,72 @@
 "use client"
 
-import { Button, ButtonProps } from "@/components/ui/button"
-import { useParticleEffect } from "@/hooks/use-particle-effect"
-import { cn } from "@/lib/utils" // Assuming you use shadcn utils
-import { useRef } from "react"
+// Assuming these imports and the hook are correctly set up
+import React, { useEffect, useRef, useState, RefObject } from "react"
+import { Button, ButtonProps } from "@/components/ui/button" // Adjust import path
+import { cn } from "@/lib/utils" // Adjust import path
+import { useParticleEffect } from "@/hooks/use-particle-effect" // Adjust import path
+// Make sure all the simulation classes and helpers are available, either here or imported by the hook
 
-// Extend ButtonProps and add specific props if needed
+// --- FlickeringButton Component ---
 interface FlickeringButtonProps extends ButtonProps {}
 
-export function FlickeringButton({ children, className, ...props }: FlickeringButtonProps) {
+export function FlickeringButton({ children, className, style, ...props }: FlickeringButtonProps) {
   const buttonRef = useRef<HTMLButtonElement>(null)
-  // Use the hook, passing the button ref as the target
+  // Use the particle effect hook, targeting the button element
   const canvasRef = useParticleEffect(buttonRef)
 
   return (
-    // Wrapper div to position canvas relative to button
+    // Wrapper div to position the canvas relative to the button
     <div className="relative inline-block">
-      {/* Canvas positioned absolutely, centered on the button */}
+      {/* The particle canvas, positioned absolutely and centered */}
       <canvas
         ref={canvasRef}
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0 pointer-events-none"
-        // Width/height set by the hook's resizeCanvas
+        // Width/height are set internally by the useParticleEffect hook
         aria-hidden="true"
       />
-      {/* The actual button, rendered normally, above canvas */}
+      {/* The actual Button component */}
       <Button
         ref={buttonRef}
-        className={cn("relative z-10", className)} // Ensure button is above canvas
-        {...props} // Pass down all other button props
+        className={cn(
+          "relative z-10", // Ensures button is rendered above the canvas
+          // Add base styling if needed - animation might override defaults
+          // e.g., "text-primary-foreground",
+          className
+        )}
+        // Apply the background flicker animation via inline style
+        style={{
+          // Use a new animation name for background flicker
+          animation: "ButtonBackgroundFlicker 0.5s infinite alternate", // Slower duration might look better for bg
+          // Set a default background to avoid flickering from transparent if button variant is 'ghost' or 'link'
+          backgroundColor: "#ff6347", // Match one of the keyframe colors
+          ...style, // Merge any other passed styles
+        }}
+        {...props} // Pass down standard button props (onClick, size, variant, etc.)
       >
-        {/* Span inside button to apply flicker to text only */}
-        <span style={{ animation: "flicker 0.3s infinite alternate" }}>{children}</span>
+        {/* Render children directly - no extra span needed now */}
+        {children}
       </Button>
 
-      {/* Flicker animation definition - scoped if not global */}
-      {/* Using style tag here for simplicity, could be global CSS */}
+      {/* Keyframes for the BACKGROUND flicker animation */}
+      {/* Use style jsx for scoped CSS, or define globally */}
       <style jsx>{`
-        @keyframes flicker {
+        @keyframes ButtonBackgroundFlicker {
           0%,
           100% {
-            color: #ff4500;
-            text-shadow:
-              0 0 5px rgba(255, 69, 0, 0.6),
-              0 0 15px rgba(255, 69, 0, 0.4),
-              0 0 30px rgba(255, 140, 0, 0.3);
+            /* Animate background-color and box-shadow for glow */
+            background-color: #ff6347; /* Lighter orange-red */
+            /* Adjust shadow to match desired glow */
+            box-shadow:
+              0 0 8px rgba(255, 69, 0, 0.6),
+              0 0 15px rgba(255, 140, 0, 0.4);
           }
           50% {
-            color: #ff8c00;
-            text-shadow:
-              0 0 8px rgba(255, 140, 0, 0.7),
-              0 0 20px rgba(255, 140, 0, 0.5),
-              0 0 40px rgba(255, 69, 0, 0.3);
+            background-color: #ff8c00; /* Darker orange */
+            box-shadow:
+              0 0 12px rgba(255, 140, 0, 0.7),
+              0 0 25px rgba(255, 69, 0, 0.5);
           }
-        }
-        /* Ensure flicker animation has initial color if needed */
-        span[style*="animation: flicker"] {
-          color: #ff4500;
         }
       `}</style>
     </div>
