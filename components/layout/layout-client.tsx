@@ -4,7 +4,6 @@ import React, { useEffect, useRef } from "react"
 import { usePathname } from "next/navigation" // <--- Import usePathname
 import AppSidebar from "@/components/app-sidebar" // [cite: 188]
 import { AppHeader } from "@/components/layout/app-header" // [cite: 167]
-import { PlanModeIndicator } from "@/components/plan-mode-indicator" // [cite: 190]
 import { Sidebar, SidebarProvider, useSidebar } from "@/components/ui/sidebar" // [cite: 179, 411]
 import {
   ResizablePanelGroup,
@@ -112,13 +111,12 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
           <AppSidebar />
         </Sidebar>
         <div className="flex flex-col flex-1 overflow-hidden">
-          <AppHeader // [cite: 189]
+          <AppHeader
             onToggleSidebar={() => {
               setOpenMobile((open) => !open)
             }}
             isSidebarOpen={state === "expanded"}
           />
-          <PlanModeIndicator /> // [cite: 190]
           <main className="flex-1 overflow-auto">{children}</main>
         </div>
       </div>
@@ -134,7 +132,7 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
           className={cn(
             "fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat", // Position fixed, behind content, cover viewport
             "bg-[url('/light-bg1.jpg')]", // Default (light mode) background
-            "dark:bg-[url('/dark-bg1.jpeg')] " // Dark mode background
+            "dark:bg-[url('/dark-bg2.jpg')] " // Dark mode background
           )}
         />
       )}
@@ -157,7 +155,7 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
           order={1}
           className="!overflow-y-hidden transition-all duration-300 flex flex-col h-full" // [cite: 192]
         >
-          <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
+          <div className="flex flex-col h-full bg-red-200 md:bg-sidebar text-sidebar-foreground ">
             <AppSidebar />
           </div>
         </ResizablePanel>
@@ -174,7 +172,6 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
         >
           <div className="flex flex-col h-full">
             <AppHeader onToggleSidebar={handleToggleSidebar} isSidebarOpen={state === "expanded"} />
-            <PlanModeIndicator /> {/* [cite: 194] */}
             <main className="flex-1 overflow-auto">{children}</main>{" "}
           </div>
         </ResizablePanel>
