@@ -2,7 +2,15 @@
 
 import React from "react"
 import { Button } from "@/components/ui/button"
-import { PanelLeft, PanelLeftClose, PanelBottom, Settings, ChevronDown, Copy, MoreVertical } from "lucide-react"
+import {
+  PanelLeft,
+  PanelLeftClose,
+  PanelBottom,
+  Settings,
+  ChevronDown,
+  Copy,
+  MoreVertical,
+} from "lucide-react"
 import { usePlanStore } from "@/store/plan-store"
 import { useSidebar } from "@/components/ui/sidebar"
 import { useToast } from "@/components/ui/use-toast"
@@ -25,7 +33,7 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
   const { isMobile } = useSidebar()
   const { openMobileNav, openSettingsDialog } = useUIState()
   const { toast } = useToast()
-  
+
   // Function to copy the current URL to clipboard
   const copyUrlToClipboard = () => {
     if (typeof window !== "undefined") {
@@ -56,7 +64,7 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
       : "dark:bg-violet-900/20 dark:text-violet-300 dark:border-violet-800"
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 bg-background px-3 sm:px-6 justify-between shadow-sm">
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 bg-sidebar px-3 sm:px-6 justify-between shadow-sm">
       {/* Sidebar Toggle Button - used for both mobile and desktop */}
       <div className="flex items-center gap-2">
         <Button
@@ -100,7 +108,7 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
             <Settings className="h-5 w-5" />
           </Button>
         </div>
-        
+
         {/* Dropdown Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
