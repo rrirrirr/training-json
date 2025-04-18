@@ -23,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
+import { usePathname } from "next/navigation"
 
 interface HeaderProps {
   onToggleSidebar: () => void
@@ -33,6 +34,8 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
   const { isMobile } = useSidebar()
   const { openMobileNav, openSettingsDialog } = useUIState()
   const { toast } = useToast()
+  const pathname = usePathname()
+  const isRootRoute = pathname === "/"
 
   // Function to copy the current URL to clipboard
   const copyUrlToClipboard = () => {
@@ -64,7 +67,9 @@ export function AppHeader({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
       : "dark:bg-violet-900/20 dark:text-violet-300 dark:border-violet-800"
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 bg-sidebar px-3 sm:px-6 justify-between shadow-sm">
+    <header className={cn("sticky top-0 z-30 flex h-14 items-center gap-2 px-3 sm:px-6 justify-between shadow-sm", 
+      isRootRoute ? "bg-[var(--sidebar-80)]" : "bg-sidebar"
+    )}>
       {/* Sidebar Toggle Button - used for both mobile and desktop */}
       <div className="flex items-center gap-2">
         <Button
