@@ -30,6 +30,7 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
   const { isSidebarOpen, openSidebar, closeSidebar } = useUIState() // [cite: 179]
   const panelGroupRef = useRef<ImperativePanelGroupHandle>(null) // [cite: 179]
   const pathname = usePathname() // <--- Get the current pathname
+  const isRootRoute = pathname === "/"
 
   // Sync UI Context and other effects (keep existing useEffects)
   // ... (Keep existing useEffect hooks) ...
@@ -98,7 +99,7 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex min-h-screen w-full bg-background">
         {/* Add the conditional background div here as well for mobile */}
-        {pathname === "/" && (
+        {isRootRoute && (
           <div
             className={cn(
               "fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat",
@@ -111,12 +112,15 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
           <AppSidebar />
         </Sidebar>
         <div className="flex flex-col flex-1 overflow-hidden">
-          <AppHeader
-            onToggleSidebar={() => {
-              setOpenMobile((open) => !open)
-            }}
-            isSidebarOpen={state === "expanded"}
-          />
+          {/* Only show header when not on root route */}
+          {!isRootRoute && (
+            <AppHeader
+              onToggleSidebar={() => {
+                setOpenMobile((open) => !open)
+              }}
+              isSidebarOpen={state === "expanded"}
+            />
+          )}
           <main className="flex-1 overflow-auto">{children}</main>
         </div>
       </div>
@@ -127,7 +131,7 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen w-full bg-transparent">
       {/* === Conditional Background Div === */}
-      {pathname === "/" && (
+      {isRootRoute && (
         <div
           className={cn(
             "fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat", // Position fixed, behind content, cover viewport
@@ -155,7 +159,10 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
           order={1}
           className="!overflow-y-hidden transition-all duration-300 flex flex-col h-full" // [cite: 192]
         >
-          <div className="flex flex-col h-full bg-red-200 md:bg-sidebar text-sidebar-foreground ">
+          <div 
+            className="flex flex-col h-full text-sidebar-foreground bg-sidebar"
+            style={isRootRoute ? { opacity: 0.8 } : undefined}
+          >
             <AppSidebar />
           </div>
         </ResizablePanel>
@@ -171,7 +178,13 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
           className="h-screen flex flex-col overflow-hidden" // [cite: 193]
         >
           <div className="flex flex-col h-full">
-            <AppHeader onToggleSidebar={handleToggleSidebar} isSidebarOpen={state === "expanded"} />
+            {/* Only show header when not on root route */}
+            {!isRootRoute && (
+              <AppHeader 
+                onToggleSidebar={handleToggleSidebar} 
+                isSidebarOpen={state === "expanded"} 
+              />
+            )}
             <main className="flex-1 overflow-auto">{children}</main>{" "}
           </div>
         </ResizablePanel>
