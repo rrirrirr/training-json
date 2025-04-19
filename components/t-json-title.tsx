@@ -1,18 +1,16 @@
+"use client"
+
+import { useRef } from "react"
+
 export default function TJsonTitle() {
   const titleRef = useRef<HTMLHeadingElement>(null)
   // Use the hook, passing the h1 ref as the target
-  const canvasRef = useParticleEffect(titleRef)
 
   return (
     <div className="relative inline-block">
-      <canvas
-        ref={canvasRef}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0 pointer-events-none"
-        aria-hidden="true"
-      />
       <h1
         ref={titleRef}
-        className="relative z-10 px-4 text-center text-5xl sm:text-6xl font-bold text-transparent md:text-7xl whitespace-nowrap"
+        className="relative z-10 px-4 text-center text-5xl sm:text-6xl font-bold font-archivo-black text-transparent md:text-7xl whitespace-nowrap"
         style={{
           animation: "flicker 0.3s infinite alternate",
           color: "#FF4500", // Base color for flicker
