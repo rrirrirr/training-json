@@ -3,6 +3,9 @@
 import React, { createContext, useContext, useState, useCallback } from "react"
 
 // Define the shape of our UI context
+import type { PlanMetadata } from "@/store/plan-store"
+
+// Define the shape of our UI context
 interface UIContextType {
   // Mobile navigation state
   isMobileNavOpen: boolean
@@ -30,6 +33,26 @@ interface UIContextType {
   planActionTarget: any | null
   openPlanActionDialog: (type: 'edit' | 'delete', plan: any) => void
   closePlanActionDialog: () => void
+  
+  // NEW Properties for AppSidebar Dialogs
+  
+  // Delete Confirmation Dialog
+  isDeleteDialogOpen: boolean
+  planToDelete: PlanMetadata | null
+  openDeleteDialog: (plan: PlanMetadata) => void
+  closeDeleteDialog: () => void
+  
+  // Switch Warning Dialog
+  isSwitchWarningOpen: boolean
+  planToSwitchToId: string | null
+  openSwitchWarningDialog: (planId: string) => void
+  closeSwitchWarningDialog: () => void
+  
+  // JSON Editor Dialog
+  isJsonEditorOpen: boolean
+  planToViewJson: any | null
+  openJsonEditor: (planData: any) => void
+  closeJsonEditor: () => void
 }
 
 // Create the context with a default undefined value
@@ -52,6 +75,15 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   const [planActionType, setPlanActionType] = useState<'edit' | 'delete' | null>(null)
   const [planActionTarget, setPlanActionTarget] = useState<any | null>(null)
   
+  // NEW Dialog states for AppSidebar
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [planToDelete, setPlanToDelete] = useState<PlanMetadata | null>(null)
+  const [isSwitchWarningOpen, setIsSwitchWarningOpen] = useState(false)
+  const [planToSwitchToId, setPlanToSwitchToId] = useState<string | null>(null)
+  const [isJsonEditorOpen, setIsJsonEditorOpen] = useState(false)
+  const [planToViewJson, setPlanToViewJson] = useState<any | null>(null)
+  
+  // Mobile navigation actions
   // Mobile navigation actions
   const openMobileNav = useCallback(() => setIsMobileNavOpen(true), [])
   const closeMobileNav = useCallback(() => setIsMobileNavOpen(false), [])
@@ -85,6 +117,38 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
     }, 200)
   }, [])
   
+  // NEW Dialog actions for AppSidebar
+  const openDeleteDialog = useCallback((plan: PlanMetadata) => {
+    setPlanToDelete(plan)
+    setIsDeleteDialogOpen(true)
+  }, [])
+  
+  const closeDeleteDialog = useCallback(() => {
+    setIsDeleteDialogOpen(false)
+    // Delay clearing data to avoid UI flicker if dialog animates out
+    setTimeout(() => setPlanToDelete(null), 300)
+  }, [])
+  
+  const openSwitchWarningDialog = useCallback((planId: string) => {
+    setPlanToSwitchToId(planId)
+    setIsSwitchWarningOpen(true)
+  }, [])
+  
+  const closeSwitchWarningDialog = useCallback(() => {
+    setIsSwitchWarningOpen(false)
+    setTimeout(() => setPlanToSwitchToId(null), 300)
+  }, [])
+  
+  const openJsonEditor = useCallback((planData: any) => {
+    setPlanToViewJson(planData)
+    setIsJsonEditorOpen(true)
+  }, [])
+  
+  const closeJsonEditor = useCallback(() => {
+    setIsJsonEditorOpen(false)
+    setTimeout(() => setPlanToViewJson(null), 300)
+  }, [])
+  
   // Create the context value object
   const value = {
     isMobileNavOpen,
@@ -105,9 +169,22 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
     planActionType,
     planActionTarget,
     openPlanActionDialog,
-    closePlanActionDialog
+    closePlanActionDialog,
+    
+    // NEW Dialog values for AppSidebar
+    isDeleteDialogOpen,
+    planToDelete,
+    openDeleteDialog,
+    closeDeleteDialog,
+    isSwitchWarningOpen,
+    planToSwitchToId,
+    openSwitchWarningDialog,
+    closeSwitchWarningDialog,
+    isJsonEditorOpen,
+    planToViewJson,
+    openJsonEditor,
+    closeJsonEditor
   }
-  
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>
 }
 

@@ -1,32 +1,27 @@
-// components/plan-switcher.tsx (PlanItemContent only)
 "use client"
 
 import Link from "next/link"
 import { FileText, Trash2, MoreHorizontal, Plus, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-// Tooltip Imports removed
 import { cn } from "@/lib/utils"
 import type { PlanMetadata } from "@/store/plan-store"
 import { useIsMobile } from "@/hooks/use-mobile"
 import React from "react"
 import { usePlanMode } from "@/contexts/plan-mode-context"
 import { usePlanStore } from "@/store/plan-store"
+import { useUIState } from "@/contexts/ui-context"
 import { useNewPlanModal } from "@/components/modals/new-plan-modal"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 
 export const PlanItemContent = ({
   plan,
   isActive,
-  onViewJson,
-  onDelete,
   formatDate,
   onLinkClick,
 }: {
   plan: PlanMetadata
   isActive: boolean
-  onViewJson: (plan: PlanMetadata, e: React.MouseEvent | React.TouchEvent) => void
-  onDelete: (plan: PlanMetadata, e: React.MouseEvent | React.TouchEvent) => void
   formatDate: (dateString: string | null | undefined) => string
   onLinkClick: (e: React.MouseEvent, planId: string) => void
 }) => {
@@ -35,19 +30,46 @@ export const PlanItemContent = ({
   }
 
   const isMobile = useIsMobile()
+  const { openDeleteDialog, openJsonEditor } = useUIState()
+
   const handleActionClick = (
     e: React.MouseEvent | React.TouchEvent,
-    actionCallback: (plan: PlanMetadata, e: React.MouseEvent | React.TouchEvent) => void
+    action: "viewJson" | "delete"
   ) => {
     e.preventDefault()
     e.stopPropagation()
-    actionCallback(plan, e)
+
+    if (action === "viewJson") {
+      // Prepare data for JSON editor
+      let planDataToShow = null
+      const activePlanId = usePlanStore.getState().activePlanId
+      const activePlan = usePlanStore.getState().activePlan
+
+      if (activePlanId === plan.id && activePlan) {
+        planDataToShow = { ...plan, data: activePlan }
+      } else {
+        console.warn("Viewing JSON from metadata only")
+        planDataToShow = {
+          id: plan.id,
+          name: plan.name,
+          data: {
+            metadata: { planName: plan.name },
+            weeks: [],
+            monthBlocks: [],
+            exerciseDefinitions: [],
+          },
+        }
+      }
+      openJsonEditor(planDataToShow)
+    } else if (action === "delete") {
+      openDeleteDialog(plan)
+    }
   }
 
   // Wrapper Div - Flex container for the whole item
   const wrapperClassName = cn(
     // *** ADDED py-1.5 for vertical padding INSIDE item ***
-    "flex w-full items-center p-2 my-0.5 group/item relative overflow-hidden min-h-[48px] rounded-md",
+    "flex w-full items-center p-2 group/item relative overflow-hidden min-h-[48px] rounded-md",
     "hover:bg-accent",
     "focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1 focus-within:ring-offset-background",
     isActive && "bg-accent"
@@ -97,20 +119,18 @@ export const PlanItemContent = ({
                 size="sm"
                 className="h-8 px-2 hover:bg-muted"
                 aria-label="View JSON"
-                onClick={(e) => handleActionClick(e, onViewJson)}
+                onClick={(e) => handleActionClick(e, "viewJson")}
               >
-                {" "}
-                <FileText className="h-4 w-4 mr-1" /> View JSON{" "}
+                <FileText className="h-4 w-4 mr-1" /> View JSON
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-8 px-2 text-destructive hover:bg-destructive/10 hover:text-destructive focus:text-destructive focus:bg-destructive/10"
                 aria-label="Delete Plan"
-                onClick={(e) => handleActionClick(e, onDelete)}
+                onClick={(e) => handleActionClick(e, "delete")}
               >
-                {" "}
-                <Trash2 className="h-4 w-4 mr-1" /> Delete{" "}
+                <Trash2 className="h-4 w-4 mr-1" /> Delete
               </Button>
             </div>
           </PopoverContent>
@@ -121,18 +141,38 @@ export const PlanItemContent = ({
 }
 
 // --- Main PlanSwitcher component (renders mobile view) ---
-// This component's code remains the same as the previous version
-// It correctly renders the mobile list view using the updated PlanItemContent
-export function PlanSwitcher({} /* ... props ... */ : {
-  /* ... prop types ... */
-}) {
-  // ... component logic remains the same ...
+export function PlanSwitcher({}: {}) {
+  const { openSwitchWarningDialog } = useUIState()
   const { open: openNewPlanModal } = useNewPlanModal()
   const { mode } = usePlanMode()
   const activePlanId = usePlanStore((state) => state.activePlanId)
   const planMetadataList = usePlanStore((state) => state.planMetadataList)
   const mobileListLimit = 5
-  const mobileListItems = planMetadataList.slice(0, mobileListLimit) // Use base list for mobile too
+  const mobileListItems = planMetadataList.slice(0, mobileListLimit)
+
+  // Helper function to format dates (passed to PlanItemContent)
+  const formatDate = (dateString: string | null | undefined): string => {
+    return dateString
+      ? new Date(dateString).toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })
+      : "N/A"
+  }
+
+  // Handle clicking on plan links - used for switch warnings in edit mode
+  const handlePlanLinkClick = (e: React.MouseEvent, planId: string) => {
+    if (planId === activePlanId && mode === "normal") {
+      e.preventDefault()
+      return
+    }
+    if (mode === "edit") {
+      e.preventDefault()
+      openSwitchWarningDialog(planId)
+      return
+    }
+  }
 
   return (
     <>
@@ -145,32 +185,27 @@ export function PlanSwitcher({} /* ... props ... */ : {
       >
         <h3 className="text-sm font-semibold px-2 py-1.5 text-muted-foreground">Recent Plans</h3>
         {mobileListItems.length > 0 ? (
-          <div className="flex flex-col">
+          <div className="flex flex-col gap-y-0.5">
             {mobileListItems.map((plan) => (
               <PlanItemContent
                 key={plan.id}
                 plan={plan}
                 isActive={plan.id === activePlanId && mode === "normal"}
-                onViewJson={handleViewJsonClick}
-                onDelete={handleDeleteClick}
                 formatDate={formatDate}
                 onLinkClick={handlePlanLinkClick}
               />
             ))}
             {planMetadataList.length > mobileListLimit && (
               <div className="mt-1 px-2">
-                {" "}
                 <Link href="/plans" passHref>
-                  {" "}
                   <Button
                     variant="link"
                     size="sm"
                     className="w-full h-8 justify-center text-xs text-muted-foreground hover:text-primary"
                   >
-                    {" "}
-                    View All Plans &rarr;{" "}
-                  </Button>{" "}
-                </Link>{" "}
+                    View All Plans &rarr;
+                  </Button>
+                </Link>
               </div>
             )}
           </div>
@@ -183,7 +218,7 @@ export function PlanSwitcher({} /* ... props ... */ : {
             className="w-full justify-start h-9 px-2 py-1.5 text-sm text-primary hover:bg-primary/10 focus-visible:bg-primary/10 focus-visible:text-primary"
             onClick={() => openNewPlanModal()}
           >
-            <Plus className="mr-2 h-4 w-4" /> Create New Plan{" "}
+            <Plus className="mr-2 h-4 w-4" /> Create New Plan
           </Button>
         </div>
       </div>
