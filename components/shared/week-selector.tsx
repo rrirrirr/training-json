@@ -15,7 +15,7 @@ interface WeekSelectorProps {
   getWeekInfo?: (weekNumber: number) => {
     type: string
     weekTypeIds: string[]
-    colorName?: string
+    colorName?: string | undefined // Ensure undefined is possible
   }
 }
 
@@ -28,14 +28,14 @@ export default function WeekSelector({
 }: WeekSelectorProps) {
   // Get active plan directly from Zustand store
   const activePlan = usePlanStore((state) => state.activePlan)
-  
+
   // Get plan mode data from context
   const { mode, draftPlan } = usePlanMode()
-  
+
   // Determine which plan to use
   const planToDisplay = mode !== "normal" ? draftPlan : activePlan
   const trainingData = planToDisplay?.weeks || []
-  
+
   const { theme } = useTheme()
 
   // Mapping function to get week type by ID
@@ -49,32 +49,23 @@ export default function WeekSelector({
     return {
       type: weekData?.weekType || "",
       weekTypeIds: weekData?.weekTypeIds || [],
-      colorName: weekData?.weekStyle?.colorName,
+      colorName: weekData?.weekStyle?.colorName, // Can be undefined
     }
   }
 
   // Use provided getWeekInfo or default
   const weekInfoFn = getWeekInfo || defaultGetWeekInfo
 
-  // --- Refactored Layout ---
-  // Use CSS Grid with auto-fit and minmax.
-  // This creates a responsive grid where columns wrap automatically,
-  // have a minimum size, and grow equally to fill space, ensuring all
-  // items are the same size.
-  // - grid: Establishes the grid container.
-  // - gap-2: Defines spacing between grid items.
-  // - grid-cols-[repeat(auto-fit,minmax(4rem,1fr))]:
-  //   - `repeat()`: Creates repeating column definitions.
-  //   - `auto-fit`: Fits as many columns as possible in the container width. If items wrap, it collapses empty tracks, ensuring items stretch to fill space.
-  //   - `minmax(4rem, 1fr)`: Each column (and thus button) will be at least `4rem` (64px) wide. The `1fr` allows them to grow equally to fill any remaining horizontal space. Adjust '4rem' if needed.
-  const containerClassName = "grid gap-2 grid-cols-[repeat(auto-fit,minmax(4rem,1fr))]" // <-- UPDATED GRID LAYOUT
+  // Responsive Grid Layout - items will be at least 5rem wide
+  const containerClassName =
+    "grid gap-2 grid-cols-[repeat(auto-fit,minmax(5rem,1fr))] overflow-y-auto"
 
-  // Get button styles - sizing is now controlled by the grid container
+  // Get button styles - includes aspect-square and flex for uniform size
   const getWeekButtonStyles = (weekNumber: number) => {
     const { type, weekTypeIds, colorName } = weekInfoFn(weekNumber)
     const isSelected = selectedWeek === weekNumber
 
-    // Styling logic for colors, borders, etc. (unchanged)
+    // Styling logic for colors, borders, etc.
     let weekTypeColorName: string | undefined = undefined
     let firstWeekType: WeekType | undefined = undefined
     if (weekTypeIds && weekTypeIds.length > 0) {
@@ -93,11 +84,11 @@ export default function WeekSelector({
       ? getThemeAwareColorClasses(firstWeekType.colorName, theme)?.border
       : undefined
 
-    // --- Refactored Styling ---
-    // Sizing classes like flex-1, min-w-* are REMOVED from the button itself.
-    // The button will naturally fill the grid cell defined by the container.
     return cn(
-      "p-2 rounded text-center text-sm transition-colors", // Base styles
+      // Base styles & Layout:
+      "p-1 rounded text-center text-sm transition-colors", // Adjusted padding
+      "aspect-square flex flex-col items-center justify-center", // Force square aspect ratio and center content
+
       // State/Color styles:
       isSelected
         ? "bg-primary text-primary-foreground"
@@ -106,14 +97,14 @@ export default function WeekSelector({
           : "hover:bg-muted text-foreground",
       // Indicator styles:
       hasBorderIndicator ? "border-l-4" : "",
-      borderColor // Note: Ensure borderColor gives a valid class string like "border-blue-500"
+      borderColor // e.g., "border-blue-500"
     )
   }
 
   return (
     <nav className="py-4">
       <h2 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
-        Veckor
+        Weeks
       </h2>
       {/* Apply the responsive Grid container class */}
       <div className={containerClassName}>
@@ -131,13 +122,14 @@ export default function WeekSelector({
             <button
               key={week}
               onClick={() => onSelectWeek(week)}
-              // Button styles are now simpler, without explicit sizing
+              // Apply the updated styles for uniform size and centered content
               className={getWeekButtonStyles(week)}
             >
-              {/* Content remains the same */}
+              {/* Content arrangement is handled by flex properties */}
               <div className="font-medium">{week}</div>
-              {type && <div className="text-xs opacity-75">{type}</div>}
-              {weekTypeName && <div className="text-xs font-medium mt-1">{weekTypeName}</div>}
+              {/* Conditionally render type and name if they exist and aren't empty/placeholder */}
+              {type && type !== "-" && <div className="text-xs opacity-75">{type}</div>}
+              {weekTypeName && <div className="text-xs font-medium mt-0.5">{weekTypeName}</div>}
             </button>
           )
         })}
