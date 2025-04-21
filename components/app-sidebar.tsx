@@ -13,6 +13,7 @@ import {
   Settings,
   PanelLeft,
   PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -36,9 +37,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { WeekType, type PlanMetadata } from "@/types/training-plan"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { usePlanStore } from "@/store/plan-store"
 import { PlanItemContent } from "./plan-switcher"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -51,6 +52,9 @@ interface AppSidebarProps {
 
 export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
   const router = useRouter()
+  const pathname = usePathname()
+  const isRootRoute = pathname === "/"
+
   const activePlan = usePlanStore((state) => state.activePlan)
   const activePlanId = usePlanStore((state) => state.activePlanId)
   const planMetadataList = usePlanStore((state) => state.planMetadataList)
@@ -69,30 +73,31 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
     openDeleteDialog,
     openJsonEditor,
   } = useUIState()
-  const { state } = useSidebar()
+  const { state, isMobile } = useSidebar()
   const isOpen = state === "expanded"
   const [weekTypes, setWeekTypes] = useState<WeekType[]>([])
   const { open: openNewPlanModal } = useNewPlanModal()
 
+  // --- State for Animation ---
+  const [showAnimation, setShowAnimation] = useState(false)
+  const isMounted = useRef(false)
+
+  // --- Effect to Trigger Animation ---
+  useEffect(() => {
+    if (isMounted.current) {
+      setShowAnimation(true)
+      const timer = setTimeout(() => setShowAnimation(false), 2000)
+      return () => clearTimeout(timer)
+    } else {
+      isMounted.current = true
+    }
+  }, [isOpen])
+
+  // --- (Other state, effects, helpers remain the same) ---
   const planToDisplay = mode !== "normal" ? draftPlan : activePlan
   const desktopListLimit = 10
   const desktopListItems = planMetadataList.slice(0, desktopListLimit)
   const dropdownListLimit = desktopListLimit
-
-  useEffect(() => {
-    if (planMetadataList.length === 0) {
-      fetchPlanMetadata()
-    }
-  }, [planMetadataList.length, fetchPlanMetadata])
-
-  useEffect(() => {
-    setWeekTypes(
-      planToDisplay?.weekTypes && Array.isArray(planToDisplay.weekTypes)
-        ? planToDisplay.weekTypes
-        : []
-    )
-  }, [planToDisplay])
-
   const getWeekInfo = (weekNumber: number) => {
     const weekData = planToDisplay?.weeks?.find((w) => w.weekNumber === weekNumber)
     return weekData
@@ -103,13 +108,11 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
         }
       : { type: "", weekTypeIds: [], colorName: undefined }
   }
-
   const handleChangeViewMode = (newMode: "week" | "month") => {
     if (typeof setViewMode === "function") {
       setViewMode(newMode)
     }
   }
-
   const formatDate = (dateString: string | null | undefined): string => {
     return dateString
       ? new Date(dateString).toLocaleDateString(undefined, {
@@ -119,7 +122,6 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
         })
       : "N/A"
   }
-
   const handlePlanLinkClick = (e: React.MouseEvent, planId: string) => {
     if (planId === activePlanId && mode === "normal") {
       e.preventDefault()
@@ -131,7 +133,6 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
       return
     }
   }
-
   let triggerPlanName = "Select Plan"
   if (mode === "edit") {
     triggerPlanName = `Editing: ${draftPlan?.metadata?.planName || "Unnamed Plan"}`
@@ -141,34 +142,61 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
     const currentMeta = planMetadataList.find((p) => p.id === activePlanId)
     triggerPlanName = currentMeta?.name || "Loading Plan..."
   }
+  // --- End Helpers ---
 
-  return (
-    <>
-      {/* Header */}
-      <SidebarHeader
-        className={cn(
-          "my-4 flex items-center relative",
-          isOpen ? "justify-between px-4" : "justify-center pt-10"
-        )}
-      >
-        {isOpen && (
-          <Link href="/" passHref>
-            <h1 className="text-3xl font-bold text-primary font-archivo-black">T-JSON</h1>
-          </Link>
-        )}
+  // Define Toggle Button JSX once, passing animation state
+  const ToggleButton = ({ className }: { className?: string }) => (
+    <Tooltip>
+      <TooltipTrigger asChild>
         <Button
           variant="ghost"
           size="icon"
           onClick={handleToggleResize}
-          className={cn(
-            "h-8 w-8 text-foreground",
-            isOpen && "absolute top-0 right-2",
-            !isOpen && "absolute top-2 left-1/2 -translate-x-1/2"
-          )}
+          className={cn("h-8 w-8", showAnimation && "animate-blink-icon-once", className)}
           aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
         >
-          {isOpen ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
+          {/* Ensure icons don't have weird margins */}
+          {isOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
         </Button>
+      </TooltipTrigger>
+      <TooltipContent side="right" align="center">
+        Toggle Sidebar
+      </TooltipContent>
+    </Tooltip>
+  )
+
+  return (
+    <>
+      {/* Absolute Toggle Button - RENDER ONLY WHEN OPEN */}
+      {!isMobile && isOpen && (
+        <ToggleButton className={cn("absolute top-2 right-2 z-50", "hidden md:block")} />
+      )}
+
+      {/* Header */}
+      <SidebarHeader
+        className={cn(
+          "flex items-center relative",
+          isOpen ? "my-4 px-4 justify-start" : "my-0 py-4 justify-center flex-col"
+        )}
+      >
+        {/* Title Area */}
+        <div
+          className={cn(
+            "flex-shrink min-w-0",
+            isOpen ? "overflow-hidden mr-10" : "text-center pt-3"
+          )}
+        >
+          <Link href="/" passHref className={cn(isOpen ? "block truncate" : "inline-block")}>
+            <h1
+              className={cn(
+                "font-bold text-primary font-archivo-black",
+                isOpen ? "text-3xl whitespace-nowrap" : "text-2xl"
+              )}
+            >
+              {isOpen ? "T-JSON" : "T"}
+            </h1>
+          </Link>
+        </div>
       </SidebarHeader>
 
       {/* Content */}
@@ -181,7 +209,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant={isOpen ? "default" : "outline"}
+                    variant="default"
                     size={isOpen ? "sm" : "icon"}
                     className={cn(isOpen ? "w-full justify-start" : "w-9 h-9")}
                     onClick={() => openNewPlanModal()}
@@ -200,7 +228,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
             </div>
           ) : null}
 
-          {/* Plan Dropdown - Wrapper now outside conditional */}
+          {/* Plan Dropdown */}
           <DropdownMenu>
             <div className={cn(isOpen ? "w-full" : "w-auto")}>
               {isOpen ? (
@@ -266,7 +294,6 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                 // Collapsed View: Plan Selector Icon Trigger
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    {/* Wrap Button in Trigger */}
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="icon" className="w-9 h-9 mt-1">
                         <FileText className="h-4 w-4" />
@@ -281,13 +308,11 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
               )}
             </div>
 
-            {/* Dropdown Content - Placed outside conditional rendering */}
-            {/* Only render content if there's an active plan OR if collapsed */}
+            {/* Dropdown Content */}
             {(planToDisplay || !isOpen) && (
               <DropdownMenuContent
                 align="start"
-                // Apply min-width and trigger-width classes
-                className="min-w-[280px] w-[--radix-dropdown-menu-trigger-width]"
+                className="min-w-[300px] w-[--radix-dropdown-menu-trigger-width]"
               >
                 {planMetadataList.slice(0, dropdownListLimit).map((plan) => (
                   <DropdownMenuItem
@@ -331,7 +356,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
         </SidebarGroup>
         {/* End Plan Management Group */}
 
-        {/* Active Plan Navigation Section (Remains the same) */}
+        {/* Active Plan Navigation Section */}
         {planToDisplay && (
           <div
             className={cn(
@@ -426,13 +451,16 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
         )}
       </SidebarContent>
 
-      {/* Footer (Remains the same as previous step) */}
+      {/* Footer */}
       <SidebarFooter
         className={cn(
-          "mt-auto border-t flex gap-1", // Common styles
-          isOpen ? "p-3 flex-row justify-center items-center" : "p-1 flex-col items-center"
+          "mt-auto border-t flex gap-1",
+          isOpen ? "p-3 flex-row justify-start items-center" : "p-1 flex-col items-center"
         )}
       >
+        {/* RENDER COLLAPSED TOGGLE BUTTON HERE */}
+        {!isMobile && !isOpen && <ToggleButton />}
+
         {/* Info Button */}
         <Tooltip>
           <TooltipTrigger asChild>
@@ -450,7 +478,6 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
             About T-JSON
           </TooltipContent>
         </Tooltip>
-
         {/* Settings Button */}
         <Tooltip>
           <TooltipTrigger asChild>

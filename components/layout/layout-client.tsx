@@ -1,21 +1,21 @@
 "use client"
 
 import React, { useEffect, useRef } from "react"
-import { usePathname } from "next/navigation" // <--- Import usePathname
-import AppSidebar from "@/components/app-sidebar" // [cite: 188]
-import { AppHeader } from "@/components/layout/app-header" // [cite: 167]
-import { Sidebar, SidebarProvider, useSidebar } from "@/components/ui/sidebar" // [cite: 179, 411]
+import { usePathname } from "next/navigation"
+import AppSidebar from "@/components/app-sidebar" // Pass handler prop
+import { AppHeader } from "@/components/layout/app-header"
+import { Sidebar, SidebarProvider, useSidebar } from "@/components/ui/sidebar"
 import {
   ResizablePanelGroup,
   ResizablePanel,
   ResizableHandle,
   ImperativePanelGroupHandle,
-} from "@/components/ui/resizable" // [cite: 179]
-import { cn } from "@/lib/utils" // [cite: 179]
-import { useUIState } from "@/contexts/ui-context" // [cite: 179]
+} from "@/components/ui/resizable"
+import { cn } from "@/lib/utils"
+import { useUIState } from "@/contexts/ui-context"
 
 const SIDEBAR_DEFAULT_SIZE_PERCENT = 20
-const SIDEBAR_COLLAPSED_SIZE_PERCENT = 5
+const SIDEBAR_COLLAPSED_SIZE_PERCENT = 3
 
 export function LayoutClient({ children }: { children: React.ReactNode }) {
   return (
@@ -26,35 +26,28 @@ export function LayoutClient({ children }: { children: React.ReactNode }) {
 }
 
 function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
-  const { state, isMobile, setOpen, setOpenMobile } = useSidebar() // [cite: 179]
-  const { isSidebarOpen, openSidebar, closeSidebar } = useUIState() // [cite: 179]
-  const panelGroupRef = useRef<ImperativePanelGroupHandle>(null) // [cite: 179]
-  const pathname = usePathname() // <--- Get the current pathname
+  const { state, isMobile, setOpen, setOpenMobile } = useSidebar()
+  const { isSidebarOpen, openSidebar, closeSidebar } = useUIState()
+  const panelGroupRef = useRef<ImperativePanelGroupHandle>(null)
+  const pathname = usePathname()
   const isRootRoute = pathname === "/"
 
-  // Sync UI Context and other effects (keep existing useEffects)
-  // ... (Keep existing useEffect hooks) ...
+  // Sync UI Context and other effects (remains same)
   useEffect(() => {
     if (isMobile && state === "collapsed") {
-      setOpen(true) // Force expanded state on mobile [cite: 180]
+      setOpen(true)
     }
   }, [isMobile, state, setOpen])
 
-  // Sync UI Context (Optional)
   useEffect(() => {
     const isVisuallyCollapsed =
-      panelGroupRef.current?.getLayout()[0] <= SIDEBAR_COLLAPSED_SIZE_PERCENT + 0.1 // Check layout size
+      panelGroupRef.current?.getLayout()[0] <= SIDEBAR_COLLAPSED_SIZE_PERCENT + 0.1
     const contextSaysCollapsed = state === "collapsed"
-
     if (isVisuallyCollapsed && !contextSaysCollapsed) {
-      // console.log("Sync: Visual collapsed, context not -> updating context");
-      // setOpen(false); // Potentially causes loops, disable if problematic [cite: 182]
+      /* setOpen(false) */
     } else if (!isVisuallyCollapsed && contextSaysCollapsed) {
-      // console.log("Sync: Visual expanded, context not -> updating context");
-      // setOpen(true); // Potentially causes loops, disable if problematic [cite: 183]
+      /* setOpen(true) */
     }
-
-    // Keep the simpler UI state sync if it works for your needs elsewhere
     if (state === "collapsed" && isSidebarOpen) {
       closeSidebar()
     } else if (state === "expanded" && !isSidebarOpen) {
@@ -62,91 +55,75 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
     }
   }, [state, isSidebarOpen, openSidebar, closeSidebar, setOpen])
 
-  // Handle sidebar toggle button click (keep existing handler)
-  const handleToggleSidebar = () => {
-    // [cite: 184]
+  // Define Toggle function that controls resizing
+  const handleToggleResize = () => {
     const group = panelGroupRef.current
     if (!group) return
-
     const currentLayout = group.getLayout()
     const currentSidebarSize = currentLayout[0]
-
     if (currentSidebarSize <= SIDEBAR_COLLAPSED_SIZE_PERCENT + 0.1) {
       group.setLayout([SIDEBAR_DEFAULT_SIZE_PERCENT, 100 - SIDEBAR_DEFAULT_SIZE_PERCENT])
       setOpen(true)
     } else {
       group.setLayout([SIDEBAR_COLLAPSED_SIZE_PERCENT, 100 - SIDEBAR_COLLAPSED_SIZE_PERCENT])
-      setOpen(false) // [cite: 185]
+      setOpen(false)
     }
   }
 
-  // Handle resize event (keep existing handler)
+  // Handle resize event (remains same)
   const handleLayout = (sizes: number[]) => {
-    //
     const sidebarSize = sizes[0]
     const isVisuallyCollapsed = sidebarSize <= SIDEBAR_COLLAPSED_SIZE_PERCENT + 0.1
-
     if (isVisuallyCollapsed && state === "expanded") {
-      setOpen(false) // [cite: 186]
+      setOpen(false)
     } else if (!isVisuallyCollapsed && state === "collapsed") {
-      setOpen(true) // [cite: 187]
+      setOpen(true)
     }
   }
 
-  // --- Mobile Layout --- (Keep existing logic)
+  // --- Mobile Layout --- (Pass handler)
   if (isMobile) {
-    // [cite: 189]
     return (
       <div className="flex min-h-screen w-full bg-background">
-        {/* Add the conditional background div here as well for mobile */}
         {isRootRoute && (
           <div
             className={cn(
               "fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat",
-              "bg-[url('/light-bg1.jpg')]", // Light mode background
-              "dark:bg-[url('/dark-bg1.jpg')] " // Dark mode background
+              "bg-[url('/light-bg1.jpg')]",
+              "dark:bg-[url('/dark-bg1.jpg')] "
             )}
           />
         )}
         <Sidebar collapsible="icon">
-          <AppSidebar />
+          {/* Pass the resize handler to AppSidebar */}
+          <AppSidebar handleToggleResize={handleToggleResize} />
         </Sidebar>
         <div className="flex flex-col flex-1 overflow-hidden">
-          {/* Only show header when not on root route */}
-          {!isRootRoute && (
-            <AppHeader
-              onToggleSidebar={() => {
-                setOpenMobile((open) => !open)
-              }}
-              isSidebarOpen={state === "expanded"}
-            />
-          )}
+          {!isRootRoute && <AppHeader />}
           <main className="flex-1 overflow-auto">{children}</main>
         </div>
       </div>
     )
   }
 
-  // --- Desktop Layout ---
+  // --- Desktop Layout --- (Pass handler)
   return (
     <div className="flex min-h-screen w-full bg-transparent">
-      {/* === Conditional Background Div === */}
       {isRootRoute && (
         <div
           className={cn(
-            "fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat", // Position fixed, behind content, cover viewport
-            "bg-[url('/light-bg1.jpg')]", // Default (light mode) background
-            "dark:bg-[url('/dark-bg2.jpg')] " // Dark mode background
+            "fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat",
+            "bg-[url('/light-bg1.jpg')]",
+            "dark:bg-[url('/dark-bg2.jpg')] "
           )}
         />
       )}
-      {/* === End Conditional Background Div === */}
 
       <ResizablePanelGroup
         ref={panelGroupRef}
         direction="horizontal"
         onLayout={handleLayout}
-        className="h-screen" // [cite: 191]
+        className="h-screen"
       >
         {/* Sidebar Panel */}
         <ResizablePanel
@@ -157,13 +134,16 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
           collapsible={true}
           collapsedSize={SIDEBAR_COLLAPSED_SIZE_PERCENT}
           order={1}
-          className="!overflow-y-hidden transition-all duration-300 flex flex-col h-full" // [cite: 192]
+          // Added relative and overflow-visible
+          className="transition-all duration-300 flex flex-col h-full relative overflow-visible"
         >
-          <div 
+          {/* This inner div takes full height and is the container for AppSidebar */}
+          <div
             className="flex flex-col h-full text-sidebar-foreground bg-sidebar"
             style={isRootRoute ? { opacity: 0.8 } : undefined}
           >
-            <AppSidebar />
+            {/* Pass the resize handler to AppSidebar */}
+            <AppSidebar handleToggleResize={handleToggleResize} />
           </div>
         </ResizablePanel>
 
@@ -175,16 +155,10 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
           id="main-panel"
           defaultSize={100 - SIDEBAR_DEFAULT_SIZE_PERCENT}
           order={2}
-          className="h-screen flex flex-col overflow-hidden" // [cite: 193]
+          className="h-screen flex flex-col overflow-hidden" // Keep overflow hidden here
         >
           <div className="flex flex-col h-full">
-            {/* Only show header when not on root route */}
-            {!isRootRoute && (
-              <AppHeader 
-                onToggleSidebar={handleToggleSidebar} 
-                isSidebarOpen={state === "expanded"} 
-              />
-            )}
+            {!isRootRoute && <AppHeader />}
             <main className="flex-1 overflow-auto">{children}</main>{" "}
           </div>
         </ResizablePanel>
