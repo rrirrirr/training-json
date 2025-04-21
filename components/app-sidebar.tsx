@@ -20,7 +20,6 @@ import BlockSelector from "./shared/block-selector"
 import WeekSelector from "./shared/week-selector"
 import WeekTypeLegend from "./week-type-legend"
 import Link from "next/link"
-// Restore Sidebar structural components
 import {
   SidebarHeader,
   SidebarContent,
@@ -77,6 +76,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
   const [weekTypes, setWeekTypes] = useState<WeekType[]>([])
   const [showAnimation, setShowAnimation] = useState(false)
   const isMounted = useRef(false)
+  const [isPlanDropdownOpen, setIsPlanDropdownOpen] = useState(false)
 
   // --- Effects ---
   useEffect(() => {
@@ -141,6 +141,14 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
       openSwitchWarningDialog("/plans")
     }
   }
+  const handleDropdownPlanClick = (e: React.MouseEvent, planId: string) => {
+    handlePlanLinkClick(e, planId)
+    setIsPlanDropdownOpen(false)
+  }
+  const handleDropdownViewAllClick = (e: React.MouseEvent) => {
+    handleViewAllClick(e)
+    setIsPlanDropdownOpen(false)
+  }
 
   // --- Plan Switcher Trigger Text Logic ---
   let triggerPlanName = "Select Plan"
@@ -180,9 +188,9 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
       </Tooltip>
     ) : null
 
-  // --- Visibility Logic Based on Specification ---
+  // --- Visibility Logic ---
   const shouldShowCreateButton = isMobile || (!isMobile && isRootRoute)
-  const shouldShowInlineList = isMobile || (!isMobile && isRootRoute)
+  const shouldShowInlineList = isMobile || (!isMobile && isRootRoute && isOpen)
   const shouldShowPlanRelatedTriggers = !isMobile && !isRootRoute && !!planToDisplay
   const shouldShowDropdownTrigger = shouldShowPlanRelatedTriggers && isOpen
   const shouldShowCollapsedTrigger = shouldShowPlanRelatedTriggers && !isOpen
@@ -199,13 +207,13 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
       <SidebarHeader
         className={cn(
           "flex items-center relative flex-shrink-0",
-          isOpen || isMobile ? "my-4 px-4 justify-start" : "my-0 py-4 justify-center flex-col"
+          isOpen || isMobile ? "my-4 px-4 justify-start" : "my-0 py-4 flex-col"
         )}
       >
         <div
           className={cn(
             "flex-shrink min-w-0",
-            isOpen || isMobile ? "overflow-hidden md:mr-10" : "text-center pt-3"
+            isOpen || isMobile ? "overflow-hidden md:mr-10" : "text-center pt-3 px-1"
           )}
         >
           <Link
@@ -229,10 +237,11 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
       </SidebarHeader>
 
       <SidebarContent className="flex flex-col flex-grow min-h-0">
+        {/* Plan Management: Revert to items-center when collapsed */}
         <SidebarGroup
           className={cn(
             "pb-2 flex-shrink-0",
-            isOpen || isMobile ? "px-3" : "px-1 flex flex-col items-center"
+            isOpen || isMobile ? "px-3" : "px-1 flex flex-col items-center" // REVERTED to items-center
           )}
         >
           {shouldShowCreateButton && (
@@ -300,7 +309,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
               )}
             </div>
           )}
-          <DropdownMenu>
+          <DropdownMenu open={isPlanDropdownOpen} onOpenChange={setIsPlanDropdownOpen}>
             <div className={cn(isOpen || isMobile ? "w-full" : "w-auto")}>
               {shouldShowDropdownTrigger && (
                 <DropdownMenuTrigger asChild>
@@ -323,11 +332,12 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                   </Button>
                 </DropdownMenuTrigger>
               )}
+              {/* Collapsed trigger is centered by parent group's items-center now */}
               {shouldShowCollapsedTrigger && (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="icon" className="w-9 h-9 mt-1">
+                      <Button variant="outline" size="icon" className={cn("w-9 h-9 mt-1")}>
                         <GalleryVerticalEnd className="h-4 w-4" />
                         <span className="sr-only">Select Plan</span>
                       </Button>
@@ -346,13 +356,64 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                 alignOffset={isOpen ? 0 : -5}
                 className="min-w-[300px] w-[--radix-dropdown-menu-trigger-width] max-h-[60vh] overflow-y-auto"
               >
-                {/* Dropdown Items... */}
+                {planMetadataList.slice(0, dropdownListLimit).map((plan) => (
+                  <DropdownMenuItem
+                    key={plan.id}
+                    className="p-0 focus:bg-transparent hover:bg-transparent data-[highlighted]:bg-transparent cursor-default"
+                  >
+                    <PlanItemContent
+                      plan={plan}
+                      isActive={plan.id === activePlanId && mode === "normal"}
+                      formatDate={formatDate}
+                      onLinkClick={handleDropdownPlanClick}
+                    />
+                  </DropdownMenuItem>
+                ))}
+                {planMetadataList.length === 0 && (
+                  <DropdownMenuItem disabled className="text-muted-foreground italic">
+                    No plans found
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator className="my-1" />
+                {planMetadataList.length > dropdownListLimit && (
+                  <DropdownMenuItem asChild className="p-0">
+                    <div className="flex w-full items-center px-2 py-1.5 rounded-sm hover:bg-muted cursor-pointer data-[highlighted]:bg-muted">
+                      <Link
+                        href="/plans"
+                        passHref
+                        className={cn(
+                          "flex flex-grow items-center",
+                          "text-sm font-medium",
+                          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm"
+                        )}
+                        onClick={handleDropdownViewAllClick}
+                        draggable="false"
+                      >
+                        <span className="mr-auto pl-2 py-1">View All Plans</span>
+                        <ChevronRight className="size-4 ml-1 text-muted-foreground" />
+                      </Link>
+                    </div>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    openNewPlanModal()
+                    setIsPlanDropdownOpen(false)
+                  }}
+                  className="p-2 flex items-center gap-2 cursor-pointer text-primary hover:bg-primary/10 focus:bg-primary/10 data-[highlighted]:bg-primary/10 data-[highlighted]:text-primary"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="font-medium">Create New Plan</span>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             )}
           </DropdownMenu>
         </SidebarGroup>
 
         {shouldShowActivePlanNav && (
+          // Revert this group to items-center when collapsed
           <SidebarGroup
             className={cn(
               "flex-1 min-h-0 flex flex-col gap-2 my-4",
@@ -360,6 +421,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
             )}
           >
             {isOpen && <Separator className="mb-3 flex-shrink-0" />}
+            {/* Revert view toggles container to items-center when collapsed */}
             <div
               className={cn(
                 "flex gap-2 flex-shrink-0",
@@ -409,6 +471,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
               </Tooltip>
             </div>
 
+            {/* Internal scrolling container logic remains */}
             {isOpen && (
               <div className="mt-2 w-full flex-1 min-h-0 overflow-y-auto pr-2">
                 {viewMode === "month" ? (
@@ -419,7 +482,6 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                     variant="sidebar"
                   />
                 ) : (
-                  // Render the actual WeekSelector, not test data
                   <WeekSelector
                     weeks={planToDisplay?.weeks?.map((w) => w.weekNumber) || []}
                     selectedWeek={selectedWeek}
@@ -431,6 +493,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
               </div>
             )}
 
+            {/* Legend remains the same */}
             {isOpen && weekTypes.length > 0 && (
               <div className="pt-3 border-t text-sm text-muted-foreground flex-shrink-0 mt-4">
                 <h4 className="font-medium mb-2 px-2">Week Types</h4>
@@ -441,14 +504,18 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
         )}
       </SidebarContent>
 
+      {/* Footer: Revert to items-center when collapsed */}
       <SidebarFooter
         className={cn(
           "border-t flex gap-1 flex-shrink-0",
-          isOpen || isMobile ? "p-3 flex-row-reverse items-center" : "p-1 flex-col items-center"
+          isOpen || isMobile
+            ? "p-3 flex-row justify-start items-center"
+            : "p-1 flex-col items-center"
         )}
       >
-        {!isMobile && !isOpen && handleToggleResize && <ToggleButton />}
+        {!isMobile && !isOpen && handleToggleResize && <ToggleButton className="mb-1" />}
         {(isOpen || isMobile) && <div className="flex-grow"></div>}
+        {/* Remove inner div wrapper, let footer center items directly */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
