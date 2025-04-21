@@ -444,9 +444,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
       <SidebarFooter
         className={cn(
           "border-t flex gap-1 flex-shrink-0",
-          isOpen || isMobile
-            ? "p-3 flex-row justify-start items-center"
-            : "p-1 flex-col items-center"
+          isOpen || isMobile ? "p-3 flex-row-reverse items-center" : "p-1 flex-col items-center"
         )}
       >
         {!isMobile && !isOpen && handleToggleResize && <ToggleButton />}
