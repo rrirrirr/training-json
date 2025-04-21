@@ -1,22 +1,29 @@
-// src/components/layout/layout-client.tsx
 "use client"
 
-import React, { useEffect, useRef } from "react"
+import React, { useEffect, useRef, useCallback } from "react"
 import { usePathname } from "next/navigation"
 import AppSidebar from "@/components/app-sidebar"
 import { AppHeader } from "@/components/layout/app-header"
 import { Sidebar, SidebarProvider, useSidebar } from "@/components/ui/sidebar"
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-  ImperativePanelGroupHandle,
-} from "@/components/ui/resizable"
+
+// Import UI Components from your alias/shadcn path
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
+
+// Import types and utility functions DIRECTLY from the library
+import type { ImperativePanelGroupHandle } from "react-resizable-panels"
+import { getPanelGroupElement } from "react-resizable-panels"
+
 import { cn } from "@/lib/utils"
 import { useUIState } from "@/contexts/ui-context"
 
-const SIDEBAR_DEFAULT_SIZE_PERCENT = 20
-const SIDEBAR_COLLAPSED_SIZE_PERCENT = 4
+// --- Configuration Constants ---
+const PANEL_GROUP_ID = "desktop-layout-group" // Define ID for utility function
+const SIDEBAR_COLLAPSED_WIDTH_PX = 48
+const SIDEBAR_COLLAPSE_THRESHOLD_PX = 190
+const SIDEBAR_MAX_WIDTH_PX = 450
+const SIDEBAR_DEFAULT_SIZE_PERCENT = 18
+const SIDEBAR_MAX_SIZE_PERCENT = 30
+const SIDEBAR_INTERNAL_COLLAPSED_PERCENT = 0.1
 
 export function LayoutClient({ children }: { children: React.ReactNode }) {
   return (
@@ -27,66 +34,146 @@ export function LayoutClient({ children }: { children: React.ReactNode }) {
 }
 
 function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
-  const { state, isMobile, setOpen, setOpenMobile } = useSidebar() // setOpen is used here
+  const { state, isMobile, setOpen } = useSidebar()
   const { isSidebarOpen, openSidebar, closeSidebar } = useUIState()
-  const panelGroupRef = useRef<ImperativePanelGroupHandle>(null)
+  const panelGroupHandleRef = useRef<ImperativePanelGroupHandle>(null)
   const pathname = usePathname()
   const isRootRoute = pathname === "/"
 
-  // Sync UI Context and other effects (remains same)
+  const latestLayoutRef = useRef<number[] | null>(null)
+  const stateRef = useRef<string>(state)
+
+  useEffect(() => {
+    stateRef.current = state
+  }, [state])
+
+  const collapseSidebar = () => {
+    if (stateRef.current === "expanded") {
+      requestAnimationFrame(() => {
+        setOpen(false)
+      })
+    }
+    const groupHandle = panelGroupHandleRef.current
+    const groupElement = getPanelGroupElement(PANEL_GROUP_ID) // Use imported function
+    if (groupHandle && groupElement) {
+      const containerWidth = groupElement.offsetWidth
+      if (containerWidth > 0) {
+        const minAllowedPct = Math.max(
+          (SIDEBAR_COLLAPSED_WIDTH_PX / containerWidth) * 100,
+          SIDEBAR_INTERNAL_COLLAPSED_PERCENT
+        )
+        requestAnimationFrame(() => {
+          groupHandle.setLayout([minAllowedPct, 100 - minAllowedPct])
+        })
+      }
+    }
+  }
+
+  const expandToDefault = () => {
+    const groupHandle = panelGroupHandleRef.current
+    if (stateRef.current === "collapsed") {
+      requestAnimationFrame(() => {
+        setOpen(true)
+        if (groupHandle) {
+          groupHandle.setLayout([SIDEBAR_DEFAULT_SIZE_PERCENT, 100 - SIDEBAR_DEFAULT_SIZE_PERCENT])
+        }
+      })
+    }
+  }
+
   useEffect(() => {
     if (isMobile && state === "collapsed") {
-      // Maybe adjust initial state if needed, but setOpen controls it now
-      // setOpen(true); // Example: Ensure it's open initially on mobile if collapsed state detected? Review this logic if needed.
+      /* ... */
     }
-  }, [isMobile, state, setOpen]) // Added setOpen dependency if used inside
-
+  }, [isMobile, state])
   useEffect(() => {
-    const isVisuallyCollapsed =
-      panelGroupRef.current?.getLayout()[0] <= SIDEBAR_COLLAPSED_SIZE_PERCENT + 0.1
-    const contextSaysCollapsed = state === "collapsed"
-    // ... (rest of the effect remains the same) ...
-    if (isVisuallyCollapsed && !contextSaysCollapsed) {
-      /* setOpen(false) */
-      // This interaction might need review if desktop resize should affect context state
-    } else if (!isVisuallyCollapsed && contextSaysCollapsed) {
-      /* setOpen(true) */
-      // This interaction might need review
-    }
     if (state === "collapsed" && isSidebarOpen) {
-      closeSidebar() // UI Context sync
+      closeSidebar()
     } else if (state === "expanded" && !isSidebarOpen) {
-      openSidebar() // UI Context sync
+      openSidebar()
     }
-  }, [state, isSidebarOpen, openSidebar, closeSidebar, setOpen]) // Added setOpen dependency if used inside
+  }, [state, isSidebarOpen, openSidebar, closeSidebar])
 
-  // Define Toggle function for DESKTOP Resizable Panel Group
   const handleToggleResize = () => {
-    const group = panelGroupRef.current
-    if (!group) return
-    const currentLayout = group.getLayout()
-    const currentSidebarSize = currentLayout[0]
-    if (currentSidebarSize <= SIDEBAR_COLLAPSED_SIZE_PERCENT + 0.1) {
-      group.setLayout([SIDEBAR_DEFAULT_SIZE_PERCENT, 100 - SIDEBAR_DEFAULT_SIZE_PERCENT])
-      setOpen(true) // Also update context state for consistency
+    if (stateRef.current === "expanded") {
+      collapseSidebar()
     } else {
-      group.setLayout([SIDEBAR_COLLAPSED_SIZE_PERCENT, 100 - SIDEBAR_COLLAPSED_SIZE_PERCENT])
-      setOpen(false) // Also update context state for consistency
+      expandToDefault()
     }
   }
 
-  // Handle DESKTOP resize event (remains same, might need review regarding setOpen)
   const handleLayout = (sizes: number[]) => {
-    const sidebarSize = sizes[0]
-    const isVisuallyCollapsed = sidebarSize <= SIDEBAR_COLLAPSED_SIZE_PERCENT + 0.1
-    if (isVisuallyCollapsed && state === "expanded") {
-      setOpen(false) // Sync context on manual collapse via resize
-    } else if (!isVisuallyCollapsed && state === "collapsed") {
-      setOpen(true) // Sync context on manual expand via resize
+    latestLayoutRef.current = sizes
+    if (isMobile || !sizes || sizes.length === 0) return
+
+    const sidebarSizePercent = sizes[0]
+    const contextSaysCollapsed = stateRef.current === "collapsed"
+    const groupHandle = panelGroupHandleRef.current
+    const groupElement = getPanelGroupElement(PANEL_GROUP_ID) // Use imported function
+
+    if (!groupElement || !groupHandle) return
+    const containerWidth = groupElement.offsetWidth
+    if (containerWidth <= 0) return
+
+    const minAllowedPct = Math.max(
+      (SIDEBAR_COLLAPSED_WIDTH_PX / containerWidth) * 100,
+      SIDEBAR_INTERNAL_COLLAPSED_PERCENT
+    )
+    const transitionThresholdPct = (SIDEBAR_COLLAPSE_THRESHOLD_PX / containerWidth) * 100
+    const buffer = 0.5
+
+    if (sidebarSizePercent < minAllowedPct) {
+      requestAnimationFrame(() => {
+        groupHandle.setLayout([minAllowedPct, 100 - minAllowedPct])
+      })
+      if (!contextSaysCollapsed) {
+        setOpen(false)
+      }
+    }
+
+    const currentActualSizePercent =
+      sidebarSizePercent < minAllowedPct ? minAllowedPct : sidebarSizePercent
+    const potentiallyUpdatedState = stateRef.current
+
+    if (potentiallyUpdatedState === "collapsed") {
+      if (currentActualSizePercent > transitionThresholdPct + buffer) {
+        setOpen(true)
+      }
+    } else {
+      if (currentActualSizePercent < transitionThresholdPct) {
+        setOpen(false)
+      }
     }
   }
 
-  // --- Mobile Layout ---
+  const handleDraggingChange = (isDragging: boolean) => {
+    if (!isDragging) {
+      const finalLayout = latestLayoutRef.current
+      const currentState = stateRef.current
+      const groupHandle = panelGroupHandleRef.current
+
+      if (currentState === "collapsed" && finalLayout && groupHandle) {
+        const groupElement = getPanelGroupElement(PANEL_GROUP_ID) // Use imported function
+        if (groupElement) {
+          const containerWidth = groupElement.offsetWidth
+          if (containerWidth > 0) {
+            const minAllowedPct = Math.max(
+              (SIDEBAR_COLLAPSED_WIDTH_PX / containerWidth) * 100,
+              SIDEBAR_INTERNAL_COLLAPSED_PERCENT
+            )
+            const currentPct = finalLayout[0]
+            if (Math.abs(currentPct - minAllowedPct) > 0.1) {
+              requestAnimationFrame(() => {
+                groupHandle.setLayout([minAllowedPct, 100 - minAllowedPct])
+              })
+              console.log("Snap to 48px triggered via onDragging(false)")
+            }
+          }
+        }
+      }
+    }
+  }
+
   if (isMobile) {
     return (
       <div className="flex min-h-screen w-full bg-background">
@@ -94,75 +181,77 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
           <div
             className={cn(
               "fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat",
-              "bg-[url('/light-bg1.jpg')]",
-              "dark:bg-[url('/dark-bg1.jpg')] "
+              "bg-[url('/light-bg1.jpg')] dark:bg-[url('/dark-bg1.jpg')]"
             )}
           />
         )}
-        {/* Sidebar component likely uses useSidebar internally */}
         <Sidebar collapsible="icon">
-          {/* Pass handleToggleResize here if AppSidebar needs it for *its own* internal button (maybe desktop only?) */}
-          {/* Review if AppSidebar needs handleToggleResize anymore if header handles mobile toggle */}
-          <AppSidebar handleToggleResize={handleToggleResize} />
+          <AppSidebar handleToggleResize={undefined} />
         </Sidebar>
-        <div className="flex flex-col flex-1 overflow-hidden">
-          {/* Mobile: Render Header always, REMOVED handleToggleResize prop */}
+        <div className="flex flex-1 flex-col overflow-hidden">
           <AppHeader />
-          <main className="flex-1 overflow-y-auto overflow-x-hidden">{children}</main>
+          <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6">{children}</main>
         </div>
       </div>
     )
   }
 
-  // --- Desktop Layout ---
   return (
     <div className="flex min-h-screen w-full bg-transparent">
       {isRootRoute && (
         <div
           className={cn(
             "fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat",
-            "bg-[url('/light-bg1.jpg')]",
-            "dark:bg-[url('/dark-bg2.jpg')] "
+            "bg-[url('/light-bg1.jpg')] dark:bg-[url('/dark-bg2.jpg')]"
           )}
         />
       )}
 
       <ResizablePanelGroup
-        ref={panelGroupRef}
+        ref={panelGroupHandleRef}
+        id={PANEL_GROUP_ID}
         direction="horizontal"
-        onLayout={handleLayout} // Handles resize sync
+        onLayout={handleLayout}
         className="h-screen"
       >
-        {/* Sidebar Panel */}
         <ResizablePanel
           id="sidebar-panel"
-          // ... (rest of props remain same) ...
           order={1}
-          className="transition-all duration-300 flex flex-col h-full relative overflow-visible"
+          collapsible={true}
+          collapsedSize={SIDEBAR_INTERNAL_COLLAPSED_PERCENT}
+          defaultSize={SIDEBAR_DEFAULT_SIZE_PERCENT}
+          minSize={SIDEBAR_INTERNAL_COLLAPSED_PERCENT}
+          maxSize={SIDEBAR_MAX_SIZE_PERCENT}
+          onCollapse={collapseSidebar}
+          onExpand={expandToDefault}
+          className={cn(
+            "flex h-full flex-col relative transition-width duration-300 ease-in-out overflow-visible",
+            state === "collapsed" ? "sidebar-collapsed" : "sidebar-expanded"
+          )}
         >
           <div
-            className="flex flex-col h-full text-sidebar-foreground bg-sidebar"
-            style={isRootRoute ? { opacity: 0.8 } : undefined}
+            className={cn(
+              "h-full flex flex-col text-sidebar-foreground bg-sidebar overflow-y-auto overflow-x-hidden",
+              state === "collapsed" && `w-[${SIDEBAR_COLLAPSED_WIDTH_PX}px]`,
+              state === "expanded" && `max-w-[${SIDEBAR_MAX_WIDTH_PX}px]`,
+              `min-w-[${SIDEBAR_COLLAPSED_WIDTH_PX}px]`
+            )}
+            style={isRootRoute ? { opacity: 0.9 } : {}}
           >
-            {/* AppSidebar still needs handleToggleResize for its *own* toggle button (visible on desktop) */}
             <AppSidebar handleToggleResize={handleToggleResize} />
           </div>
         </ResizablePanel>
 
-        {/* Handle */}
-        <ResizableHandle withHandle />
+        <ResizableHandle withHandle onDragging={handleDraggingChange} />
 
-        {/* Main Content Panel */}
         <ResizablePanel
           id="main-panel"
-          defaultSize={100 - SIDEBAR_DEFAULT_SIZE_PERCENT}
           order={2}
           className="h-screen flex flex-col overflow-hidden"
         >
-          <div className="flex flex-col h-full">
-            {/* Desktop: Render Header ONLY if NOT root route, REMOVED handleToggleResize prop */}
+          <div className="flex h-full flex-col">
             {!isRootRoute && <AppHeader />}
-            <main className="flex-1 overflow-auto">{children}</main>{" "}
+            <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
