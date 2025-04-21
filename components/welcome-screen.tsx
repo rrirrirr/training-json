@@ -16,36 +16,36 @@ interface WelcomeScreenProps {
 }
 
 export default function WelcomeScreen({ onLoadExample, onImportData }: WelcomeScreenProps) {
-  // Get the modal stores directly
   const uploadModalStore = useUploadModal()
   const aiInfoModalStore = useAiInfoModal()
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="bg-primary/5 py-12 px-4 sm:px-6 lg:px-8 flex-1 flex items-center justify-center">
+    // Use h-full instead of min-h-screen to fill parent (<main>) height
+    <div className="flex flex-col h-full">
+      {/* This inner div uses flex-1 to grow within the h-full parent
+          allowing items-center to vertically center the content block */}
+      <div className="bg-primary/5 py-6 sm:py-12 px-4 sm:px-6 lg:px-8 flex-1 flex items-center justify-center">
+        {/* Max-width container remains the same */}
         <div className="max-w-4xl mx-auto w-full">
+          {/* Content structure remains the same... */}
           {/* Main Header */}
-          <div className="text-center mb-12 sm:mb-20">
-            {/* TJsonTitle now takes space based on its H1 content */}
-            {/* Add margin bottom if needed */}
+          <div className="text-center mb-8 sm:mb-16 lg:mb-20">
             <div className="mb-4">
-              {/* Wrapper to control spacing */}
               <TJsonTitle />
             </div>
-
             <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
               JSON-based training plan visualization tool. Create, manage, and visualize your
               training plans easily with T-JSON.
             </p>
           </div>
           {/* Primary Call to Action */}
-          <div className="mb-12 flex justify-center">
+          <div className="mb-8 sm:mb-12 flex justify-center">
             <FlickeringButton
               size="lg"
               onClick={() => {
                 aiInfoModalStore.open()
               }}
-              className="w-full sm:w-auto sm:min-w-[320px] flex items-center justify-between py-8 px-6 text-lg shadow-md"
+              className="w-full sm:w-auto sm:min-w-[320px] flex items-center justify-between py-4 sm:py-6 lg:py-8 px-6 text-base sm:text-lg shadow-md"
             >
               <div className="flex items-center">
                 <Sparkles className="h-6 w-6 mr-3" />
@@ -54,7 +54,6 @@ export default function WelcomeScreen({ onLoadExample, onImportData }: WelcomeSc
               <ChevronRight className="h-5 w-5 opacity-80" />
             </FlickeringButton>
           </div>
-
           {/* Documentation Link */}
           <div className="text-center mb-6">
             <Link href="/documentation" passHref>
@@ -68,9 +67,8 @@ export default function WelcomeScreen({ onLoadExample, onImportData }: WelcomeSc
             <p className="text-base text-muted-foreground mb-4">
               Or start with a ready-made JSON plan:
             </p>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto">
-              <div className="bg-sidebar opacity-80 rounded-md">
+              <div className="bg-sidebar/80 dark:bg-sidebar/50 rounded-md">
                 <Button
                   onClick={() => {
                     uploadModalStore.open(onImportData)
@@ -85,8 +83,7 @@ export default function WelcomeScreen({ onLoadExample, onImportData }: WelcomeSc
                   <ChevronRight className="h-4 w-4 opacity-70" />
                 </Button>
               </div>
-
-              <div className="bg-sidebar opacity-80 rounded-md">
+              <div className="bg-sidebar/80 dark:bg-sidebar/50 rounded-md">
                 <Button
                   onClick={onLoadExample}
                   variant="outline"
@@ -102,7 +99,7 @@ export default function WelcomeScreen({ onLoadExample, onImportData }: WelcomeSc
             </div>
           </div>
           {/* Info Text Footer */}
-          <div className="mt-12 text-center">
+          <div className="mt-8 sm:mt-12 text-center">
             <p className="text-sm text-muted-foreground">
               Use this tool to easily organize, visualize, and track your training plan whether it's
               created manually or generated with AI.
