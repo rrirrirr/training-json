@@ -152,6 +152,27 @@
   }
 }
 
+@layer utilities {
+  .animate-blink-icon-once {
+    animation: blink-icon-colors 2s ease-in-out 1;
+  }
+}
+
+@keyframes blink-icon-colors {
+  0% {
+    color: #ff4500; /* Start: OrangeRed */
+  }
+  33% {
+    color: #ff8c00; /* Mid1: DarkOrange */
+  }
+  66% {
+    color: #ff4500; /* Mid2: OrangeRed */
+  }
+  100% {
+    color: #374151;
+  }
+}
+
 /* Custom scrollbar for better UX */
 ::-webkit-scrollbar {
   width: 8px;
