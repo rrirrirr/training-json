@@ -126,7 +126,7 @@ export const PlanItemContent = ({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 px-2 text-destructive hover:bg-destructive/10 hover:text-destructive focus:text-destructive focus:bg-destructive/10"
+                className="h-8 px-2 text-destructive hover:bg-muted hover:text-destructive focus:text-destructive focus:bg-destructive/10"
                 aria-label="Delete Plan"
                 onClick={(e) => handleActionClick(e, "delete")}
               >
