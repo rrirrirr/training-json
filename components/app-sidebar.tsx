@@ -262,7 +262,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                               size="sm"
                               className="w-full h-8 justify-center text-xs text-muted-foreground hover:text-primary"
                             >
-                              View All Plans &rarr;
+                              View All Plans <ChevronRight className="size-4" />
                             </Button>
                           </Link>
                         </div>
