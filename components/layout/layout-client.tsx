@@ -225,13 +225,13 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
           onCollapse={collapseSidebar}
           onExpand={expandToDefault}
           className={cn(
-            "flex h-full flex-col relative transition-width duration-300 ease-in-out overflow-visible",
+            "flex h-full flex-col relative transition-width duration-300 ease-in-out overflow-visible max-h-screen",
             state === "collapsed" ? "sidebar-collapsed" : "sidebar-expanded"
           )}
         >
           <div
             className={cn(
-              "h-full flex flex-col text-sidebar-foreground bg-sidebar overflow-y-auto overflow-x-hidden",
+              "h-full flex flex-col text-sidebar-foreground bg-sidebar overflow-hidden",
               state === "collapsed" && `w-[${SIDEBAR_COLLAPSED_WIDTH_PX}px]`,
               state === "expanded" && `max-w-[${SIDEBAR_MAX_WIDTH_PX}px]`,
               `min-w-[${SIDEBAR_COLLAPSED_WIDTH_PX}px]`
