@@ -183,7 +183,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
         <div
           className={cn(
             "flex-shrink min-w-0",
-            isOpen ? "overflow-hidden mr-10" : "text-center pt-3"
+            isOpen ? "overflow-hidden md:mr-10" : "text-center pt-3"
           )}
         >
           <Link href="/" passHref className={cn(isOpen ? "block truncate" : "inline-block")}>
