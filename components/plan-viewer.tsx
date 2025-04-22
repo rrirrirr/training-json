@@ -30,7 +30,7 @@ export default function PlanViewer({ planId }: PlanViewerProps) {
   const setViewMode = usePlanStore((state) => state.setViewMode)
 
   // Get plan mode data from context
-  const { mode, draftPlan } = usePlanMode()
+  const { mode, draftPlan, originalPlanId } = usePlanMode()
 
   // Determine which plan to show based on mode
   const planToDisplay = mode !== "normal" ? draftPlan : activePlan
@@ -63,6 +63,7 @@ export default function PlanViewer({ planId }: PlanViewerProps) {
       </div>
     )
   }
+  
   // Handle case when no plan is active - only redirect if this is a plan page, not the root page
   // Don't redirect during initial load of external plans (which might briefly have no plan data)
   // Add a small delay to allow view mode to be properly initialized for external plans
@@ -76,8 +77,14 @@ export default function PlanViewer({ planId }: PlanViewerProps) {
     }
   }, [hasCheckedForMissingPlan, planToDisplay, mode]);
 
+  // Check if we're in edit mode with a valid ID
+  const isEditModeWithId = mode === "edit" && (
+    planId === "edit-mode-draft" || 
+    (originalPlanId && originalPlanId === planId)
+  );
+
   if (hasCheckedForMissingPlan && !planToDisplay && mode === "normal" && 
-      planId !== "edit-mode-draft" && typeof window !== "undefined" && 
+      !isEditModeWithId && typeof window !== "undefined" && 
       window.location.pathname.startsWith("/plan/")) {
     console.log("[PlanViewer] No plan to display after delay, redirecting to home page.")
     
@@ -144,6 +151,8 @@ export default function PlanViewer({ planId }: PlanViewerProps) {
   // Debug information
   console.log("[PlanViewer] Rendering with:", {
     mode,
+    planId,
+    originalPlanId,
     planToDisplay: !!planToDisplay,
     selectedWeek,
     selectedMonth,

@@ -1,11 +1,19 @@
-// src/components/layout/app-header.tsx
-"use client"
+// components/layout/app-header.tsx
 
 import React from "react"
+import Link from "next/link" // Use Next.js Link for smooth scrolling
 import { Button } from "@/components/ui/button"
-import { PanelBottom, ChevronDown, Copy, MoreVertical, Menu } from "lucide-react"
+import {
+  PanelBottom,
+  ChevronDown,
+  Copy,
+  MoreVertical,
+  Menu,
+  Eye, // Import Eye icon
+  Edit, // Import Edit icon
+} from "lucide-react"
 import { usePlanStore } from "@/store/plan-store"
-import { useSidebar } from "@/components/ui/sidebar" // <-- Keep this
+import { useSidebar } from "@/components/ui/sidebar"
 import { useToast } from "@/components/ui/use-toast"
 import { useUIState } from "@/contexts/ui-context"
 import { MobileNav } from "../mobile-nav"
@@ -17,11 +25,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import { usePathname } from "next/navigation"
+import { usePlanMode } from "@/contexts/plan-mode-context" // Import usePlanMode
 
-// REMOVED handleToggleResize from props
 interface HeaderProps {}
 
-// REMOVED handleToggleResize from function parameters
 export function AppHeader({}: HeaderProps) {
   // Get state and setOpen from useSidebar context
   const { isMobile, state: sidebarState, setOpen: setSidebarOpen, toggleSidebar } = useSidebar()
@@ -29,11 +36,12 @@ export function AppHeader({}: HeaderProps) {
   const { toast } = useToast()
   const pathname = usePathname()
   const isRootRoute = pathname === "/"
+  const { mode } = usePlanMode() // Get the current mode
 
   // Determine if the sidebar is currently open
   const isSidebarOpen = sidebarState === "expanded"
 
-  // Function to copy URL (remains the same)
+  // Function to copy URL
   const copyUrlToClipboard = () => {
     if (typeof window !== "undefined") {
       navigator.clipboard.writeText(window.location.href)
@@ -44,7 +52,7 @@ export function AppHeader({}: HeaderProps) {
     }
   }
 
-  // Data for non-root mobile button (remains the same)
+  // Data for non-root mobile button
   const selectedMonth = usePlanStore((state) => state.selectedMonth)
   const selectedWeek = usePlanStore((state) => state.selectedWeek)
   const viewMode = usePlanStore((state) => state.viewMode)
@@ -61,17 +69,18 @@ export function AppHeader({}: HeaderProps) {
   return (
     <header
       className={cn(
+        // Sticky header classes
         "sticky top-0 z-30 flex h-14 items-center gap-2 px-3 sm:px-6 justify-between shadow-sm",
         isRootRoute ? "bg-[var(--sidebar-80)]" : "bg-sidebar"
       )}
     >
-      {/* --- Left Side: Conditional Toggle --- */}
+      {/* --- Left Side: Conditional Toggle & Mode Indicator --- */}
       <div className="flex items-center">
         {isMobile && (
           <Button
             variant="ghost"
             size="icon"
-            // Use toggleSidebar function from the sidebar context which correctly handles mobile/desktop
+            // Use toggleSidebar function from the sidebar context
             onClick={toggleSidebar}
             // Dynamically set aria-label
             aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
@@ -79,30 +88,51 @@ export function AppHeader({}: HeaderProps) {
             <Menu className="h-5 w-5" />
           </Button>
         )}
-      </div>
 
-      {/* --- Center: Mobile Navigation Trigger (Conditional) --- */}
-      {isMobile &&
-        !isRootRoute && ( // Show only if mobile AND NOT root
-          <Button
-            variant="outline"
-            className={cn(
-              "flex-1 mx-2 flex items-center justify-between px-4 py-2",
-              navButtonColor,
-              darkModeNavButtonColor
-            )}
-            onClick={openMobileNav} // This opens the *other* mobile nav panel
-          >
-            <div className="flex items-center gap-1">
-              <PanelBottom className="h-4 w-4 mr-1" />
-              <span className="font-medium truncate">{mainButtonText}</span>
-            </div>
-            <ChevronDown className="h-4 w-4 ml-1 opacity-70" />
-          </Button>
+        {/* --- Mode Indicator Icon (only when not on root route and in edit/view mode) --- */}
+        {!isRootRoute && (mode === "edit" || mode === "view") && (
+          <Link href="#plan-mode-menu-anchor" passHref legacyBehavior>
+            <a
+              className={cn(
+                "ml-2 p-1.5 rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                // Apply background and text color based on mode using CSS variables
+                mode === "edit"
+                  ? "bg-[var(--edit-mode-bg)] text-[var(--edit-mode-text)]"
+                  : "bg-[var(--view-mode-bg)] text-[var(--view-mode-text)]"
+              )}
+              aria-label={mode === "edit" ? "Scroll to Edit Menu" : "Scroll to View Menu"}
+              title={mode === "edit" ? "Editing Plan - Go to Menu" : "Viewing Plan - Go to Menu"} // Add tooltip text
+            >
+              {mode === "edit" ? (
+                <Edit className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <Eye className="h-4 w-4" aria-hidden="true" />
+              )}
+            </a>
+          </Link>
         )}
-
+        {/* --- End Mode Indicator Icon --- */}
+      </div>
+      {/* --- Center: Mobile Navigation Trigger (Conditional) --- */}
+      {isMobile && !isRootRoute && (
+        <Button
+          variant="outline"
+          className={cn(
+            "flex-1 mx-2 flex items-center justify-between px-4 py-2",
+            navButtonColor,
+            darkModeNavButtonColor
+          )}
+          onClick={openMobileNav}
+        >
+          <div className="flex items-center gap-1">
+            <PanelBottom className="h-4 w-4 mr-1" />
+            <span className="font-medium truncate">{mainButtonText}</span>
+          </div>
+          <ChevronDown className="h-4 w-4 ml-1 opacity-70" />
+        </Button>
+      )}
       {/* --- Right Side Actions (Conditional) --- */}
-      {(!isMobile || !isRootRoute) && ( // Show unless it's mobile AND root
+      {(!isMobile || !isRootRoute) && (
         <div className="flex items-center gap-2">
           {/* Dropdown Menu */}
           <DropdownMenu>
@@ -120,7 +150,6 @@ export function AppHeader({}: HeaderProps) {
           </DropdownMenu>
         </div>
       )}
-
       {/* Mobile Navigation Panel (remains the same) */}
       <MobileNav />
     </header>
