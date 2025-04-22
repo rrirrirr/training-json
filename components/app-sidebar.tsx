@@ -377,7 +377,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                 <DropdownMenuSeparator className="my-1" />
                 {planMetadataList.length > dropdownListLimit && (
                   <DropdownMenuItem asChild className="p-0">
-                    <div className="flex w-full items-center px-2 py-1.5 rounded-sm hover:bg-muted cursor-pointer data-[highlighted]:bg-muted">
+                    <div className="flex w-full items-center px-2 py-1.5 rounded-sm hover:bg-accent cursor-pointer data-[highlighted]:bg-accent">
                       <Link
                         href="/plans"
                         passHref
@@ -402,7 +402,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                     openNewPlanModal()
                     setIsPlanDropdownOpen(false)
                   }}
-                  className="p-2 flex items-center gap-2 cursor-pointer text-primary hover:bg-primary/10 focus:bg-primary/10 data-[highlighted]:bg-primary/10 data-[highlighted]:text-primary"
+                  className="p-2 flex items-center gap-2 cursor-pointer hover:bg-accent focus:bg-accent data-[highlighted]:bg-accent"
                 >
                   <Plus className="h-4 w-4" />
                   <span className="font-medium">Create New Plan</span>
