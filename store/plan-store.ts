@@ -25,6 +25,7 @@ interface PlanState {
   setActivePlan: (plan: TrainingPlanData, planId: string) => void
   clearActivePlan: () => void
   fetchPlanMetadata: (force?: boolean) => Promise<void>
+  fetchPlanById: (planId: string) => Promise<TrainingPlanData | null>
   createPlan: (name: string, planData: TrainingPlanData) => Promise<string | null>
   createPlanFromEdit: (
     originalId: string,
@@ -177,6 +178,73 @@ export const usePlanStore = create<PlanState>()(
         }
       },
 
+      fetchPlanById: async (planId) => {
+        try {
+          console.log(`[fetchPlanById] Fetching plan data for ID: ${planId}`)
+          set({ isLoading: true, error: null })
+
+          // Basic validation upfront
+          if (!planId || typeof planId !== "string" || planId.toLowerCase() === "undefined") {
+            console.error("[fetchPlanById] Called with invalid ID:", planId)
+            set({ 
+              error: "Invalid Plan ID provided for fetching.",
+              isLoading: false 
+            })
+            return null
+          }
+
+          const { data, error, status } = await supabase
+            .from("training_plans")
+            .select("plan_data")
+            .eq("id", planId)
+            .single()
+
+          // Handle potential errors
+          if (error) {
+            if (status === 406) {
+              // PostgREST 406: No rows found. This is expected if the ID doesn't exist.
+              console.log(`[fetchPlanById] Plan with ID ${planId} not found.`)
+              set({ isLoading: false })
+              return null
+            } else {
+              // Other unexpected database error
+              console.error("[fetchPlanById] Supabase fetch error:", error)
+              set({ 
+                error: `Failed to fetch plan: ${error.message}`,
+                isLoading: false 
+              })
+              return null
+            }
+          }
+
+          // Return the plan data if found
+          if (data && data.plan_data) {
+            // Log access
+            supabase
+              .from("plan_access_log")
+              .insert({ plan_id: planId }) // accessed_at defaults to now()
+              .then(({ error: logError }) => {
+                if (logError) {
+                  console.error(`[fetchPlanById] Failed to log access for plan ${planId}:`, logError)
+                }
+              })
+
+            set({ isLoading: false })
+            return data.plan_data as TrainingPlanData
+          }
+
+          // No data found
+          set({ isLoading: false })
+          return null
+        } catch (err) {
+          console.error("[fetchPlanById] Error:", err)
+          set({
+            error: err instanceof Error ? err.message : "Unknown error fetching plan",
+            isLoading: false,
+          })
+          return null
+        }
+      },
       // Other actions remain the same, ensuring they sort by createdAt after adding
       createPlan: async (name, planData) => {
         /* ... implementation as before (ensure final set sorts list by createdAt) ... */
