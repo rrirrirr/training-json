@@ -22,7 +22,7 @@ import CopyNotification from "./copy-notification" // Assuming this component ex
 import CopyForAINotification from "./copy-for-ai-notification" // Assuming this component exists
 import { copyJsonErrorForAI } from "@/utils/copy-for-ai" // Assuming this utility exists
 import { useTheme } from "next-themes"
-import { usePlanMode } from "@/contexts/plan-mode-context" // Keep for updateDraftPlan
+import { usePlanMode } from "@/contexts/plan-mode-context" // Import all functionality from the plan mode context
 
 // Import syntax highlighting components
 import Editor from "react-simple-code-editor"
@@ -59,7 +59,7 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
   const { theme } = useTheme()
   const isDarkMode = theme === "dark"
   // --- Keep usePlanMode only for updateDraftPlan ---
-  const { updateDraftPlan } = usePlanMode()
+  const { mode, updateDraftPlan, enterEditMode } = usePlanMode()
 
   const [jsonText, setJsonText] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -162,9 +162,18 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
         setJsonText(potentiallyUpdatedJson)
       }
 
-      // --- Always update the draft plan on successful save ---
+      // Update the draft plan and check if we need to enter edit mode
       console.log("Updating draft plan with:", parsedData) // Debug log
       updateDraftPlan(parsedData)
+      
+      // Check if we're not already in edit mode - if not, enter edit mode
+      if (mode !== "edit") {
+        console.log("Not in edit mode, entering edit mode with the updated plan")
+        // Use the same plan ID if it exists
+        enterEditMode(parsedData, plan.id.toString())
+      } else {
+        console.log("Already in edit mode, just updated the draft plan")
+      }
 
       setIsSaved(true)
       setError(null)

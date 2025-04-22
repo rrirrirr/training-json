@@ -54,9 +54,9 @@ const usePromptController = () => {
     "creationDate": "string (ISO 8601 Format, e.g., 2025-04-16T12:00:00Z)", // Date plan was created
     "description": "string (Optional)", // Brief description
     "author": "string (Optional)", // Who created the plan
-    "version": "string (Optional)" // e.g., "1.0"
+    "version": "string (Optional)", // e.g., "1.0"
+    "creator": "string (Optional)" // Reserved for future community updates (no functionality yet)
   },
-
   // Optional: Define session types used (Gym, Rest, Barmark, etc.)
   "sessionTypes": [
     {

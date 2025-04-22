@@ -5,6 +5,7 @@ export type Metadata = {
   description?: string;
   author?: string;
   version?: string;
+  creator?: string; // For future community updates
 }
 
 // Available color names for styling

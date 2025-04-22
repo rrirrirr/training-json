@@ -93,6 +93,14 @@ const DocumentationPage = () => {
             <li>
               <code>version</code>: (Optional) A version number for the plan.
             </li>
+            <li>
+              <code>creator</code>: (Optional) Reserved for future community updates. This field exists but has no functionality yet.
+            </li>
+          </ul>
+            </li>
+            <li>
+              <code>version</code>: (Optional) A version number for the plan.
+            </li>
           </ul>
           <h4 className="font-semibold mt-4 mb-1 text-sm">Example:</h4>
           <CodeBlock>{`{
@@ -100,7 +108,8 @@ const DocumentationPage = () => {
     "planName": "Beginner Strength Phase 1",
     "creationDate": "2025-04-16T14:30:00Z",
     "description": "4-week introductory strength program focusing on compound lifts.",
-    "author": "Coach AI"
+    "author": "Coach AI",
+    "creator": "user123"
   }
   // ... other top-level properties
 }`}</CodeBlock>
@@ -529,7 +538,8 @@ const DocumentationPage = () => {
           <CodeBlock>{`{
   "metadata": {
     "planName": "AI Generated Plan",
-    "creationDate": "YYYY-MM-DDTHH:MM:SSZ"
+    "creationDate": "YYYY-MM-DDTHH:MM:SSZ",
+    "creator": "user123" // Reserved for future community updates
   },
   "weekTypes": [
     // { "id": "...", "name": "...", "colorName": "..." }
