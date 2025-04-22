@@ -8,6 +8,7 @@ export const exampleTrainingPlan: TrainingPlanData = {
       "A 20-week strength training program with progressive overload based on 5x5 methodology",
     author: "Training Plan App Team",
     version: "1.0.0",
+    creator: "system",
   },
 
   // Define the week types

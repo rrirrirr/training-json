@@ -33,7 +33,8 @@ Example minimal structure:
 \`\`\`json
 {
   "metadata": {
-    "planName": "My Training Plan"
+    "planName": "My Training Plan",
+    "creator": "user123" // Reserved for future community updates
   },
   "exerciseDefinitions": [
     {
