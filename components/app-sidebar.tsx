@@ -254,7 +254,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
       <SidebarHeader
         className={cn(
           "flex items-center relative flex-shrink-0",
-          isOpen || isMobile ? "my-4 px-4 justify-start" : "my-0 py-4 flex-col"
+          isOpen || isMobile ? "my-4 px-4 justify-start" : "my-0 py-4 flex-col max-w-[48px]"
         )}
       >
         <div
