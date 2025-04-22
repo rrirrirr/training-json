@@ -69,7 +69,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
     openDeleteDialog,
     openJsonEditor, // Get functions to open dialogs/editor
   } = useUIState()
-  const { state: sidebarState, isMobile } = useSidebar()
+  const { state: sidebarState, isMobile, setOpenMobile } = useSidebar()
   const isOpen = sidebarState === "expanded"
   const { open: openNewPlanModal } = useNewPlanModal()
   const [weekTypes, setWeekTypes] = useState<WeekType[]>([])
@@ -146,8 +146,11 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
       e.preventDefault()
       openSwitchWarningDialog(targetPlanPath)
       setIsPlanDropdownOpen(false) // Close dropdown if open
+      setOpenMobile(false)
       return
     }
+
+    setOpenMobile(false)
     // Close dropdown in normal mode when navigating
     setIsPlanDropdownOpen(false)
   }
