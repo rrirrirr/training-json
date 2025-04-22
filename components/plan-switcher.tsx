@@ -25,6 +25,7 @@ interface PlanSwitcherItemProps {
   onLinkClick: (e: React.MouseEvent, planId: string) => void
   onEdit: (plan: PlanMetadata) => void
   onDelete: (plan: PlanMetadata) => void
+  className?: string
 }
 
 export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
@@ -33,6 +34,7 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
   onLinkClick,
   onEdit,
   onDelete,
+  className,
 }) => {
   if (!plan) {
     return null
@@ -50,9 +52,10 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
 
   const wrapperClassName = cn(
     "flex w-full items-center p-2 group/item relative overflow-hidden min-h-[48px] rounded-md",
-    "hover:bg-accent", // Standard hover for plan items
+    "hover:bg-accent",
     "focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1 focus-within:ring-offset-background",
-    isActive && "bg-accent/80" // Active state for plan items
+    isActive && "bg-accent/80",
+    className
   )
 
   return (
