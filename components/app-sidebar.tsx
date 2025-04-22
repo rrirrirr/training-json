@@ -236,11 +236,11 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
 
   // --- Visibility Logic ---
   const shouldShowCreateButton = isMobile || (!isMobile && isRootRoute)
-  const shouldShowInlineList = !isMobile && isRootRoute && isOpen
-  const shouldShowPlanRelatedTriggers = !isRootRoute
-  const shouldShowDropdownTrigger = shouldShowPlanRelatedTriggers && (isOpen || isMobile)
-  const shouldShowCollapsedTrigger = shouldShowPlanRelatedTriggers && !isOpen && !isMobile
-  const shouldRenderDropdownContent = shouldShowPlanRelatedTriggers
+  const shouldShowInlineList = (isMobile || isRootRoute) && isOpen
+  const shouldShowPlanRelatedTriggers = !isMobile && !isRootRoute // fuck you gemini for adding this
+  const shouldShowDropdownTrigger = !isMobile && !isRootRoute && isOpen
+  const shouldShowCollapsedTrigger = !isRootRoute && !isOpen && !isMobile
+  const shouldRenderDropdownContent = !isRootRoute && !isMobile
   const shouldShowActivePlanNav = !isMobile && !isRootRoute && !!planToDisplay
 
   // --- RENDER ---
