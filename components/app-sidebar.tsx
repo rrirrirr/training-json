@@ -333,6 +333,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                     onLinkClick={handlePlanLinkClick} // Use existing handler
                     onEdit={handleEditPlan} // Use existing handler
                     onDelete={handleDeletePlan} // Use existing handler
+                    className="px-1"
                   />
                 ))
               ) : (
@@ -535,7 +536,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
         className={cn(
           "border-t flex gap-1 flex-shrink-0",
           isOpen || isMobile
-            ? "p-3 flex-row justify-start items-center"
+            ? "p-3 flex-row-reverse justify-start items-center"
             : "p-1 flex-col items-center"
         )}
       >
