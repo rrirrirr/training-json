@@ -59,9 +59,13 @@
       --edit-mode-bg: oklch(97% 0.04 120);   /* Light green-tinted background */
       --edit-mode-border: oklch(80% 0.1 120); /* Green-tinted border */
       --edit-mode-text: oklch(40% 0.2 120);   /* Green-tinted text */
+      --edit-mode-hover-bg: oklch(94% 0.06 120); /* Darker green background for hover */
+      --edit-mode-hover-text: oklch(50% 0.2 120); /* Lighter green text for hover */
       --view-mode-bg: oklch(97% 0.04 250);    /* Light blue-tinted background */
       --view-mode-border: oklch(80% 0.1 250); /* Blue-tinted border */
       --view-mode-text: oklch(40% 0.2 250);   /* Blue-tinted text */
+      --view-mode-hover-bg: oklch(94% 0.06 250); /* Darker blue background for hover */
+      --view-mode-hover-text: oklch(50% 0.2 250); /* Lighter blue text for hover */
 
     --sidebar: oklch(98.91% 0.022 301.74); 
     /* Added semi-transparent version with 80% opacity */
