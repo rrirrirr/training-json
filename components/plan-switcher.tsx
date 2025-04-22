@@ -1,84 +1,62 @@
+// File: /components/plan-switcher.tsx
+
 "use client"
 
 import Link from "next/link"
-import { FileText, Trash2, MoreHorizontal, Plus, ChevronDown } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { FileText, Trash2, MoreHorizontal, Plus, ChevronRight } from "lucide-react"
+import { Button } from "@/components/ui/button" // Keep Button import for potential use or reference
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  // Separator removed visually
+} from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import type { PlanMetadata } from "@/store/plan-store"
-import { useIsMobile } from "@/hooks/use-mobile"
 import React from "react"
-import { usePlanMode } from "@/contexts/plan-mode-context"
-import { usePlanStore } from "@/store/plan-store"
-import { useUIState } from "@/contexts/ui-context"
 import { useNewPlanModal } from "@/components/modals/new-plan-modal"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 
-export const PlanItemContent = ({
-  plan,
-  isActive,
-  formatDate,
-  onLinkClick,
-}: {
+// --- PlanSwitcherItem Component ---
+// (Keep the PlanSwitcherItem component exactly as it was in the previous good version)
+interface PlanSwitcherItemProps {
   plan: PlanMetadata
   isActive: boolean
-  formatDate: (dateString: string | null | undefined) => string
   onLinkClick: (e: React.MouseEvent, planId: string) => void
+  onEdit: (plan: PlanMetadata) => void
+  onDelete: (plan: PlanMetadata) => void
+}
+
+export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
+  plan,
+  isActive,
+  onLinkClick,
+  onEdit,
+  onDelete,
 }) => {
   if (!plan) {
     return null
   }
 
-  const isMobile = useIsMobile()
-  const { openDeleteDialog, openJsonEditor } = useUIState()
-
-  const handleActionClick = (
-    e: React.MouseEvent | React.TouchEvent,
-    action: "viewJson" | "delete"
-  ) => {
-    e.preventDefault()
+  const handleInnerMenuEdit = (e: React.MouseEvent) => {
     e.stopPropagation()
-
-    if (action === "viewJson") {
-      // Prepare data for JSON editor
-      let planDataToShow = null
-      const activePlanId = usePlanStore.getState().activePlanId
-      const activePlan = usePlanStore.getState().activePlan
-
-      if (activePlanId === plan.id && activePlan) {
-        planDataToShow = { ...plan, data: activePlan }
-      } else {
-        console.warn("Viewing JSON from metadata only")
-        planDataToShow = {
-          id: plan.id,
-          name: plan.name,
-          data: {
-            metadata: { planName: plan.name },
-            weeks: [],
-            monthBlocks: [],
-            exerciseDefinitions: [],
-          },
-        }
-      }
-      openJsonEditor(planDataToShow)
-    } else if (action === "delete") {
-      openDeleteDialog(plan)
-    }
+    onEdit(plan)
   }
 
-  // Wrapper Div - Flex container for the whole item
+  const handleInnerMenuDelete = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onDelete(plan)
+  }
+
   const wrapperClassName = cn(
-    // *** ADDED py-1.5 for vertical padding INSIDE item ***
     "flex w-full items-center p-2 group/item relative overflow-hidden min-h-[48px] rounded-md",
-    "hover:bg-accent",
+    "hover:bg-accent", // Standard hover for plan items
     "focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1 focus-within:ring-offset-background",
-    isActive && "bg-accent"
+    isActive && "bg-accent/80" // Active state for plan items
   )
 
   return (
-    // Outer wrapper div applying styles and managing layout
     <div className={wrapperClassName}>
-      {/* Div containing ONLY the Link and Info */}
       <div className="flex-grow min-w-0 mr-2 self-center">
         <Link
           href={`/plan/${plan.id}`}
@@ -86,145 +64,177 @@ export const PlanItemContent = ({
           className="block focus:outline-none rounded-sm focus-visible:ring-1 focus-visible:ring-ring"
           aria-current={isActive ? "page" : undefined}
           draggable="false"
+          onPointerDown={(e) => e.stopPropagation()}
         >
-          {/* Inner div for info content layout */}
           <div className="flex flex-col pl-2 py-1">
-            <span className="text-sm font-medium truncate pointer-events-none">{plan.name}</span>
+            <span
+              className={cn(
+                "text-sm font-medium truncate pointer-events-none",
+                "text-foreground",
+                isActive && "font-semibold"
+              )}
+            >
+              {plan.name}
+            </span>
           </div>
         </Link>
       </div>
-
-      {/* Actions Popover - SIBLING to the Link container */}
       <div className="ml-auto pl-1 self-center flex-shrink-0">
-        <Popover>
-          <PopoverTrigger asChild>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8 text-muted-foreground hover:bg-secondary data-[state=open]:bg-accent focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0"
               aria-label={`Actions for ${plan.name}`}
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
             >
               <MoreHorizontal className="h-4 w-4" />
               <span className="sr-only">Plan Actions</span>
             </Button>
-          </PopoverTrigger>
-          <PopoverContent
-            side={isMobile ? "bottom" : "right"}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            side={"right"}
             align="center"
             className="w-auto p-1"
+            onFocusOutside={(e) => {
+              const mainTrigger = (e.target as HTMLElement)?.closest(
+                '[data-radix-dropdown-menu-trigger][aria-haspopup="menu"]'
+              )
+              if (
+                mainTrigger &&
+                !mainTrigger.contains(e.relatedTarget as Node) &&
+                mainTrigger.getAttribute("aria-label") !== `Actions for ${plan.name}`
+              ) {
+                e.preventDefault()
+              }
+            }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 px-2 hover:bg-muted"
-                aria-label="View JSON"
-                onClick={(e) => handleActionClick(e, "viewJson")}
-              >
-                <FileText className="h-4 w-4 mr-1" /> View JSON
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 px-2 text-destructive hover:bg-muted hover:text-destructive focus:text-destructive focus:bg-destructive/10"
-                aria-label="Delete Plan"
-                onClick={(e) => handleActionClick(e, "delete")}
-              >
-                <Trash2 className="h-4 w-4 mr-1" /> Delete
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
+            <DropdownMenuItem
+              className="h-8 px-2 hover:bg-muted flex items-center gap-2 cursor-pointer outline-none"
+              onSelect={(e) => e.preventDefault()}
+              onClick={handleInnerMenuEdit}
+            >
+              <FileText className="h-4 w-4 mr-1" /> View/Edit JSON
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="h-8 px-2 text-destructive hover:bg-muted hover:text-destructive focus:text-destructive focus:bg-destructive/10 flex items-center gap-2 cursor-pointer outline-none"
+              onSelect={(e) => e.preventDefault()}
+              onClick={handleInnerMenuDelete}
+            >
+              <Trash2 className="h-4 w-4 mr-1" /> Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   )
 }
 
-// --- Main PlanSwitcher component (renders mobile view) ---
-export function PlanSwitcher({}: {}) {
-  const { openSwitchWarningDialog } = useUIState()
+// --- PlanSwitcher Component ---
+interface PlanSwitcherProps {
+  plans: PlanMetadata[]
+  activePlanId: string | null
+  mode: "normal" | "edit" | "view"
+  limit?: number
+  showCreateButton?: boolean
+  onPlanLinkClick: (e: React.MouseEvent, planId: string) => void
+  onViewAllClick: (e: React.MouseEvent) => void
+  onEditPlan: (plan: PlanMetadata) => void
+  onDeletePlan: (plan: PlanMetadata) => void
+  // onClose?: () => void;
+}
+
+export const PlanSwitcher: React.FC<PlanSwitcherProps> = ({
+  plans,
+  activePlanId,
+  mode,
+  limit = 8,
+  showCreateButton = true,
+  onPlanLinkClick,
+  onViewAllClick,
+  onEditPlan,
+  onDeletePlan,
+  // onClose
+}) => {
   const { open: openNewPlanModal } = useNewPlanModal()
-  const { mode } = usePlanMode()
-  const activePlanId = usePlanStore((state) => state.activePlanId)
-  const planMetadataList = usePlanStore((state) => state.planMetadataList)
-  const mobileListLimit = 5
-  const mobileListItems = planMetadataList.slice(0, mobileListLimit)
+  const displayPlans = plans.slice(0, limit)
 
-  // Helper function to format dates (passed to PlanItemContent)
-  const formatDate = (dateString: string | null | undefined): string => {
-    return dateString
-      ? new Date(dateString).toLocaleDateString(undefined, {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        })
-      : "N/A"
-  }
-
-  // Handle clicking on plan links - used for switch warnings in edit mode
-  const handlePlanLinkClick = (e: React.MouseEvent, planId: string) => {
-    if (planId === activePlanId && mode === "normal") {
-      e.preventDefault()
-      return
-    }
-    if (mode === "edit") {
-      e.preventDefault()
-      openSwitchWarningDialog(planId)
-      return
-    }
+  const handleCreateClick = () => {
+    // onClose?.();
+    openNewPlanModal()
   }
 
   return (
-    <>
-      {/* Mobile View: List */}
-      <div
-        className={cn(
-          "w-full md:hidden border rounded-md p-1",
-          mode !== "normal" ? "border-transparent" : "border"
+    <div className="flex flex-col w-full">
+      {/* List of plan items */}
+      <div className="flex flex-col gap-y-0.5">
+        {displayPlans.length > 0 ? (
+          displayPlans.map((plan) => (
+            <PlanSwitcherItem
+              key={plan.id}
+              plan={plan}
+              isActive={plan.id === activePlanId && mode === "normal"}
+              onLinkClick={onPlanLinkClick}
+              onEdit={onEditPlan}
+              onDelete={onDeletePlan}
+            />
+          ))
+        ) : (
+          <div className="px-3 py-2 text-sm text-muted-foreground italic">
+            {/* Increased padding slightly */}
+            No plans found
+          </div>
         )}
-      >
-        <h3 className="text-sm font-semibold px-2 py-1.5 text-muted-foreground">Recent Plans</h3>
-        {mobileListItems.length > 0 ? (
-          <div className="flex flex-col gap-y-0.5">
-            {mobileListItems.map((plan) => (
-              <PlanItemContent
-                key={plan.id}
-                plan={plan}
-                isActive={plan.id === activePlanId && mode === "normal"}
-                formatDate={formatDate}
-                onLinkClick={handlePlanLinkClick}
-              />
-            ))}
-            {planMetadataList.length > mobileListLimit && (
-              <div className="mt-1 px-2">
-                <Link href="/plans" passHref>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="w-full h-8 justify-center text-xs text-muted-foreground hover:text-primary"
-                  >
-                    View All Plans &rarr;
-                  </Button>
+      </div>
+
+      {/* --- Footer Section --- */}
+      {(plans.length > limit || showCreateButton) && (
+        <div className="mt-1 pt-1 flex flex-col gap-y-1.5 px-1">
+          {plans.length > limit && (
+            <DropdownMenuItem
+              asChild
+              className="p-0 cursor-default outline-none focus:bg-transparent data-[highlighted]:bg-transparent"
+            >
+              <div>
+                <Link
+                  href="/plans"
+                  passHref
+                  className={cn(
+                    "flex w-full items-center text-sm text-muted-foreground rounded-sm outline-none",
+                    "px-2 py-2",
+                    "hover:bg-accent",
+                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  )}
+                  onClick={onViewAllClick}
+                  draggable="false"
+                >
+                  <span className="mr-auto">View All Plans</span>
+                  <ChevronRight className="size-4 ml-2" />
                 </Link>
               </div>
-            )}
-          </div>
-        ) : (
-          <div className="px-2 py-1.5 text-sm text-muted-foreground">No recent plans</div>
-        )}
-        <div className="border-t mt-1 pt-1">
-          <Button
-            variant="ghost"
-            className="w-full justify-start h-9 px-2 py-1.5 text-sm text-primary hover:bg-primary/10 focus-visible:bg-primary/10 focus-visible:text-primary"
-            onClick={() => openNewPlanModal()}
-          >
-            <Plus className="mr-2 h-4 w-4" /> Create New Plan
-          </Button>
+            </DropdownMenuItem>
+          )}
+          {showCreateButton && (
+            <DropdownMenuItem
+              className={cn(
+                "relative flex cursor-pointer select-none items-center justify-start gap-x-2 rounded-md px-3 py-2 text-sm font-medium outline-none transition-colors", // Base layout & transition
+                "bg-primary text-primary-foreground", // Primary button colors
+                "hover:bg-primary/90", // Primary button hover
+                "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-background", // Adjusted focus ring offset for dropdown
+                "data-[disabled]:pointer-events-none data-[disabled]:opacity-50", // Disabled state
+                "m-2"
+              )}
+              onSelect={handleCreateClick}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              <span>New Plan</span>
+            </DropdownMenuItem>
+          )}
         </div>
-      </div>
-    </>
+      )}
+    </div>
   )
 }
-
-// Export hook if needed
-export { useIsMobile }

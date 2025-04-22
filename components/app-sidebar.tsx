@@ -1,5 +1,6 @@
 "use client"
 
+// Import necessary components and icons
 import {
   Calendar,
   List,
@@ -27,18 +28,19 @@ import {
   SidebarGroup,
   useSidebar,
 } from "@/components/ui/sidebar"
+// Import DropdownMenu components needed here
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useEffect, useState, useRef } from "react"
-import { WeekType, type PlanMetadata, type TrainingPlanData } from "@/types/training-plan"
+import type { WeekType, TrainingPlanData } from "@/types/training-plan"
+import type { PlanMetadata } from "@/store/plan-store" // Import PlanMetadata
 import { useRouter, usePathname } from "next/navigation"
 import { usePlanStore } from "@/store/plan-store"
-import { PlanItemContent } from "./plan-switcher"
+// Import the updated PlanSwitcher component AND PlanSwitcherItem
+import { PlanSwitcher, PlanSwitcherItem } from "./plan-switcher" // *** IMPORT PlanSwitcherItem ***
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { usePlanMode } from "@/contexts/plan-mode-context"
 import { useNewPlanModal } from "@/components/modals/new-plan-modal"
@@ -47,21 +49,12 @@ interface AppSidebarProps {
   handleToggleResize?: () => void
 }
 
-interface PopulatedPlanMetadata extends PlanMetadata {
-  id: string
-  name: string
-  lastModified?: string | null
-}
-
 export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
   // --- Hooks, State, Utils ---
   const router = useRouter()
   const pathname = usePathname()
-  const activePlan = usePlanStore((state) => state.activePlan)
   const activePlanId = usePlanStore((state) => state.activePlanId)
-  const planMetadataList = usePlanStore(
-    (state) => state.planMetadataList as PopulatedPlanMetadata[]
-  )
+  const planMetadataList = usePlanStore((state) => state.planMetadataList as PlanMetadata[])
   const selectedWeek = usePlanStore((state) => state.selectedWeek)
   const selectedMonth = usePlanStore((state) => state.selectedMonth)
   const viewMode = usePlanStore((state) => state.viewMode)
@@ -69,7 +62,13 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
   const selectMonth = usePlanStore((state) => state.selectMonth)
   const setViewMode = usePlanStore((state) => state.setViewMode)
   const { mode, draftPlan, originalPlanId } = usePlanMode()
-  const { openInfoDialog, openSettingsDialog, openSwitchWarningDialog } = useUIState()
+  const {
+    openInfoDialog,
+    openSettingsDialog,
+    openSwitchWarningDialog,
+    openDeleteDialog,
+    openJsonEditor, // Get functions to open dialogs/editor
+  } = useUIState()
   const { state: sidebarState, isMobile } = useSidebar()
   const isOpen = sidebarState === "expanded"
   const { open: openNewPlanModal } = useNewPlanModal()
@@ -88,21 +87,25 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
       isMounted.current = true
     }
   }, [isOpen, isMobile, handleToggleResize])
+
   useEffect(() => {
-    const currentPlan = mode !== "normal" ? draftPlan : activePlan
-    setWeekTypes(currentPlan?.weekTypes?.filter((wt) => wt) || [])
-  }, [activePlan, draftPlan, mode])
+    const currentPlanData = mode !== "normal" ? draftPlan : usePlanStore.getState().activePlan
+    setWeekTypes(currentPlanData?.weekTypes?.filter((wt) => wt) || [])
+  }, [mode, draftPlan, activePlanId]) // Re-run if activePlan changes too
 
   const planToDisplay: TrainingPlanData | null | undefined =
-    mode !== "normal" ? draftPlan : activePlan
+    mode !== "normal" ? draftPlan : usePlanStore.getState().activePlan
   const isRootRoute = pathname === "/"
 
   // --- Utility Functions ---
   const desktopListLimit = 8
-  const dropdownListLimit = 8
+  const dropdownListLimit = 8 // Limit used by PlanSwitcher inside dropdown
+  // Slice the list for the inline display on the root route
   const recentPlansToShow = planMetadataList.slice(0, desktopListLimit)
+
   const getWeekInfo = (weekNumber: number) => {
-    const weekData = planToDisplay?.weeks?.find((w) => w.weekNumber === weekNumber)
+    const currentPlanData = mode !== "normal" ? draftPlan : usePlanStore.getState().activePlan
+    const weekData = currentPlanData?.weeks?.find((w) => w.weekNumber === weekNumber)
     return weekData
       ? {
           type: weekData.weekType || "",
@@ -111,43 +114,86 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
         }
       : { type: "", weekTypeIds: [], colorName: undefined }
   }
+
   const handleChangeViewMode = (newMode: "week" | "month") => {
     if (typeof setViewMode === "function") setViewMode(newMode)
   }
+
+  // formatDate might still be useful elsewhere, keep it for now
   const formatDate = (dateString: string | null | undefined): string => {
+    const locale = "sv-SE" // Use Swedish locale
     return dateString
-      ? new Date(dateString).toLocaleDateString(undefined, {
+      ? new Date(dateString).toLocaleDateString(locale, {
           year: "numeric",
           month: "short",
           day: "numeric",
         })
       : "N/A"
   }
+
+  // Handles warning in edit mode for plan links (both inline and dropdown)
   const handlePlanLinkClick = (e: React.MouseEvent, planId: string) => {
-    const targetHref = `/plan/${planId}`
-    if (planId === activePlanId && mode === "normal" && pathname === targetHref) {
+    const currentActivePlanId = usePlanStore.getState().activePlanId
+    // Prevent navigation if clicking the already active plan in normal mode
+    if (planId === currentActivePlanId && mode === "normal") {
       e.preventDefault()
+      setIsPlanDropdownOpen(false) // Close dropdown if open
       return
     }
-    if (mode === "edit" && planId !== originalPlanId) {
+    // Show warning if in edit mode
+    if (mode === "edit") {
+      const targetPlanPath = `/plan/${planId}`
       e.preventDefault()
-      openSwitchWarningDialog(targetHref)
+      openSwitchWarningDialog(targetPlanPath)
+      setIsPlanDropdownOpen(false) // Close dropdown if open
       return
     }
+    // Close dropdown in normal mode when navigating
+    setIsPlanDropdownOpen(false)
   }
+
+  // Handles "View All" click (both inline and dropdown)
   const handleViewAllClick = (e: React.MouseEvent) => {
     if (mode === "edit") {
       e.preventDefault()
       openSwitchWarningDialog("/plans")
+      setIsPlanDropdownOpen(false)
+    } else {
+      setIsPlanDropdownOpen(false)
     }
   }
-  const handleDropdownPlanClick = (e: React.MouseEvent, planId: string) => {
-    handlePlanLinkClick(e, planId)
-    setIsPlanDropdownOpen(false)
+
+  // --- Handlers for Edit/Delete actions (used by both inline PlanSwitcherItem and dropdown PlanSwitcher) ---
+  const handleEditPlan = (plan: PlanMetadata) => {
+    let planDataToShow = null
+    const currentActivePlanId = usePlanStore.getState().activePlanId
+    const currentActivePlan = usePlanStore.getState().activePlan
+
+    if (currentActivePlanId === plan.id && currentActivePlan) {
+      planDataToShow = { ...plan, data: currentActivePlan }
+    } else {
+      console.warn("AppSidebar: Editing JSON from metadata only for plan:", plan.id)
+      planDataToShow = {
+        id: plan.id,
+        name: plan.name,
+        data: {
+          metadata: { planName: plan.name },
+          weeks: [],
+          monthBlocks: [],
+          exerciseDefinitions: [],
+          weekTypes: [],
+        },
+        createdAt: plan.createdAt,
+        updatedAt: plan.updatedAt,
+      }
+    }
+    openJsonEditor(planDataToShow)
+    setIsPlanDropdownOpen(false) // Ensure dropdown closes if action originated there
   }
-  const handleDropdownViewAllClick = (e: React.MouseEvent) => {
-    handleViewAllClick(e)
-    setIsPlanDropdownOpen(false)
+
+  const handleDeletePlan = (plan: PlanMetadata) => {
+    openDeleteDialog(plan)
+    setIsPlanDropdownOpen(false) // Ensure dropdown closes if action originated there
   }
 
   // --- Plan Switcher Trigger Text Logic ---
@@ -155,7 +201,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
   if (mode === "edit") {
     triggerPlanName = `Editing: ${draftPlan?.metadata?.planName || "Unnamed Plan"}`
   } else if (mode === "view") {
-    triggerPlanName = `Viewing: ${draftPlan?.metadata?.planName || "Unnamed Plan"}`
+    triggerPlanName = `Viewing: ${draftPlan?.metadata?.planName || "Shared Plan"}`
   } else if (activePlanId) {
     const currentMeta = planMetadataList.find((p) => p.id === activePlanId)
     triggerPlanName = currentMeta?.name || "Loading Plan..."
@@ -190,16 +236,17 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
 
   // --- Visibility Logic ---
   const shouldShowCreateButton = isMobile || (!isMobile && isRootRoute)
-  const shouldShowInlineList = isMobile || (!isMobile && isRootRoute && isOpen)
-  const shouldShowPlanRelatedTriggers = !isMobile && !isRootRoute && !!planToDisplay
-  const shouldShowDropdownTrigger = shouldShowPlanRelatedTriggers && isOpen
-  const shouldShowCollapsedTrigger = shouldShowPlanRelatedTriggers && !isOpen
+  const shouldShowInlineList = !isMobile && isRootRoute && isOpen
+  const shouldShowPlanRelatedTriggers = !isRootRoute
+  const shouldShowDropdownTrigger = shouldShowPlanRelatedTriggers && (isOpen || isMobile)
+  const shouldShowCollapsedTrigger = shouldShowPlanRelatedTriggers && !isOpen && !isMobile
   const shouldRenderDropdownContent = shouldShowPlanRelatedTriggers
   const shouldShowActivePlanNav = !isMobile && !isRootRoute && !!planToDisplay
 
   // --- RENDER ---
   return (
     <>
+      {/* Toggle button absolutely positioned */}
       {!isMobile && isOpen && handleToggleResize ? (
         <ToggleButton className={cn("absolute top-2 right-2 z-50 hidden md:block")} />
       ) : null}
@@ -237,13 +284,14 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
       </SidebarHeader>
 
       <SidebarContent className="flex flex-col flex-grow min-h-0">
-        {/* Plan Management: Revert to items-center when collapsed */}
+        {/* Plan Management Area */}
         <SidebarGroup
           className={cn(
             "pb-2 flex-shrink-0",
-            isOpen || isMobile ? "px-3" : "px-1 flex flex-col items-center" // REVERTED to items-center
+            isOpen || isMobile ? "px-3" : "px-1 flex flex-col items-center"
           )}
         >
+          {/* New Plan Button */}
           {shouldShowCreateButton && (
             <div className={cn("mb-2", isOpen || isMobile ? "w-full" : "w-auto")}>
               <Tooltip>
@@ -259,7 +307,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                     {!(isOpen || isMobile) && <span className="sr-only">New Plan (AI)</span>}
                   </Button>
                 </TooltipTrigger>
-                {!isOpen && !isMobile && (
+                {!(isOpen || isMobile) && (
                   <TooltipContent side="right" align="center">
                     New Plan (AI)
                   </TooltipContent>
@@ -267,50 +315,56 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
               </Tooltip>
             </div>
           )}
+
+          {/* Inline list shown ONLY on desktop root when sidebar is open */}
           {shouldShowInlineList && (
-            <div className="w-full flex flex-col gap-1 mt-2">
-              <h3 className="text-sm font-semibold px-2 py-1.5 text-muted-foreground">
+            <div className="w-full flex flex-col gap-y-0.5 mt-2">
+              <h3 className="text-sm font-semibold px-2 py-1 text-muted-foreground mb-1">
                 Recent Plans
               </h3>
+              {/* Render the list using PlanSwitcherItem */}
               {recentPlansToShow.length > 0 ? (
                 recentPlansToShow.map((plan) => (
-                  <PlanItemContent
+                  // *** USE PlanSwitcherItem DIRECTLY ***
+                  <PlanSwitcherItem
                     key={plan.id}
                     plan={plan}
                     isActive={plan.id === activePlanId && mode === "normal"}
-                    formatDate={formatDate}
-                    onLinkClick={handlePlanLinkClick}
+                    onLinkClick={handlePlanLinkClick} // Use existing handler
+                    onEdit={handleEditPlan} // Use existing handler
+                    onDelete={handleDeletePlan} // Use existing handler
                   />
                 ))
               ) : (
-                <div className="px-2 py-1.5 text-sm text-muted-foreground">No plans found</div>
+                <div className="px-2 py-1.5 text-sm text-muted-foreground italic">
+                  No plans found
+                </div>
               )}
-              <Separator className="my-1" />
+              {/* View All Plans Link - Styling matches PlanSwitcher */}
               {planMetadataList.length > desktopListLimit && (
-                <div className="mt-1">
+                <div className={cn("px-2 py-2 rounded-sm", "hover:bg-accent")}>
                   <Link
                     href="/plans"
                     passHref
                     className={cn(
-                      "flex w-full items-center px-2 py-1.5",
-                      "text-sm font-medium",
-                      "hover:bg-muted",
-                      "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                      "rounded-sm",
-                      "cursor-pointer"
+                      "flex w-full items-center text-sm text-muted-foreground outline-none",
+                      "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     )}
                     onClick={handleViewAllClick}
                     draggable="false"
                   >
-                    <span className="mr-auto pl-2 py-1">View All Plans</span>
-                    <ChevronRight className="size-4 ml-1 text-muted-foreground" />
+                    <span className="mr-auto">View All Plans</span>
+                    <ChevronRight className="size-4 ml-2" />
                   </Link>
                 </div>
               )}
             </div>
           )}
-          <DropdownMenu open={isPlanDropdownOpen} onOpenChange={setIsPlanDropdownOpen}>
-            <div className={cn(isOpen || isMobile ? "w-full" : "w-auto")}>
+
+          {/* --- Dropdown Menu for Plan Switching (shown when not on root route) --- */}
+          {shouldShowPlanRelatedTriggers && (
+            <DropdownMenu open={isPlanDropdownOpen} onOpenChange={setIsPlanDropdownOpen}>
+              {/* Expanded/Mobile Trigger */}
               {shouldShowDropdownTrigger && (
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -320,9 +374,10 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                       "w-full justify-start text-left mt-2 px-2 text-md",
                       mode !== "normal" && "font-semibold",
                       mode === "edit" &&
-                        "bg-yellow-100/50 border-yellow-400 text-yellow-800 hover:bg-yellow-100 focus-visible:ring-yellow-500",
+                        "bg-yellow-100/50 border-yellow-400 text-yellow-800 hover:bg-yellow-100 focus-visible:ring-yellow-500 dark:bg-yellow-900/20 dark:border-yellow-800 dark:text-yellow-300 dark:hover:bg-yellow-900/30",
                       mode === "view" &&
-                        "bg-blue-100/50 border-blue-400 text-blue-800 hover:bg-blue-100 focus-visible:ring-blue-500"
+                        "bg-blue-100/50 border-blue-400 text-blue-800 hover:bg-blue-100 focus-visible:ring-blue-500 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/30",
+                      planMetadataList.length === 0 && mode === "normal" && "text-muted-foreground"
                     )}
                     disabled={planMetadataList.length === 0 && mode === "normal"}
                   >
@@ -332,88 +387,62 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                   </Button>
                 </DropdownMenuTrigger>
               )}
-              {/* Collapsed trigger is centered by parent group's items-center now */}
+              {/* Collapsed Trigger */}
               {shouldShowCollapsedTrigger && (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="icon" className={cn("w-9 h-9 mt-1")}>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className={cn(
+                          "w-9 h-9 mt-1",
+                          mode === "edit" &&
+                            "bg-yellow-100/50 border-yellow-400 text-yellow-800 hover:bg-yellow-100 focus-visible:ring-yellow-500 dark:bg-yellow-900/20 dark:border-yellow-800 dark:text-yellow-300 dark:hover:bg-yellow-900/30",
+                          mode === "view" &&
+                            "bg-blue-100/50 border-blue-400 text-blue-800 hover:bg-blue-100 focus-visible:ring-blue-500 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/30"
+                        )}
+                      >
                         <GalleryVerticalEnd className="h-4 w-4" />
                         <span className="sr-only">Select Plan</span>
                       </Button>
                     </DropdownMenuTrigger>
                   </TooltipTrigger>
                   <TooltipContent side="right" align="center">
-                    Select Plan
+                    {triggerPlanName}
                   </TooltipContent>
                 </Tooltip>
               )}
-            </div>
-            {shouldRenderDropdownContent && (
-              <DropdownMenuContent
-                align="start"
-                sideOffset={isOpen ? 4 : 10}
-                alignOffset={isOpen ? 0 : -5}
-                className="min-w-[300px] w-[--radix-dropdown-menu-trigger-width] max-h-[60vh] overflow-y-auto"
-              >
-                {planMetadataList.slice(0, dropdownListLimit).map((plan) => (
-                  <DropdownMenuItem
-                    key={plan.id}
-                    className="p-0 focus:bg-transparent hover:bg-transparent data-[highlighted]:bg-transparent cursor-default"
-                  >
-                    <PlanItemContent
-                      plan={plan}
-                      isActive={plan.id === activePlanId && mode === "normal"}
-                      formatDate={formatDate}
-                      onLinkClick={handleDropdownPlanClick}
-                    />
-                  </DropdownMenuItem>
-                ))}
-                {planMetadataList.length === 0 && (
-                  <DropdownMenuItem disabled className="text-muted-foreground italic">
-                    No plans found
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator className="my-1" />
-                {planMetadataList.length > dropdownListLimit && (
-                  <DropdownMenuItem asChild className="p-0">
-                    <div className="flex w-full items-center px-2 py-1.5 rounded-sm hover:bg-accent cursor-pointer data-[highlighted]:bg-accent">
-                      <Link
-                        href="/plans"
-                        passHref
-                        className={cn(
-                          "flex flex-grow items-center",
-                          "text-sm font-medium",
-                          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm"
-                        )}
-                        onClick={handleDropdownViewAllClick}
-                        draggable="false"
-                      >
-                        <span className="mr-auto pl-2 py-1">View All Plans</span>
-                        <ChevronRight className="size-4 ml-1 text-muted-foreground" />
-                      </Link>
-                    </div>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    openNewPlanModal()
-                    setIsPlanDropdownOpen(false)
-                  }}
-                  className="p-2 flex items-center gap-2 cursor-pointer hover:bg-accent focus:bg-accent data-[highlighted]:bg-accent"
+
+              {/* Dropdown Content */}
+              {shouldRenderDropdownContent && (
+                <DropdownMenuContent
+                  align="start"
+                  sideOffset={isOpen && !isMobile ? 4 : 10}
+                  alignOffset={isOpen && !isMobile ? 0 : -5}
+                  className="min-w-[300px] w-[--radix-dropdown-menu-trigger-width] max-h-[60vh] overflow-y-auto p-0" // No padding on content itself
                 >
-                  <Plus className="h-4 w-4" />
-                  <span className="font-medium">Create New Plan</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            )}
-          </DropdownMenu>
+                  {/* Use PlanSwitcher to render the list and actions */}
+                  <PlanSwitcher
+                    plans={planMetadataList}
+                    activePlanId={activePlanId}
+                    mode={mode}
+                    limit={dropdownListLimit}
+                    showCreateButton={true}
+                    onPlanLinkClick={handlePlanLinkClick}
+                    onViewAllClick={handleViewAllClick}
+                    onEditPlan={handleEditPlan}
+                    onDeletePlan={handleDeletePlan}
+                    // Pass onClose if needed: onClose={() => setIsPlanDropdownOpen(false)}
+                  />
+                </DropdownMenuContent>
+              )}
+            </DropdownMenu>
+          )}
         </SidebarGroup>
 
+        {/* Active Plan Navigation (Week/Month selectors etc.) */}
         {shouldShowActivePlanNav && (
-          // Revert this group to items-center when collapsed
           <SidebarGroup
             className={cn(
               "flex-1 min-h-0 flex flex-col gap-2 my-4",
@@ -421,7 +450,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
             )}
           >
             {isOpen && <Separator className="mb-3 flex-shrink-0" />}
-            {/* Revert view toggles container to items-center when collapsed */}
+            {/* View Mode Buttons */}
             <div
               className={cn(
                 "flex gap-2 flex-shrink-0",
@@ -470,8 +499,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                 )}
               </Tooltip>
             </div>
-
-            {/* Internal scrolling container logic remains */}
+            {/* Week/Block Selectors (only when open) */}
             {isOpen && (
               <div className="mt-2 w-full flex-1 min-h-0 overflow-y-auto pr-2">
                 {viewMode === "month" ? (
@@ -492,8 +520,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                 )}
               </div>
             )}
-
-            {/* Legend remains the same */}
+            {/* Week Type Legend (only when open) */}
             {isOpen && weekTypes.length > 0 && (
               <div className="pt-3 border-t text-sm text-muted-foreground flex-shrink-0 mt-4">
                 <h4 className="font-medium mb-2 px-2">Week Types</h4>
@@ -504,7 +531,6 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
         )}
       </SidebarContent>
 
-      {/* Footer: Revert to items-center when collapsed */}
       <SidebarFooter
         className={cn(
           "border-t flex gap-1 flex-shrink-0",
@@ -513,9 +539,11 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
             : "p-1 flex-col items-center"
         )}
       >
+        {/* Collapsed toggle button */}
         {!isMobile && !isOpen && handleToggleResize && <ToggleButton className="mb-1" />}
+        {/* Spacer */}
         {(isOpen || isMobile) && <div className="flex-grow"></div>}
-        {/* Remove inner div wrapper, let footer center items directly */}
+        {/* Info Button */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -532,6 +560,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
             About T-JSON
           </TooltipContent>
         </Tooltip>
+        {/* Settings Button */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
