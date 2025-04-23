@@ -160,6 +160,16 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
     }
     // Show warning if in edit mode
     if (mode === "edit") {
+      // If this is the same plan that's being edited, navigate to its edit page instead of showing warning
+      if (planId === originalPlanId) {
+        e.preventDefault()
+        router.push(`/plan/${planId}/edit`)
+        setIsPlanDropdownOpen(false) 
+        setOpenMobile(false)
+        return
+      }
+      
+      // Otherwise show warning for switching to a different plan
       const targetPlanPath = `/plan/${planId}`
       e.preventDefault()
       openSwitchWarningDialog(targetPlanPath)
