@@ -7,7 +7,7 @@ import { SidebarProvider } from "@/components/ui/sidebar"
 import { PlanModeProvider } from "@/contexts/plan-mode-context"
 import { UIProvider } from "@/contexts/ui-context"
 import { TooltipProvider } from "@/components/ui/tooltip"
-
+import { PlanDebugBar } from "@/components/plan-debug-bar"
 export const metadata: Metadata = {
   title: "T-JSON",
   description: "JSON-based training plan visualization tool",
@@ -28,6 +28,7 @@ export default function AppLayout({
                 {children}
                 <ModalProvider />
                 <DialogProvider />
+                <PlanDebugBar />
               </LayoutClient>
             </PlanEventHandler>
           </SidebarProvider>
