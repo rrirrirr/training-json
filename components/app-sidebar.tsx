@@ -8,14 +8,19 @@ import {
   Plus,
   GalleryVerticalEnd,
   ChevronsUpDown,
+  MoreVertical,
+  Copy,
   ChevronRight,
   Settings,
+  Eye,
+  Edit,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
+import { useToast } from "@/components/ui/use-toast"
 import { useUIState } from "@/contexts/ui-context"
 import BlockSelector from "./shared/block-selector"
 import WeekSelector from "./shared/week-selector"
@@ -33,6 +38,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu"
 import { useEffect, useState, useRef } from "react"
 import type { WeekType, TrainingPlanData } from "@/types/training-plan"
@@ -70,6 +76,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
     openJsonEditor, // Get functions to open dialogs/editor
   } = useUIState()
   const { state: sidebarState, isMobile, setOpenMobile } = useSidebar()
+  const { toast } = useToast()
   const isOpen = sidebarState === "expanded"
   const { open: openNewPlanModal } = useNewPlanModal()
   const [weekTypes, setWeekTypes] = useState<WeekType[]>([])
@@ -102,6 +109,17 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
   const dropdownListLimit = 8 // Limit used by PlanSwitcher inside dropdown
   // Slice the list for the inline display on the root route
   const recentPlansToShow = planMetadataList.slice(0, desktopListLimit)
+
+  // Function to copy URL to clipboard
+  const copyUrlToClipboard = () => {
+    if (typeof window !== "undefined") {
+      navigator.clipboard.writeText(window.location.href)
+      toast({
+        title: "URL Copied",
+        description: "The link has been copied to your clipboard",
+      })
+    }
+  }
 
   const getWeekInfo = (weekNumber: number) => {
     const currentPlanData = mode !== "normal" ? draftPlan : usePlanStore.getState().activePlan
@@ -201,17 +219,21 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
 
   // --- Plan Switcher Trigger Text Logic ---
   let triggerPlanName = "Select Plan"
+  // Get the plan name without "Editing:" or "Viewing:" prefix
+  let planNameOnly = ""
+  
   if (mode === "edit") {
-    triggerPlanName = `Editing: ${draftPlan?.metadata?.planName || "Unnamed Plan"}`
+    planNameOnly = draftPlan?.metadata?.planName || "Unnamed Plan"
+    triggerPlanName = planNameOnly
   } else if (mode === "view") {
-    triggerPlanName = `Viewing: ${draftPlan?.metadata?.planName || "Shared Plan"}`
+    planNameOnly = draftPlan?.metadata?.planName || "Shared Plan"
+    triggerPlanName = planNameOnly
   } else if (activePlanId) {
     const currentMeta = planMetadataList.find((p) => p.id === activePlanId)
     triggerPlanName = currentMeta?.name || "Loading Plan..."
   } else if (!planMetadataList || planMetadataList.length === 0) {
     triggerPlanName = "No Plans Available"
   }
-
   // --- Toggle Button Component ---
   const ToggleButton = ({ className }: { className?: string }) =>
     handleToggleResize ? (
@@ -378,14 +400,20 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                       "w-full justify-start text-left mt-2 px-2 text-md",
                       mode !== "normal" && "font-semibold",
                       mode === "edit" &&
-                        "bg-yellow-100/50 border-yellow-400 text-yellow-800 hover:bg-yellow-100 focus-visible:ring-yellow-500 dark:bg-yellow-900/20 dark:border-yellow-800 dark:text-yellow-300 dark:hover:bg-yellow-900/30",
+                        "bg-[var(--edit-mode-bg)] border-[var(--edit-mode-border)] text-[var(--edit-mode-text)] hover:bg-[var(--edit-mode-hover-bg)] focus-visible:ring-[var(--edit-mode-text)]",
                       mode === "view" &&
-                        "bg-blue-100/50 border-blue-400 text-blue-800 hover:bg-blue-100 focus-visible:ring-blue-500 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/30",
+                        "bg-[var(--view-mode-bg)] border-[var(--view-mode-border)] text-[var(--view-mode-text)] hover:bg-[var(--view-mode-hover-bg)] focus-visible:ring-[var(--view-mode-text)]",
                       planMetadataList.length === 0 && mode === "normal" && "text-muted-foreground"
                     )}
                     disabled={planMetadataList.length === 0 && mode === "normal"}
                   >
-                    <GalleryVerticalEnd className="mr-2 h-4 w-4 text-muted-foreground shrink-0" />
+                    {mode === "edit" ? (
+                      <Edit className="mr-2 h-4 w-4 shrink-0" />
+                    ) : mode === "view" ? (
+                      <Eye className="mr-2 h-4 w-4 shrink-0" />
+                    ) : (
+                      <GalleryVerticalEnd className="mr-2 h-4 w-4 text-muted-foreground shrink-0" />
+                    )}
                     <span className="truncate flex-1 mr-1">{triggerPlanName}</span>
                     <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                   </Button>
@@ -402,13 +430,19 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                         className={cn(
                           "w-9 h-9 mt-1",
                           mode === "edit" &&
-                            "bg-yellow-100/50 border-yellow-400 text-yellow-800 hover:bg-yellow-100 focus-visible:ring-yellow-500 dark:bg-yellow-900/20 dark:border-yellow-800 dark:text-yellow-300 dark:hover:bg-yellow-900/30",
+                            "bg-[var(--edit-mode-bg)] border-[var(--edit-mode-border)] text-[var(--edit-mode-text)] hover:bg-[var(--edit-mode-hover-bg)] focus-visible:ring-[var(--edit-mode-text)]",
                           mode === "view" &&
-                            "bg-blue-100/50 border-blue-400 text-blue-800 hover:bg-blue-100 focus-visible:ring-blue-500 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/30"
+                            "bg-[var(--view-mode-bg)] border-[var(--view-mode-border)] text-[var(--view-mode-text)] hover:bg-[var(--view-mode-hover-bg)] focus-visible:ring-[var(--view-mode-text)]"
                         )}
                       >
-                        <GalleryVerticalEnd className="h-4 w-4" />
-                        <span className="sr-only">Select Plan</span>
+                        {mode === "edit" ? (
+                          <Edit className="h-4 w-4" />
+                        ) : mode === "view" ? (
+                          <Eye className="h-4 w-4" />
+                        ) : (
+                          <GalleryVerticalEnd className="h-4 w-4" />
+                        )}
+                        <span className="sr-only">{mode === "edit" ? "Editing Plan" : mode === "view" ? "Viewing Plan" : "Select Plan"}</span>
                       </Button>
                     </DropdownMenuTrigger>
                   </TooltipTrigger>
@@ -446,6 +480,8 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
         </SidebarGroup>
 
         {/* Active Plan Navigation (Week/Month selectors etc.) */}
+        {/* Plan Mode Indicator - Added below plan switcher */}
+        {/* Mode indicator removed as requested */}
         {shouldShowActivePlanNav && (
           <SidebarGroup
             className={cn(
@@ -545,6 +581,29 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
       >
         {/* Collapsed toggle button */}
         {!isMobile && !isOpen && handleToggleResize && <ToggleButton className="mb-1" />}
+        
+        {/* More Options Dropdown (moved from AppHeader) */}
+        <DropdownMenu>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="More options">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent side={isOpen || isMobile ? "top" : "right"} align="center">
+              More Options
+            </TooltipContent>
+          </Tooltip>
+          <DropdownMenuContent align={isOpen || isMobile ? "end" : "right"} sideOffset={5}>
+            <DropdownMenuItem onClick={copyUrlToClipboard}>
+              <Copy className="mr-2 h-4 w-4" />
+              <span>Copy URL</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        
         {/* Spacer */}
         {(isOpen || isMobile) && <div className="flex-grow"></div>}
         {/* Info Button */}
