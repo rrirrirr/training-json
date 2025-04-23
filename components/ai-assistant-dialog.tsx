@@ -70,7 +70,7 @@ function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-dialog-lg dialog-content-base">
+      <DialogContent className="max-w-dialog-md dialog-content-base">
         <DialogHeader>
           <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
             <Wand2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Create Plan with AI Magic!
