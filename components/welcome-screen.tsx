@@ -68,34 +68,31 @@ export default function WelcomeScreen({ onLoadExample, onImportData }: WelcomeSc
               Or start with a ready-made JSON plan:
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto">
-              <div className="bg-sidebar/80 dark:bg-sidebar/50 rounded-md">
-                <Button
-                  onClick={() => {
-                    uploadModalStore.open(onImportData)
-                  }}
-                  variant="outline"
-                  className="h-14 text-base flex items-center justify-between w-full"
-                >
-                  <div className="flex items-center">
-                    <Upload className="h-5 w-5 mr-2" />
-                    <span>Import JSON Plan</span>
-                  </div>
-                  <ChevronRight className="h-4 w-4 opacity-70" />
-                </Button>
-              </div>
-              <div className="bg-sidebar/80 dark:bg-sidebar/50 rounded-md">
-                <Button
-                  onClick={onLoadExample}
-                  variant="outline"
-                  className="h-14 text-base flex items-center justify-between w-full"
-                >
-                  <div className="flex items-center">
-                    <BookOpen className="h-5 w-5 mr-2" />
-                    <span>Load Example Plan</span>
-                  </div>
-                  <ChevronRight className="h-4 w-4 opacity-70" />
-                </Button>
-              </div>
+              <Button
+                onClick={() => {
+                  // Don't pass the onImportData callback - we want to enter edit mode directly
+                  uploadModalStore.open()
+                }}
+                variant="outline"
+                className="h-14 text-base flex items-center justify-between w-full bg-sidebar/50"
+              >
+                <div className="flex items-center">
+                  <Upload className="h-5 w-5 mr-2" />
+                  <span>Import JSON Plan</span>
+                </div>
+                <ChevronRight className="h-4 w-4 opacity-70" />
+              </Button>
+              <Button
+                onClick={onLoadExample}
+                variant="outline"
+                className="h-14 text-base flex items-center justify-between w-full bg-sidebar/50"
+              >
+                <div className="flex items-center">
+                  <BookOpen className="h-5 w-5 mr-2" />
+                  <span>Load Example Plan</span>
+                </div>
+                <ChevronRight className="h-4 w-4 opacity-70" />
+              </Button>
             </div>
           </div>
           {/* Info Text Footer */}

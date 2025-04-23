@@ -53,7 +53,7 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
     "flex w-full items-center p-2 group/item relative overflow-hidden min-h-[48px] rounded-md",
     "hover:bg-accent",
     // REMOVED focus ring classes: focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1 focus-within:ring-offset-background
-    isActive && "bg-accent/80",
+    isActive && "bg-accent",
     className
   )
 

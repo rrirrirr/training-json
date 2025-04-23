@@ -30,63 +30,68 @@
 @layer base {
   :root {
  --radius: 0.5rem;
---background: oklch(98.91% 0.022 301.74); /* Very light */
-      --foreground: oklch(0% 0 0);         /* Black (L=0%) */
-      --muted: oklch(85.35% 0.048 301.46);
-      --muted-foreground: oklch(40.18% 0.036 301.24);
-      --popover: oklch(98.91% 0.022 301.74); /* Same as background */
-      --popover-foreground: oklch(0% 0 0);  /* Black (L=0%) */
-      --card: oklch(97.98% 0.027 301.69);
-      --card-foreground: oklch(0% 0 0);     /* Black (L=0%) */
-      --border: oklch(89.47% 0.008 301.41); /* Very low chroma */
-      --input: oklch(89.47% 0.008 301.41);  /* Same as border */
-      --primary: oklch(54.37% 0.198 301.35);
-      --primary-foreground: oklch(100% 0 0); /* White (L=100%) */
-      --secondary: oklch(92.42% 0.025 301.50);
-      --secondary-foreground: oklch(34.97% 0.048 301.27);
-      --accent: oklch(85.65% 0.067 301.45);
-      --accent-foreground: oklch(28.02% 0.071 301.20);
-      --destructive: oklch(35.08% 0.154 33.41); /* Hue shifted towards orange in OKLCH */
-      --destructive-foreground: oklch(83.84% 0.114 33.69); /* Hue shifted towards orange in OKLCH */
-      --ring: oklch(54.37% 0.198 301.35);    /* Same as primary */
-      --chart-1: oklch(54.37% 0.198 301.35); /* Same as primary */
-      --chart-2: oklch(92.42% 0.025 301.50); /* Same as secondary */
-      --chart-3: oklch(85.65% 0.067 301.45); /* Same as accent */
-      --chart-4: oklch(95.21% 0.016 301.57); /* Lighter version of secondary */
-      --chart-5: oklch(54.35% 0.206 301.35); /* Slightly higher chroma than primary */
+--background: 220 44% 100%;
+    --foreground: 220 67% 0%;
+    --muted: 220 39% 92%;
+    --muted-foreground: 220 13% 27%;
+    --popover: 220 44% 100%;
+    --popover-foreground: 220 67% 0%;
+    --card: 0 0% 99%;
+    --card-foreground: 0 0% 0%;
+    --border: 220 2% 93%;
+    --input: 220 2% 93%;
+    --primary: 207.5 40.45% 34.9%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 7% 91%;
+    --secondary-foreground: 220 7% 31%;
+    --accent: 220 13% 82%;
+    --accent-foreground: 220 13% 22%;
+    --destructive: 0 86% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --ring: 207.5 40.45% 34.9%; /* Same as primary */
 
-      /* Plan mode colors */
-      --edit-mode-bg: oklch(97% 0.04 120);   /* Light green-tinted background */
-      --edit-mode-border: oklch(80% 0.1 120); /* Green-tinted border */
-      --edit-mode-text: oklch(40% 0.2 120);   /* Green-tinted text */
-      --edit-mode-hover-bg: oklch(94% 0.06 120); /* Darker green background for hover */
-      --edit-mode-hover-text: oklch(50% 0.2 120); /* Lighter green text for hover */
-      --view-mode-bg: oklch(97% 0.04 250);    /* Light blue-tinted background */
-      --view-mode-border: oklch(80% 0.1 250); /* Blue-tinted border */
-      --view-mode-text: oklch(40% 0.2 250);   /* Blue-tinted text */
-      --view-mode-hover-bg: oklch(94% 0.06 250); /* Darker blue background for hover */
-      --view-mode-hover-text: oklch(50% 0.2 250); /* Lighter blue text for hover */
+    /* Chart Colors (Using HSL values from above or provided) */
+    --chart-1: var(--primary);
+    --chart-2: var(--secondary);
+    --chart-3: var(--accent);
+    --chart-4: 220 7% 94%;
+    /* --chart-5: 301 75% 54.4%; */ /* Removed as not in user snippet, add back if needed */
 
-    --sidebar: oklch(98.91% 0.022 301.74); 
-    /* Added semi-transparent version with 80% opacity */
-    --sidebar-80: oklch(98.91% 0.022 301.74 / 0.8);
-    --sidebar-foreground: oklch(0.141 0.005 285.823);
-    --sidebar-background: oklch(1 0 0);
-    --sidebar-primary: oklch(0.606 0.25 292.717);
-    --sidebar-primary-foreground: oklch(0.969 0.016 293.756);
-    --sidebar-accent: oklch(0.967 0.001 286.375);
-    --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-    --sidebar-border: oklch(0.92 0.004 286.32);
-    --sidebar-ring: oklch(0.606 0.25 292.717);
+    /* --- Plan mode colors (HSL component values - Kept from previous version) --- */
+    --edit-mode-bg: 120 40% 97%;
+    --edit-mode-border: 120 30% 80%;
+    --edit-mode-text: 120 50% 40%;
+    --edit-mode-hover-bg: 120 35% 94%;
+    --edit-mode-hover-text: 120 45% 50%;
+    --view-mode-bg: 250 40% 97%;
+    --view-mode-border: 250 30% 80%;
+    --view-mode-text: 250 50% 40%;
+    --view-mode-hover-bg: 250 35% 94%;
+    --view-mode-hover-text: 250 45% 50%;
 
-   --session-gym-bg: 0.984 0.03 247;     /* Light Blueish */
-    --session-gym-border: 0.906 0.09 250;
-    --session-barmark-bg: 0.978 0.02 150;  /* Light Greenish */
-    --session-barmark-border: 0.92 0.08 150;
-    --session-egen-vila-bg: 0.975 0.004 260; /* Light Grayish */
-    --session-egen-vila-border: 0.91 0.006 260;
-    --session-default-bg-values: var(--card); /* Store card values */
-    --session-default-border-values: var(--border); /* Store border values */
+    /* --- Sidebar (HSL component values - Kept from previous version) --- */
+    /* Using user's new --background for sidebar base */
+    --sidebar: 220 44% 100%;
+    --sidebar-foreground: 286 10% 14%; /* Kept from previous */
+    --sidebar-background: 0 0% 100%; /* Kept from previous */
+    --sidebar-primary: 293 60% 61%; /* Kept from previous */
+    --sidebar-primary-foreground: 294 20% 97%; /* Kept from previous */
+    --sidebar-accent: 286 20% 97%; /* Kept from previous */
+    --sidebar-accent-foreground: 286 10% 21%; /* Kept from previous */
+    --sidebar-border: 286 10% 92%; /* Kept from previous */
+    --sidebar-ring: 293 60% 61%; /* Kept from previous */
+
+    /* --- Session (HSL component values - Kept from previous version) --- */
+    --session-gym-bg: 247 50% 98%;
+    --session-gym-border: 250 40% 91%;
+    --session-barmark-bg: 150 30% 98%;
+    --session-barmark-border: 150 25% 92%;
+    --session-egen-vila-bg: 260 10% 97%;
+    --session-egen-vila-border: 260 5% 91%;
+
+    /* Default session values reference card/border components */
+    --session-default-bg-values: var(--card);
+    --session-default-border-values: var(--border);
   }
 
   .dark {
