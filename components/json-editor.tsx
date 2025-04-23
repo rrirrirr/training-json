@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+// Import necessary React hooks and components
+import { useState, useEffect, useCallback } from "react"
 import {
   Dialog,
   DialogContent,
@@ -17,18 +18,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, Save, Copy, Bot, Code, MoreVertical } from "lucide-react"
-import CopyNotification from "./copy-notification" // Assuming this component exists
-import CopyForAINotification from "./copy-for-ai-notification" // Assuming this component exists
-import { copyJsonErrorForAI } from "@/utils/copy-for-ai" // Assuming this utility exists
-import { useTheme } from "next-themes"
-import { usePlanMode } from "@/contexts/plan-mode-context" // Import all functionality from the plan mode context
+import { AlertCircle, Save, Copy, Bot, Code, MoreVertical, Loader2 } from "lucide-react"
+import CopyNotification from "./copy-notification"
+import CopyForAINotification from "./copy-for-ai-notification"
+import { copyJsonErrorForAI } from "@/utils/copy-for-ai"
+import { usePlanMode } from "@/contexts/plan-mode-context"
 
-// Import syntax highlighting components
+// Re-import react-simple-code-editor
 import Editor from "react-simple-code-editor"
-import { Highlight, themes } from "prism-react-renderer" // Ensure this is installed
+// DO NOT import prism-react-renderer for this step
 
-// Define the expected shape of the plan prop
+// --- Types (Keep these) ---
 interface PlanData {
   weeks?: any[]
   monthBlocks?: any[]
@@ -47,57 +47,69 @@ interface Plan {
   [key: string]: any
 }
 
-// --- Removed 'mode' prop ---
 interface JsonEditorProps {
   isOpen: boolean
   onClose: () => void
   plan: Plan | null | undefined
 }
 
-// --- Removed 'mode' from function signature ---
+// --- JsonEditor Component (No Highlighting) ---
 export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
-  const { theme } = useTheme()
-  const isDarkMode = theme === "dark"
-  // --- Keep usePlanMode only for updateDraftPlan ---
+  // --- Hooks ---
   const { mode, updateDraftPlan, enterEditMode } = usePlanMode()
 
-  const [jsonText, setJsonText] = useState("")
+  // --- State ---
+  const [editorValue, setEditorValue] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isSaved, setIsSaved] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  // Separate notification states
   const [showCopyNotification, setShowCopyNotification] = useState(false)
   const [showAICopyNotification, setShowAICopyNotification] = useState(false)
   const [copySuccess, setCopySuccess] = useState<boolean>(true)
 
-  // --- Effects and Handler functions ---
+  // --- Effects ---
+  // Initialize editor when plan changes or dialog opens
   useEffect(() => {
-    if (plan?.data) {
+    if (isOpen && plan?.data) {
       try {
         const formattedJson = JSON.stringify(plan.data, null, 2)
-        setJsonText(formattedJson)
+        setEditorValue(formattedJson)
         setError(null)
       } catch (err) {
         console.error("Failed to stringify initial plan data:", err)
         setError("Failed to load plan data into editor")
-        setJsonText('{\n  "error": "Could not load plan data"\n}')
+        setEditorValue('{\n  "error": "Could not load plan data"\n}')
       }
-    } else {
-      setJsonText('{\n  "message": "No plan data provided or plan is invalid."\n}')
+    } else if (isOpen) {
+      setEditorValue('{\n  "message": "No plan data provided or plan is invalid."\n}')
+      setError(null)
     }
     setIsSaved(false)
-  }, [plan])
+  }, [plan, isOpen])
 
+  // Reset state when dialog closes
   useEffect(() => {
     if (!isOpen) {
       setError(null)
       setIsSaved(false)
       setIsSubmitting(false)
+      // setEditorValue(""); // Optionally clear value on close
     }
   }, [isOpen])
 
+  // --- Event Handlers ---
+  // Direct state update on change (No debouncing needed for this test)
+  const handleEditorChange = (code: string) => {
+    setEditorValue(code)
+    // Clear JSON parse errors immediately when user types
+    setError((prevError) => (prevError?.startsWith("Invalid JSON") ? null : prevError))
+    setIsSaved(false) // Mark as unsaved on any change
+  }
+
+  // Save handler (remains the same as the simplified version)
   const handleSave = async () => {
+    const textToParse = editorValue
+
     if (isSubmitting || !plan) {
       setError("Cannot save: Plan information is missing or submission in progress.")
       return
@@ -105,8 +117,7 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
 
     let parsedData: PlanData
     try {
-      parsedData = JSON.parse(jsonText)
-      if (error?.startsWith("Invalid JSON")) setError(null)
+      parsedData = JSON.parse(textToParse)
     } catch (err) {
       setError(err instanceof Error ? `Invalid JSON: ${err.message}` : "Invalid JSON format")
       setIsSubmitting(false)
@@ -118,12 +129,13 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
       setIsSubmitting(false)
       return
     }
+    setError(null) // Clear error after successful parse
 
     setIsSubmitting(true)
     setIsSaved(false)
 
     try {
-      // Basic JSON Structure Validation
+      // --- Basic JSON Structure Validation ---
       if (typeof parsedData !== "object" || parsedData === null) {
         throw new Error("JSON must be an object.")
       }
@@ -133,14 +145,19 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
       if (!parsedData.monthBlocks || !Array.isArray(parsedData.monthBlocks)) {
         throw new Error("JSON validation failed: must contain a 'monthBlocks' array.")
       }
+      if (!parsedData.exerciseDefinitions || !Array.isArray(parsedData.exerciseDefinitions)) {
+        throw new Error("JSON validation failed: must contain an 'exerciseDefinitions' array")
+      }
+      if (!parsedData.weekTypes || !Array.isArray(parsedData.weekTypes)) {
+        throw new Error("JSON validation failed: must contain a 'weekTypes' array")
+      }
 
-      // Ensure Metadata Exists and is Valid
+      // --- Ensure Metadata Exists and is Valid ---
       if (!parsedData.metadata) {
         parsedData.metadata = {}
       } else if (typeof parsedData.metadata !== "object" || parsedData.metadata === null) {
         throw new Error("JSON validation failed: 'metadata' must be an object.")
       }
-
       if (
         !parsedData.metadata.planName ||
         typeof parsedData.metadata.planName !== "string" ||
@@ -148,7 +165,6 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
       ) {
         parsedData.metadata.planName = plan.name || "Draft Plan"
       }
-
       if (
         !parsedData.metadata.creationDate ||
         typeof parsedData.metadata.creationDate !== "string"
@@ -157,24 +173,21 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
           plan.data?.metadata?.creationDate || new Date().toISOString()
       }
 
-      const potentiallyUpdatedJson = JSON.stringify(parsedData, null, 2)
-      if (potentiallyUpdatedJson !== jsonText) {
-        setJsonText(potentiallyUpdatedJson)
-      }
+      // --- Update Context ---
+      const finalJsonToSave = JSON.stringify(parsedData, null, 2)
+      if (finalJsonToSave !== editorValue) setEditorValue(finalJsonToSave)
 
-      // Update the draft plan and check if we need to enter edit mode
-      console.log("Updating draft plan with:", parsedData) // Debug log
+      console.log("Updating draft plan with:", parsedData.metadata?.planName)
       updateDraftPlan(parsedData)
-      
-      // Check if we're not already in edit mode - if not, enter edit mode
+
       if (mode !== "edit") {
         console.log("Not in edit mode, entering edit mode with the updated plan")
-        // Use the same plan ID if it exists
-        enterEditMode(parsedData, plan.id.toString())
+        enterEditMode(parsedData, plan.id ? plan.id.toString() : undefined)
       } else {
         console.log("Already in edit mode, just updated the draft plan")
       }
 
+      // --- Success Feedback and Cleanup ---
       setIsSaved(true)
       setError(null)
 
@@ -196,9 +209,10 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
     }
   }
 
+  // Copy handler
   const handleCopy = () => {
-    if (!jsonText) return
-    navigator.clipboard.writeText(jsonText).then(
+    if (!editorValue) return
+    navigator.clipboard.writeText(editorValue).then(
       () => {
         setShowCopyNotification(true)
         setCopySuccess(true)
@@ -212,9 +226,10 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
     )
   }
 
+  // Copy for AI handler
   const handleCopyForAI = () => {
-    if (!jsonText && !error) return
-    copyJsonErrorForAI(jsonText, error, (success) => {
+    if (!editorValue && !error) return
+    copyJsonErrorForAI(editorValue, error, (success) => {
       setShowAICopyNotification(true)
       setCopySuccess(success)
       if (!success) {
@@ -223,14 +238,13 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
     })
   }
 
+  // Format JSON handler
   const formatJson = () => {
     try {
-      const parsed = JSON.parse(jsonText)
+      const parsed = JSON.parse(editorValue)
       const formatted = JSON.stringify(parsed, null, 2)
-      setJsonText(formatted)
-      if (error?.startsWith("Invalid JSON")) {
-        setError(null)
-      }
+      setEditorValue(formatted)
+      setError(null)
       setIsSaved(false)
     } catch (err) {
       if (!error || error.startsWith("Invalid JSON")) {
@@ -239,78 +253,64 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
     }
   }
 
-  const handleEditorChange = (code: string) => {
-    setJsonText(code)
-    setIsSaved(false)
-    if (error?.startsWith("Invalid JSON")) {
-      setError(null)
-    }
-  }
-
-  const highlightCode = (code: string) => (
-    <Highlight theme={isDarkMode ? themes.vsDark : themes.github} code={code} language="json">
-      {({ className, style, tokens, getLineProps, getTokenProps }) => (
-        <pre
-          style={{ ...style, margin: 0, padding: 0, background: "transparent" }}
-          className={className}
-        >
-          {tokens.map((line, i) => (
-            <div key={i} {...getLineProps({ line })}>
-              {line.map((token, key) => (
-                <span key={key} {...getTokenProps({ token })} />
-              ))}
-            </div>
-          ))}
-        </pre>
-      )}
-    </Highlight>
-  )
-
-  // --- Define static labels and button text (no mode check) ---
-  const dialogTitle = "Edit Plan JSON"
+  // --- Dialog Labels and Button Text ---
+  const dialogTitle = "Edit Plan JSON (No Highlighting)" // Updated title
   const dialogDescription =
-    "Make changes to the plan's JSON data. Click Update Plan to apply your changes."
-  const saveButtonText = "Update Plan" // Always use this text
+    "Make changes to the plan's JSON data. Syntax highlighting is disabled for performance testing."
+  const saveButtonText = "Update Plan"
 
-  // --- Simplified disable states (no mode check) ---
-  const disableSave = isSubmitting || !jsonText || !!error
-  const disableFormat = isSubmitting || !jsonText || !!error?.startsWith("Invalid JSON")
+  // --- Disable States ---
+  const disableSaveButton = isSubmitting || !editorValue || !!error
+  const disableFormatButton = isSubmitting || !editorValue
+  const disableCopyButton = !editorValue || isSubmitting
+  const disableCopyAIButton = (!editorValue && !error) || isSubmitting
 
+  // --- Render ---
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-dialog-lg max-h-[90vh] dialog-content-base flex flex-col">
-          {/* DialogHeader */}
+          {/* Header */}
           <DialogHeader className="flex-shrink-0">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
               <div>
-                {/* Use static title/description */}
                 <DialogTitle>{dialogTitle}</DialogTitle>
                 <DialogDescription>{dialogDescription}</DialogDescription>
               </div>
             </div>
           </DialogHeader>
 
-          {/* Editor Area Container */}
-          <div className="flex-grow mt-4 border rounded-md bg-background overflow-auto">
+          {/* Editor Area: Use react-simple-code-editor without prism */}
+          <div className="flex-grow mt-4 border rounded-md bg-background overflow-auto relative min-h-[400px]">
+            {/* Loading Overlay */}
+            {isSubmitting && (
+              <div className="absolute inset-0 bg-white/50 dark:bg-black/50 flex items-center justify-center z-10 rounded-md">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            )}
+            {/* Use react-simple-code-editor */}
             <Editor
-              value={jsonText}
-              onValueChange={handleEditorChange}
-              highlight={highlightCode}
+              value={editorValue}
+              onValueChange={handleEditorChange} // Direct update
+              highlight={(code) => code} // NO HIGHLIGHTING - just return the code
               padding={12}
               style={{
                 fontFamily: '"Fira code", "Fira Mono", monospace',
                 fontSize: 14,
-                minHeight: "400px",
+                minHeight: "100%",
                 outline: "none",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-all",
               }}
               disabled={isSubmitting}
-              className="w-full focus-visible:outline-none"
-              textareaClassName="outline-none focus:outline-none caret-black dark:caret-white block"
+              className="w-full h-full focus-visible:outline-none"
+              textareaClassName="outline-none focus:outline-none caret-black dark:caret-white block w-full h-full"
+              aria-label="JSON Editor"
+              // Note: react-simple-code-editor might handle role/multiline internally
             />
           </div>
 
-          {/* Error / Success Feedback Area */}
+          {/* Error/Success Feedback Area */}
           <div className="flex-shrink-0 mt-4 space-y-3">
             {error && (
               <Alert variant="destructive">
@@ -326,7 +326,7 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
                       variant="outline"
                       size="sm"
                       className="flex-shrink-0 self-start sm:self-auto items-center gap-2 border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      disabled={!jsonText && !error}
+                      disabled={disableCopyAIButton || isSubmitting}
                     >
                       <Bot className="h-4 w-4" />
                       Copy Error for AI
@@ -341,7 +341,6 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
                   <Save className="h-4 w-4 mt-0.5 flex-shrink-0" />
                   <div className="ml-3 flex-1">
                     <AlertTitle>Success</AlertTitle>
-                    {/* Simplified success message */}
                     <AlertDescription>Plan updated successfully!</AlertDescription>
                   </div>
                 </div>
@@ -349,7 +348,7 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
             )}
           </div>
 
-          {/* Dialog Footer (Original Simple Layout) */}
+          {/* Footer: Actions and Save/Cancel */}
           <DialogFooter className="dialog-footer-between flex-shrink-0 flex flex-row items-center gap-2 pt-4">
             {/* Left Group (Actions) */}
             <div className="flex gap-2 justify-start items-center">
@@ -368,22 +367,20 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
                         e.preventDefault()
                         formatJson()
                       }}
-                      disabled={disableFormat}
+                      disabled={disableFormatButton || isSubmitting}
                       className="flex items-center gap-2 cursor-pointer"
                     >
-                      <Code className="h-4 w-4" />
-                      <span>Format</span>
+                      <Code className="h-4 w-4" /> <span>Format</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onSelect={(e) => {
                         e.preventDefault()
                         handleCopy()
                       }}
-                      disabled={!jsonText || isSubmitting}
+                      disabled={disableCopyButton}
                       className="flex items-center gap-2 cursor-pointer"
                     >
-                      <Copy className="h-4 w-4" />
-                      <span>Copy JSON</span>
+                      <Copy className="h-4 w-4" /> <span>Copy JSON</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -393,7 +390,7 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
                 onClick={formatJson}
                 variant="outline"
                 className="hidden sm:flex items-center gap-2"
-                disabled={disableFormat}
+                disabled={disableFormatButton || isSubmitting}
               >
                 <Code className="h-4 w-4" /> Format
               </Button>
@@ -401,7 +398,7 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
                 onClick={handleCopy}
                 variant="outline"
                 className="hidden sm:flex items-center gap-2"
-                disabled={!jsonText || isSubmitting}
+                disabled={disableCopyButton}
               >
                 <Copy className="h-4 w-4" /> Copy JSON
               </Button>
@@ -409,38 +406,16 @@ export default function JsonEditor({ isOpen, onClose, plan }: JsonEditorProps) {
 
             {/* Right Group (Save/Cancel) */}
             <div className="flex gap-2 justify-end items-center">
-              {/* Always show Cancel button */}
               <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
                 Cancel
               </Button>
-              {/* --- Always show Update Plan button (no mode check) --- */}
-              <Button onClick={handleSave} disabled={disableSave}>
+              <Button onClick={handleSave} disabled={disableSaveButton}>
                 {isSubmitting ? (
                   <>
-                    <svg
-                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Saving...
                   </>
                 ) : (
-                  // --- Use static button text ---
                   saveButtonText
                 )}
               </Button>
