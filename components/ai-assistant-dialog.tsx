@@ -44,7 +44,7 @@ function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
   }
 
   // Open the upload modal
-  // No need to pass a special callback anymore - the enhanced-json-upload-modal 
+  // No need to pass a special callback anymore - the enhanced-json-upload-modal
   // now handles plan creation with Zustand store directly
   const handleOpenUploadModal = () => {
     onClose()
@@ -70,7 +70,7 @@ function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-dialog-md dialog-content-base">
+      <DialogContent className="max-w-dialog-lg dialog-content-base">
         <DialogHeader>
           <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
             <Wand2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> Create Plan with AI Magic!
@@ -121,7 +121,7 @@ function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
               </div>
             </div>
           </div>
-          
+
           {/* 2. Import Plan Section */}
           <div className="rounded-lg border p-3 sm:p-4 space-y-2 sm:space-y-3 shadow-sm">
             <h3 className="text-base sm:text-lg font-semibold text-primary flex items-center gap-2">
@@ -146,7 +146,7 @@ function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
               </Button>
             </div>
           </div>
-          
+
           {/* 3. Tips Link */}
           <div className="text-center pt-4">
             <p className="text-xs sm:text-sm text-muted-foreground">
@@ -159,7 +159,7 @@ function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
               </Link>
             </p>
           </div>
-          
+
           {/* 4. How it Works (Collapsed) */}
           <Accordion type="single" collapsible className="w-full pt-4 border-t mt-6">
             <AccordionItem value="how-it-works">
