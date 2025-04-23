@@ -186,9 +186,9 @@ export const usePlanStore = create<PlanState>()(
           // Basic validation upfront
           if (!planId || typeof planId !== "string" || planId.toLowerCase() === "undefined") {
             console.error("[fetchPlanById] Called with invalid ID:", planId)
-            set({ 
+            set({
               error: "Invalid Plan ID provided for fetching.",
-              isLoading: false 
+              isLoading: false,
             })
             return null
           }
@@ -209,9 +209,9 @@ export const usePlanStore = create<PlanState>()(
             } else {
               // Other unexpected database error
               console.error("[fetchPlanById] Supabase fetch error:", error)
-              set({ 
+              set({
                 error: `Failed to fetch plan: ${error.message}`,
-                isLoading: false 
+                isLoading: false,
               })
               return null
             }
@@ -225,7 +225,10 @@ export const usePlanStore = create<PlanState>()(
               .insert({ plan_id: planId }) // accessed_at defaults to now()
               .then(({ error: logError }) => {
                 if (logError) {
-                  console.error(`[fetchPlanById] Failed to log access for plan ${planId}:`, logError)
+                  console.error(
+                    `[fetchPlanById] Failed to log access for plan ${planId}:`,
+                    logError
+                  )
                 }
               })
 
@@ -416,25 +419,35 @@ export const usePlanStore = create<PlanState>()(
           return null
         }
       },
-      removeLocalPlan: async (planId) => {
-        /* ... implementation as before ... */
+      removeLocalPlan: async (planId: string): Promise<boolean> => {
+        // Make explicitly async
         console.log(`[removeLocalPlan] START - Removing plan ID: ${planId}`)
         const state = get()
         console.log(`[removeLocalPlan] Initial activePlanId: ${state.activePlanId}`)
         let wasActive = state.activePlanId === planId
         try {
-          const listBeforeFilter = state.planMetadataList
-          const listAfterFilter = listBeforeFilter.filter((p) => p.id !== planId)
+          // Filter the list
+          const listAfterFilter = state.planMetadataList.filter((p) => p.id !== planId)
+
+          // Check if filtering worked as expected (optional sanity check)
           if (
-            listAfterFilter.length === listBeforeFilter.length &&
-            listBeforeFilter.some((p) => p.id === planId)
+            listAfterFilter.length === state.planMetadataList.length &&
+            state.planMetadataList.some((p) => p.id === planId)
           ) {
-            console.error(`[removeLocalPlan] FILTERING FAILED for ID ${planId}!`)
-            set({ error: `Failed to locally remove plan ${planId}` })
+            console.error(
+              `[removeLocalPlan] FILTERING FAILED for ID ${planId}! List length unchanged.`
+            )
+            // Decide if you want to set an error state or just return false
+            // set({ error: `Failed to locally remove plan ${planId}` });
             return false
-          } else {
-            console.log(`[removeLocalPlan] Filtering successful or plan ${planId} was not present.`)
           }
+
+          // Prepare state update object
+          let stateUpdate: Partial<PlanState> = {
+            planMetadataList: listAfterFilter,
+            error: null, // Clear any previous error
+          }
+
           if (wasActive) {
             console.log(`[removeLocalPlan] Plan ${planId} was active. Clearing active state.`)
             localStorage.removeItem("lastViewedPlanId")
@@ -443,27 +456,30 @@ export const usePlanStore = create<PlanState>()(
               localStorage.removeItem("planModeDraft_plan")
               localStorage.removeItem("planModeDraft_originalId")
             } catch (error) {
-              console.error(error)
+              console.error("Error clearing dependent localStorage keys:", error)
             }
-            set({
+            // Add active state clearing to the update object
+            stateUpdate = {
+              ...stateUpdate,
               activePlan: null,
               activePlanId: null,
-              planMetadataList: listAfterFilter,
               selectedWeek: null,
               selectedMonth: 1,
               viewMode: "month",
-              error: null,
-            })
+            }
           } else {
             console.log(`[removeLocalPlan] Plan ${planId} was not active. Only updating list.`)
-            set({ planMetadataList: listAfterFilter, error: null })
           }
+
+          // Apply the state update
+          set(stateUpdate)
+
           console.log(`[removeLocalPlan] END - State set. Returning true.`)
-          return true
+          return true // Indicate success
         } catch (err) {
           console.error("[removeLocalPlan] Error:", err)
-          set({ error: err instanceof Error ? err.message : "Unknown error" })
-          return false
+          set({ error: err instanceof Error ? err.message : "Unknown error removing plan" })
+          return false // Indicate failure
         }
       },
       clearActivePlan: () => {

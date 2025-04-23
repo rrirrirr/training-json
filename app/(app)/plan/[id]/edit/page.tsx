@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react" // Added useRef
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import PlanViewer from "@/components/plan-viewer"
@@ -9,63 +9,93 @@ import { usePlanStore } from "@/store/plan-store"
 
 export default function PlanEditPage({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const { mode, draftPlan, enterEditMode } = usePlanMode()
+  const { mode, draftPlan, originalPlanId, enterEditMode } = usePlanMode() // Get originalPlanId too
   const fetchPlanById = usePlanStore((state) => state.fetchPlanById)
-  const isLoading = usePlanStore((state) => state.isLoading)
-  
-  // Store the ID in state to avoid direct params access in the render function
-  const [planId, setPlanId] = useState<string>("")
-  
-  useEffect(() => {
-    // Set the plan ID from params once
-    if (params.id && !planId) {
-      setPlanId(params.id);
-    }
-  }, [params.id, planId]);
+  const isStoreLoading = usePlanStore((state) => state.isLoading) // Zustand loading state
+  const [isComponentLoading, setIsComponentLoading] = useState(true) // Component-level loading
+  const isMounted = useRef(true) // Ref to track mount status
 
-  // On mount, load the plan and enter edit mode if not already there
+  // Get planId from params once
+  const planIdFromParams = params.id
+
   useEffect(() => {
-    if (!planId) return; // Don't proceed until we have the ID
-    
-    const loadPlan = async () => {
-      // If we're already in edit mode and have a draft plan, make sure we're editing the correct plan
-      if (mode === "edit" && draftPlan) {
-        // Check if we're already editing this plan
-        const originalPlanId = localStorage.getItem("planModeDraft_originalId")
-        if (originalPlanId === planId) {
-          console.log("[PlanEditPage] Already editing the requested plan:", planId)
-          return // We're already in the correct state
-        }
+    isMounted.current = true // Mark as mounted
+    let isActive = true // Flag to prevent state updates after unmount or early exit
+
+    const loadAndSetup = async () => {
+      console.log(`[PlanEditPage ${planIdFromParams}] Running effect. Current mode: ${mode}`)
+
+      // *** CRITICAL CHECK: If mode is already normal, it means exitMode was likely called (e.g., after save). Do nothing. ***
+      if (mode === "normal") {
+        console.log(
+          `[PlanEditPage ${planIdFromParams}] Mode is 'normal'. Skipping effect to allow navigation.`
+        )
+        setIsComponentLoading(false) // Ensure loader hides if we somehow stay on this page
+        return
       }
 
-      // Load the plan if we need to
+      // If we are already editing the correct plan, we are good.
+      if (mode === "edit" && originalPlanId === planIdFromParams) {
+        console.log(`[PlanEditPage ${planIdFromParams}] Already in correct edit mode.`)
+        if (isActive) setIsComponentLoading(false)
+        return
+      }
+
+      // If we are in edit mode but for a *different* plan, or not in edit mode at all,
+      // we need to load the correct plan and enter edit mode.
+      console.log(
+        `[PlanEditPage ${planIdFromParams}] Mode is '${mode}', attempting to load plan and enter edit mode.`
+      )
+      setIsComponentLoading(true) // Show loader while fetching/setting up
+
       try {
-        // Fetch the plan by ID
-        const planData = await fetchPlanById(planId)
-        
+        const planData = await fetchPlanById(planIdFromParams)
+
         if (!planData) {
-          console.error("[PlanEditPage] Plan not found:", planId)
-          router.replace("/")
+          console.error(`[PlanEditPage ${planIdFromParams}] Plan not found.`)
+          if (isActive) router.replace("/")
           return
         }
 
-        // Enter edit mode with the loaded plan data
-        console.log("[PlanEditPage] Entering edit mode with plan:", planData.metadata?.planName)
-        enterEditMode(planData, planId)
+        // Only proceed if the effect is still active
+        if (isActive) {
+          console.log(
+            `[PlanEditPage ${planIdFromParams}] Entering edit mode with fetched plan:`,
+            planData.metadata?.planName
+          )
+          // Enter edit mode - This might trigger navigation itself if implemented differently,
+          // but here we assume it just sets the context state.
+          enterEditMode(planData, planIdFromParams)
+          // We expect to be redirected or the component state to update,
+          // keep loading true until the component potentially unmounts or re-renders in the correct state.
+          // Setting isComponentLoading to false here might be premature if enterEditMode causes navigation.
+          // Let subsequent renders handle the final loading state based on the context mode.
+          // If enterEditMode *doesn't* navigate immediately, we need this:
+          setIsComponentLoading(false)
+        }
       } catch (error) {
-        console.error("[PlanEditPage] Error loading plan:", error)
-        router.replace("/")
+        console.error(`[PlanEditPage ${planIdFromParams}] Error loading plan:`, error)
+        if (isActive) router.replace("/")
       }
     }
 
-    // Only try to load the plan if we're not already in edit mode or have a different plan loaded
-    if (mode !== "edit" || !draftPlan) {
-      loadPlan()
-    }
-  }, [mode, draftPlan, planId, enterEditMode, fetchPlanById, router])
+    loadAndSetup()
 
-  // While checking mode or if the plan is loading, show loading state
-  if (isLoading || (mode !== "edit" || !draftPlan) || !planId) {
+    // Cleanup function
+    return () => {
+      isActive = false // Prevent state updates on unmount
+      isMounted.current = false // Update ref on unmount
+    }
+  }, [planIdFromParams, mode, originalPlanId, fetchPlanById, enterEditMode, router]) // Add dependencies
+
+  // Combine loading states
+  const isLoading = isStoreLoading || isComponentLoading
+
+  // Render loader while loading or if the mode check prevents setup
+  if (isLoading || mode !== "edit" || originalPlanId !== planIdFromParams) {
+    // Keep showing loader if the mode isn't 'edit' for the *correct* plan ID yet
+    // This prevents rendering PlanViewer prematurely if enterEditMode is still processing
+    // or if the initial mode check decided to skip setup.
     return (
       <div className="flex h-full items-center justify-center p-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -73,7 +103,6 @@ export default function PlanEditPage({ params }: { params: { id: string } }) {
     )
   }
 
-  // PlanViewer is responsible for rendering the editor UI, 
-  // and the PlanModeMenu will be shown automatically when in edit mode
-  return <PlanViewer planId={planId} />
+  // Render PlanViewer only when confirmed to be in edit mode for the correct plan
+  return <PlanViewer planId={planIdFromParams} isLoading={false} /> // Pass isLoading as false since we handled it above
 }

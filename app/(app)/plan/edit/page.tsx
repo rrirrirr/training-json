@@ -2,76 +2,64 @@
 
 import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react" // Keep loader import if PlanViewer doesn't import it
 import PlanViewer from "@/components/plan-viewer"
 import { usePlanMode } from "@/contexts/plan-mode-context"
 
 export default function PlanEditPage() {
   const router = useRouter()
   const { mode, draftPlan, originalPlanId } = usePlanMode()
-  
-  // Use a ref to track mounted state to avoid state updates during unmount
   const isMounted = useRef(true)
-  
-  // State to control when to show content
-  const [isLoading, setIsLoading] = useState(true)
-  
-  // Setup effect with consistent hook calls
+  // State to control when the viewer is ready to display content
+  const [isReadyToShowViewer, setIsReadyToShowViewer] = useState(false)
+
   useEffect(() => {
-    // Set isMounted to true when component mounts
     isMounted.current = true
-    
-    console.log("[PlanEditPage] Initial state:", { 
-      mode, 
-      hasDraftPlan: !!draftPlan, 
-      hasOriginalId: !!originalPlanId
+    console.log("[PlanEditPage] Initial state:", {
+      mode,
+      hasDraftPlan: !!draftPlan,
+      hasOriginalId: !!originalPlanId,
     })
-    
-    // Special case: original plan ID exists, redirect to specific edit URL
+
+    // Redirect existing plan edits immediately
     if (mode === "edit" && draftPlan && originalPlanId) {
       console.log(`[PlanEditPage] Redirecting to specific edit URL: /plan/${originalPlanId}/edit`)
       router.replace(`/plan/${originalPlanId}/edit`)
-      return
+      return // Exit useEffect early
     }
-    
-    // Check if we can show the editor
-    if (mode === "edit" && draftPlan) {
-      console.log("[PlanEditPage] Valid edit mode, showing editor after short delay")
-      // Small delay to ensure state is stable
+
+    // Handle the case for /plan/edit (new plan edit)
+    if (mode === "edit" && draftPlan && !originalPlanId) {
+      // Valid state for NEW plan edit at /plan/edit
+      console.log("[PlanEditPage] Valid new plan edit mode, preparing viewer.")
+      // Set viewer ready after a minimal delay to ensure state consistency
       const timer = setTimeout(() => {
         if (isMounted.current) {
-          setIsLoading(false)
+          setIsReadyToShowViewer(true)
         }
-      }, 50)
-      
-      return () => {
-        clearTimeout(timer)
-      }
-    } else {
-      // Invalid state, redirect to home
-      console.log("[PlanEditPage] Invalid state, redirecting to home")
+      }, 50) // Adjust delay if needed
+      return () => clearTimeout(timer) // Cleanup timer
+    }
+
+    // If state is invalid for this page (e.g., not in edit mode, no draft), redirect
+    console.log("[PlanEditPage] Invalid state for /plan/edit, redirecting to home.")
+    if (isMounted.current) {
+      // Prevent updates on unmounted component
       router.replace("/")
     }
-    
-    // Cleanup function to prevent state updates after unmount
+
+    // Cleanup ref on unmount
     return () => {
       isMounted.current = false
     }
   }, [mode, draftPlan, originalPlanId, router])
-  
-  // Always render the same structure, only change what's inside
+
+  // Render PlanViewer unconditionally, passing the loading state
+  // PlanViewer must be updated to handle this isLoading prop internally
   return (
-    <>
-      {isLoading ? (
-        <div className="flex h-full items-center justify-center">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Loading editor...</p>
-          </div>
-        </div>
-      ) : (
-        <PlanViewer planId="edit-mode-draft" />
-      )}
-    </>
+    <PlanViewer
+      planId="edit-mode-draft" // ID for new drafts
+      isLoading={!isReadyToShowViewer} // Pass the loading state down
+    />
   )
 }
