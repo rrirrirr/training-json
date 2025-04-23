@@ -78,7 +78,9 @@ export function PlanModeIndicator() {
       "px-4 py-2 border-b-2 text-sm flex items-center justify-center",
       currentStyle.bg,
       modeData.mode === "normal" ? "!border-gray-500" : "!border-blue-500"
-    )}>
+    )}
+    data-testid="edit-mode-indicator"
+    >
       <span className="mr-2">{currentStyle.icon}</span>
       <span className={cn("font-medium", currentStyle.text)}>
         {modeData.mode === "normal" ? 

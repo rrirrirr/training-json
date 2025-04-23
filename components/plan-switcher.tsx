@@ -58,7 +58,7 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
   )
 
   return (
-    <div className={wrapperClassName}>
+    <div className={wrapperClassName} data-testid="plan-item" data-plan-id={plan.id}>
       <div className="flex-grow min-w-0 mr-2 self-center">
         <Link
           href={`/plan/${plan.id}`}
