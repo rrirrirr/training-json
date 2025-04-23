@@ -158,7 +158,7 @@ export function PlanModeProvider({ children }: { children: React.ReactNode }) {
     setMode("normal") // Uses the wrapper function
     setDraftPlan(null) // Uses the wrapper function
     setOriginalPlanId(null) // Uses the wrapper function
-    
+
     // Force navigation when on edit pages
     if (typeof window !== "undefined") {
       const path = window.location.pathname
@@ -166,16 +166,16 @@ export function PlanModeProvider({ children }: { children: React.ReactNode }) {
 
       if (isOnEditPage) {
         console.log("[PlanModeContext] Forcing navigation away from edit page")
-        
+
         // Use window.location for a hard redirect that bypasses Next.js router
         if (planIdToNavigateTo) {
           // Small delay to ensure state is updated before navigation
           setTimeout(() => {
-            window.location.href = `/plan/${planIdToNavigateTo}`
+            // window.location.href = `/plan/${planIdToNavigateTo}`
           }, 50)
         } else {
           setTimeout(() => {
-            window.location.href = "/"
+            // window.location.href = "/"
           }, 50)
         }
       }
@@ -199,17 +199,23 @@ export function PlanModeProvider({ children }: { children: React.ReactNode }) {
       setMode("edit")
       setOriginalPlanId(originalId ?? null) // Ensure null if undefined
 
-      // Navigate to the dynamic edit page with ID if available
-      if (originalId) {
-        router.push(`/plan/${originalId}/edit`)
-      } else {
-        // If no original ID, we'll need to create a plan first to get an ID
-        console.log("[PlanModeContext] No original ID provided, using fallback route")
-        router.push("/plan/edit")
-      }
+      // Small delay to ensure state is updated before navigation
+      setTimeout(() => {
+        // Navigate to the dynamic edit page with ID if available
+        if (originalId) {
+          console.log("[PlanModeContext] Navigating to plan-specific edit page:", originalId)
+          // Use window.location for a hard redirect to ensure consistent state
+          window.location.href = `/plan/${originalId}/edit`
+        } else {
+          // If no original ID, we'll use the generic edit route
+          console.log("[PlanModeContext] No original ID provided, using fallback route")
+          // Use window.location for a hard redirect to ensure consistent state
+          window.location.href = "/plan/edit"
+        }
+      }, 100) // Small delay to ensure state updates
     },
     [setMode, setDraftPlan, setOriginalPlanId, router]
-  ) // Use setters as dependencies
+  )
 
   // Enter view mode for an external plan
   const enterViewMode = useCallback(
@@ -293,9 +299,11 @@ export function PlanModeProvider({ children }: { children: React.ReactNode }) {
       setMode("normal")
       setDraftPlan(null)
       setOriginalPlanId(null)
+      console.log("[PlanModeContext] State reset to normal mode")
 
-      // Navigate to the plan view page
-      router.push(`/plan/${planId}`)
+      // Use a hard redirect for more reliable navigation after save
+      console.log(`[PlanModeContext] Navigating to plan view: /plan/${planId}`)
+      // window.location.href = `/plan/${planId}`
     } else {
       console.error("[PlanModeContext] Failed to save draft plan.")
     }
@@ -356,20 +364,18 @@ export function PlanModeProvider({ children }: { children: React.ReactNode }) {
         setMode("normal")
         setDraftPlan(null)
         setOriginalPlanId(null)
-        // Use a more reliable navigation method
-        if (typeof window !== "undefined") {
-          // Use a small delay to ensure state updates before navigation
-          setTimeout(() => {
-            window.location.href = `/plan/${planId}`;
-          }, 50);
-        }
+        console.log("[PlanModeContext] State reset to normal mode")
+
+        // Use a hard redirect for more reliable navigation after save
+        console.log(`[PlanModeContext] Navigating to plan view: /plan/${planId}`)
+        // window.location.href = `/plan/${planId}`
       } else {
         console.error(
           "[PlanModeContext] Failed to save viewed plan (createPlan returned null/undefined)."
         )
       }
     } catch (error) {
-      console.error("[PlanModeContext] Error in saveViewedPlanToMyPlans:", error);
+      console.error("[PlanModeContext] Error in saveViewedPlanToMyPlans:", error)
     }
 
     return planId

@@ -22,6 +22,18 @@ export default function HomePage() {
 
   // Effect to clear modes and active plan state when navigating TO home page
   useEffect(() => {
+    // Add check to see if we're about to navigate to the edit page
+    // If localStorage has draft plan data but we haven't navigated yet, don't clear state
+    const isDraftPlanInLocalStorage = localStorage.getItem("planModeDraft_plan") !== null;
+    const isDraftModeInLocalStorage = localStorage.getItem("planModeDraft_mode") === "edit";
+    
+    // If we have draft plan data and in edit mode, we're likely in the process of navigating to edit page
+    // Don't clear state in this case
+    if (isDraftPlanInLocalStorage && isDraftModeInLocalStorage) {
+      console.log("[HomePage] Draft plan in localStorage detected, likely navigating to edit page. Not clearing state.");
+      return;
+    }
+    
     let didClear = false
     // Exit view/edit mode if applicable
     if (mode !== "normal") {
@@ -62,29 +74,21 @@ export default function HomePage() {
     }
   }
 
-  // Handler for importing plan data (keep as is)
+  // Handler for importing plan data - now uses edit mode instead of direct Supabase save
   const handleImportPlan = async (data: TrainingPlanData) => {
-    /* ... as before ... */
-    setCreatingPlan(true)
-    try {
-      if (!data.metadata)
-        data.metadata = { planName: `Imported Plan ${new Date().toLocaleDateString()}` }
-      else if (!data.metadata.planName)
-        data.metadata.planName = `Imported Plan ${new Date().toLocaleDateString()}`
-      const { data: createdPlan, error } = await supabase
-        .from("training_plans")
-        .insert({ plan_data: data })
-        .select("id")
-        .single()
-      if (error) throw error
-      if (createdPlan?.id) {
-        localStorage.setItem("lastViewedPlanId", createdPlan.id) // Store immediately
-        router.push(`/plan/${createdPlan.id}`)
-      }
-    } catch (error) {
-      console.error("Error creating imported plan:", error)
-      setCreatingPlan(false)
+    console.log("[HomePage] handleImportPlan called - this should not happen with the new flow");
+    console.log("[HomePage] Plans should now enter edit mode directly instead of saving immediately");
+    
+    // Ensure metadata is present and has a planName
+    if (!data.metadata) {
+      data.metadata = { planName: `Imported Plan ${new Date().toLocaleDateString()}` }
+    } else if (!data.metadata.planName) {
+      data.metadata.planName = `Imported Plan ${new Date().toLocaleDateString()}`
     }
+    
+    // Enter edit mode directly instead of saving to Supabase
+    console.log("[HomePage] Entering edit mode with imported plan");
+    enterEditMode(data);
   }
 
   // Event listener for AI creation (keep as is)
@@ -92,7 +96,18 @@ export default function HomePage() {
     /* ... as before ... */
     const handlePlanCreatedFromJson = async (e: CustomEvent<{ data: TrainingPlanData }>) => {
       const data = e.detail.data
-      await handleImportPlan(data)
+      
+      // Ensure metadata is present and has a planName
+      if (!data.metadata) {
+        data.metadata = { planName: `AI-Generated Plan ${new Date().toLocaleDateString()}` }
+      } else if (!data.metadata.planName) {
+        data.metadata.planName = `AI-Generated Plan ${new Date().toLocaleDateString()}`
+      }
+      
+      // Enter edit mode directly instead of saving to Supabase
+      console.log("[HomePage] Entering edit mode with AI-generated plan");
+      // Use the enterEditMode function from the plan mode context
+      enterEditMode(data);
     }
     // @ts-ignore
     window.addEventListener("plan-created-from-json", handlePlanCreatedFromJson)

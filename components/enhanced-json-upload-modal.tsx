@@ -59,13 +59,13 @@ export default function EnhancedJsonUploadModal({
 
   // Get the createPlan function from the Zustand store
   const createPlan = usePlanStore((state) => state.createPlan)
-  
+
   // Get the enterEditMode function from the plan mode context
   const { mode, enterEditMode } = usePlanMode()
-  
+
   // Log initial state
-  console.log("[EnhancedJsonUploadModal] Initial mode:", mode);
-  console.log("[EnhancedJsonUploadModal] enterEditMode function exists:", !!enterEditMode);
+  console.log("[EnhancedJsonUploadModal] Initial mode:", mode)
+  console.log("[EnhancedJsonUploadModal] enterEditMode function exists:", !!enterEditMode)
 
   // Separate notification states for regular copy and AI copy
   const [showCopyNotification, setShowCopyNotification] = useState(false)
@@ -119,16 +119,16 @@ export default function EnhancedJsonUploadModal({
 
         // Get the plan name from metadata
         const planName = data.metadata.planName.trim()
-        
-        console.log("[validateAndImport] Validated plan data:", { 
+
+        console.log("[validateAndImport] Validated plan data:", {
           name: planName,
           weeksCount: data.weeks.length,
-          monthsCount: data.monthBlocks.length
-        });
-        
+          monthsCount: data.monthBlocks.length,
+        })
+
         // If there's an onImport callback, call it with the data and let the parent handle plan creation
         if (typeof onImport === "function") {
-          console.log("[validateAndImport] Using onImport callback");
+          console.log("[validateAndImport] Using onImport callback")
           // Reset form state
           setJsonText("")
           setFile(null)
@@ -141,33 +141,42 @@ export default function EnhancedJsonUploadModal({
           // The parent component will decide what to do with it
           onImport(data)
         } else {
-          console.log("[validateAndImport] No onImport callback - entering edit mode directly");
-          console.log("[validateAndImport] Current mode before entering edit mode:", mode);
-          console.log("[validateAndImport] enterEditMode function type:", typeof enterEditMode);
-          
+          console.log("[validateAndImport] No onImport callback - entering edit mode directly")
+          console.log("[validateAndImport] Current mode before entering edit mode:", mode)
+          console.log("[validateAndImport] enterEditMode function type:", typeof enterEditMode)
+
           // Instead of immediately saving to Supabase, enter edit mode
           try {
-            enterEditMode(data);
-            console.log("[validateAndImport] Successfully entered edit mode");
-            console.log("[validateAndImport] Mode after enterEditMode called:", mode);
+            console.log("[validateAndImport] Entering edit mode with data:", {
+              planName: data.metadata?.planName,
+              weeksCount: data.weeks?.length || 0,
+            })
+            enterEditMode(data)
+            console.log("[validateAndImport] Successfully entered edit mode")
+            console.log("[validateAndImport] Mode after enterEditMode called:", mode)
+
+            // Close the modal only - let enterEditMode handle the navigation
+            onClose()
+            
+            // Don't navigate here - enterEditMode handles the navigation
           } catch (editModeError) {
-            console.error("[validateAndImport] Error entering edit mode:", editModeError);
-            setError("Error entering edit mode: " + 
-              (editModeError instanceof Error ? editModeError.message : "Unknown error"));
-            setIsSubmitting(false);
-            return;
+            console.error("[validateAndImport] Error entering edit mode:", editModeError)
+            setError(
+              "Error entering edit mode: " +
+                (editModeError instanceof Error ? editModeError.message : "Unknown error")
+            )
+            setIsSubmitting(false)
+            return
           }
-          
+
           // Reset form state
-          setJsonText("");
-          setFile(null);
-          setError(null);
-          
+          setError(null)
+
           // Close the modal
-          onClose();
-          
+          onClose()
+
           // Log after modal is closed
-          console.log("[validateAndImport] Modal closed, edit mode should be active now");
+          console.log("[validateAndImport] Modal closed, edit mode should be active now")
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Invalid JSON format")
@@ -214,29 +223,29 @@ export default function EnhancedJsonUploadModal({
 
   const handleOpenJsonEditor = async () => {
     try {
-      let jsonData = null;
-      
+      let jsonData = null
+
       if (activeTab === "paste" && jsonText.trim()) {
         // Use the text input data
         try {
-          jsonData = JSON.parse(jsonText);
+          jsonData = JSON.parse(jsonText)
         } catch (err) {
           // If it's not valid JSON, create a template
           jsonData = {
             metadata: { planName: "New Plan" },
             weeks: [],
             monthBlocks: [],
-            exerciseDefinitions: []
-          };
+            exerciseDefinitions: [],
+          }
         }
       } else if (activeTab === "upload" && file) {
         // Read from file
-        const text = await file.text();
+        const text = await file.text()
         try {
-          jsonData = JSON.parse(text);
+          jsonData = JSON.parse(text)
         } catch (err) {
-          setError("Failed to parse file as JSON");
-          return;
+          setError("Failed to parse file as JSON")
+          return
         }
       } else {
         // If no data, create a template
@@ -244,27 +253,27 @@ export default function EnhancedJsonUploadModal({
           metadata: { planName: "New Plan" },
           weeks: [],
           monthBlocks: [],
-          exerciseDefinitions: []
-        };
+          exerciseDefinitions: [],
+        }
       }
-      
+
       // Create a mock plan object for the editor
       const mockPlan = {
         id: "temp-editing-id",
         name: jsonData.metadata?.planName || "Draft Plan",
-        data: jsonData
-      };
-      
-      setJsonDataForEditor(mockPlan);
-      setIsJsonEditorOpen(true);
+        data: jsonData,
+      }
+
+      setJsonDataForEditor(mockPlan)
+      setIsJsonEditorOpen(true)
     } catch (err) {
-      setError("Failed to prepare data for JSON editor");
+      setError("Failed to prepare data for JSON editor")
     }
   }
 
   const handleJsonEditorClose = () => {
-    setIsJsonEditorOpen(false);
-    setJsonDataForEditor(null);
+    setIsJsonEditorOpen(false)
+    setJsonDataForEditor(null)
   }
 
   return (
@@ -297,10 +306,7 @@ export default function EnhancedJsonUploadModal({
                 disabled={isSubmitting}
               />
               <div className="mt-4 flex flex-wrap gap-2">
-                <Button
-                  onClick={handleImportFromText}
-                  disabled={isSubmitting || !jsonText.trim()}
-                >
+                <Button onClick={handleImportFromText} disabled={isSubmitting || !jsonText.trim()}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -330,10 +336,7 @@ export default function EnhancedJsonUploadModal({
                 )}
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
-                <Button
-                  onClick={handleImportFromFile}
-                  disabled={isSubmitting || !file}
-                >
+                <Button onClick={handleImportFromFile} disabled={isSubmitting || !file}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -400,10 +403,10 @@ export default function EnhancedJsonUploadModal({
                   </span>
                 </div>
               </div>
-              <Button 
-                onClick={handleOpenJsonEditor} 
-                variant="outline" 
-                className="flex items-center gap-1" 
+              <Button
+                onClick={handleOpenJsonEditor}
+                variant="outline"
+                className="flex items-center gap-1"
                 size="sm"
               >
                 <Edit className="h-4 w-4 mr-1" />
@@ -459,11 +462,7 @@ export default function EnhancedJsonUploadModal({
               Cancel
             </Button>
             <Link href="/documentation" passHref>
-              <Button
-                variant="secondary"
-                className="dialog-button-icon"
-                disabled={isSubmitting}
-              >
+              <Button variant="secondary" className="dialog-button-icon" disabled={isSubmitting}>
                 <FileText className="h-4 w-4" />
                 Documentation <ExternalLink className="ml-1 h-3 w-3" />
               </Button>

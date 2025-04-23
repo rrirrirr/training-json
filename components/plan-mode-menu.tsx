@@ -30,15 +30,29 @@ export function PlanModeMenu() {
   const handleSave = async () => {
     setIsSaving(true)
     try {
+      let planId;
+      
       if (mode === "edit") {
-        await saveDraftPlan()
+        planId = await saveDraftPlan();
+        if (planId) {
+          console.log("[PlanModeMenu] Plan saved successfully with ID:", planId);
+        } else {
+          console.error("[PlanModeMenu] Failed to save plan");
+          setIsSaving(false); // Reset only if save failed
+        }
       } else if (mode === "view") {
-        await saveViewedPlanToMyPlans()
+        planId = await saveViewedPlanToMyPlans();
+        if (planId) {
+          console.log("[PlanModeMenu] Viewed plan saved to my plans with ID:", planId);
+        } else {
+          console.error("[PlanModeMenu] Failed to save viewed plan");
+          setIsSaving(false); // Reset only if save failed
+        }
       }
+      // Don't reset isSaving on success - the component will unmount with navigation
     } catch (error) {
       console.error("Error saving plan:", error)
-    } finally {
-      setIsSaving(false)
+      setIsSaving(false) // Only reset on error
     }
   }
 

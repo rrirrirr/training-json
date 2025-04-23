@@ -22,26 +22,15 @@ export const useUploadModal = create<UploadModalStore>((set) => ({
 export function UploadModal() {
   const { isOpen, close, onImportCallback } = useUploadModal()
   
-  // Only create a handler if a callback was provided, otherwise pass null
-  // This allows the EnhancedJsonUploadModal to enter edit mode directly
-  const handleImport = onImportCallback 
-    ? (data: TrainingPlanData) => {
-        console.log("[UploadModal] Import handler called with callback");
-        // If a callback was provided, execute it
-        onImportCallback(data)
-        
-        // Close the modal
-        close()
-      }
-    : null
-  
-  console.log("[UploadModal] Rendering with onImport callback:", !!handleImport);
+  // Don't create a handler - we want the EnhancedJsonUploadModal to enter edit mode directly
+  // instead of saving to Supabase immediately
+  console.log("[UploadModal] Rendering without onImport callback to ensure edit mode is used");
   
   return (
     <EnhancedJsonUploadModal 
       isOpen={isOpen} 
       onClose={close} 
-      onImport={handleImport} 
+      // No onImport prop - this will make the modal use enterEditMode directly
     />
   )
 }
