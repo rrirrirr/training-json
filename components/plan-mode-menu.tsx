@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog" // Assuming Shadcn AlertDialog path
 import JsonEditor from "@/components/json-editor" // Updated import path
 import { cn } from "@/lib/utils"
+import { SavedPlanToast } from "@/components/saved-plan-toast"
 
 export function PlanModeMenu() {
   const { mode, draftPlan, originalPlanId, exitMode, saveDraftPlan, saveViewedPlanToMyPlans } =
@@ -24,6 +25,7 @@ export function PlanModeMenu() {
   const [isSaving, setIsSaving] = useState(false)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
   const [isJsonEditorOpen, setIsJsonEditorOpen] = useState(false)
+  const [savedPlanName, setSavedPlanName] = useState<string | null>(null)
 
   const planName = draftPlan?.metadata?.planName || "Unnamed Plan"
 
@@ -36,6 +38,7 @@ export function PlanModeMenu() {
         planId = await saveDraftPlan();
         if (planId) {
           console.log("[PlanModeMenu] Plan saved successfully with ID:", planId);
+          setSavedPlanName(planName); // Set the plan name for the toast
         } else {
           console.error("[PlanModeMenu] Failed to save plan");
           setIsSaving(false); // Reset only if save failed
@@ -44,6 +47,7 @@ export function PlanModeMenu() {
         planId = await saveViewedPlanToMyPlans();
         if (planId) {
           console.log("[PlanModeMenu] Viewed plan saved to my plans with ID:", planId);
+          setSavedPlanName(planName); // Set the plan name for the toast
         } else {
           console.error("[PlanModeMenu] Failed to save viewed plan");
           setIsSaving(false); // Reset only if save failed
@@ -103,6 +107,7 @@ export function PlanModeMenu() {
             variant="link" // Changed to link variant
             size="sm"
             onClick={handleBackClick}
+            data-testid="discard-button"
             className={cn(
               "-ml-2 p-1",
               mode === "edit"
@@ -134,7 +139,7 @@ export function PlanModeMenu() {
                   <span>Viewing Plan</span>
                 )}
               </div>
-              <h1 className="text-xl sm:text-2xl text-foreground line-clamp-1 font-oswald font-light uppercase tracking-wide">
+              <h1 className="text-xl sm:text-2xl text-foreground line-clamp-1 font-oswald font-light uppercase tracking-wide" data-testid="plan-name">
                 {/* Plan Name - larger & bolder */}
                 {planName}
               </h1>
@@ -163,6 +168,7 @@ export function PlanModeMenu() {
                 size="sm"
                 onClick={handleSave}
                 disabled={isSaving}
+                data-testid="save-button"
                 className={cn(
                   "w-full sm:w-auto", // Full width on mobile
                   mode === "edit"
@@ -201,7 +207,7 @@ export function PlanModeMenu() {
           setShowExitConfirm(open)
         }}
       >
-        <AlertDialogContent className={mode === "edit" ? "border-[var(--edit-mode-border)]" : ""}>
+        <AlertDialogContent className={mode === "edit" ? "border-[var(--edit-mode-border)]" : ""} data-testid="discard-warning-dialog">
           <AlertDialogHeader>
             <AlertDialogTitle className={mode === "edit" ? "text-[var(--edit-mode-text)]" : ""}>
               Discard unsaved changes?
@@ -222,6 +228,7 @@ export function PlanModeMenu() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDiscardChanges}
+              data-testid="confirm-discard-button"
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Discard changes
@@ -241,6 +248,7 @@ export function PlanModeMenu() {
           }}
         />
       )}
+      {savedPlanName && <SavedPlanToast planName={savedPlanName} />}
     </>
   )
 }
