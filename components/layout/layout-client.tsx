@@ -189,6 +189,7 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
           <AppSidebar handleToggleResize={undefined} />
         </Sidebar>
         <div className="flex flex-1 flex-col">
+          {/* Keep AppHeader in mobile view as requested */}
           <AppHeader />
           <main className="flex-1 overflow-y-auto overflow-x-hidden">{children}</main>
         </div>
@@ -251,7 +252,7 @@ function LayoutWithSidebar({ children }: { children: React.ReactNode }) {
           className="h-screen flex flex-col overflow-hidden"
         >
           <div className="flex h-full flex-col">
-            {!isRootRoute && <AppHeader />}
+            {/* AppHeader removed from desktop view, but kept in mobile */}
             <main className="flex-1 overflow-auto">{children}</main>
           </div>
         </ResizablePanel>
