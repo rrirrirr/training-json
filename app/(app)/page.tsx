@@ -8,7 +8,7 @@ import type { TrainingPlanData } from "@/types/training-plan"
 import { exampleTrainingPlan } from "@/utils/example-training-plan"
 import { usePlanStore } from "@/store/plan-store" // Import Zustand store hook
 import { usePlanMode } from "@/contexts/plan-mode-context" // Keep plan mode context
-import { supabase } from "@/lib/supa-client"
+import { db } from "@/lib/db-client" // Use our db abstraction
 
 export default function HomePage() {
   const router = useRouter()
@@ -55,10 +55,9 @@ export default function HomePage() {
 
   // Handler for loading example (keep as is)
   const handleLoadExample = async () => {
-    /* ... as before ... */
     setCreatingPlan(true)
     try {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("training_plans")
         .insert({ plan_data: exampleTrainingPlan })
         .select("id")
@@ -74,7 +73,7 @@ export default function HomePage() {
     }
   }
 
-  // Handler for importing plan data - now uses edit mode instead of direct Supabase save
+  // Handler for importing plan data - now uses edit mode instead of direct database save
   const handleImportPlan = async (data: TrainingPlanData) => {
     console.log("[HomePage] handleImportPlan called - this should not happen with the new flow");
     console.log("[HomePage] Plans should now enter edit mode directly instead of saving immediately");
@@ -86,14 +85,13 @@ export default function HomePage() {
       data.metadata.planName = `Imported Plan ${new Date().toLocaleDateString()}`
     }
     
-    // Enter edit mode directly instead of saving to Supabase
+    // Enter edit mode directly instead of saving to database
     console.log("[HomePage] Entering edit mode with imported plan");
     enterEditMode(data);
   }
 
   // Event listener for AI creation (keep as is)
   useEffect(() => {
-    /* ... as before ... */
     const handlePlanCreatedFromJson = async (e: CustomEvent<{ data: TrainingPlanData }>) => {
       const data = e.detail.data
       
@@ -104,7 +102,7 @@ export default function HomePage() {
         data.metadata.planName = `AI-Generated Plan ${new Date().toLocaleDateString()}`
       }
       
-      // Enter edit mode directly instead of saving to Supabase
+      // Enter edit mode directly instead of saving to database
       console.log("[HomePage] Entering edit mode with AI-generated plan");
       // Use the enterEditMode function from the plan mode context
       enterEditMode(data);
@@ -119,7 +117,6 @@ export default function HomePage() {
 
   if (creatingPlan) {
     return (
-      /* ... loading indicator ... */
       <div className="flex h-screen w-full items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary/70" />

@@ -4,12 +4,25 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:local": "next dev",
+    "dev:with-supabase": "bunx supabase start && next dev",
+    "setup:dev": "node scripts/setup-dev-env.js",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui",
-    "test:e2e:debug": "playwright test --debug"
+    "test:db:setup": "node tests/setup/setup-test-db.js setup",
+    "test:db:clear": "node tests/setup/setup-test-db.js clear",
+    "test:db:reset": "node tests/setup/reset-local-db.js",
+    "test:e2e": "NODE_ENV=test playwright test",
+    "test:e2e:ui": "NODE_ENV=test playwright test --ui",
+    "test:e2e:debug": "NODE_ENV=test playwright test --debug",
+    "test:e2e:with-setup": "npm run test:db:reset && npm run test:e2e",
+    "test:local": "NODE_ENV=test playwright test tests/e2e/local-plan-edit-mode.spec.ts",
+    "supabase:start": "bunx supabase start",
+    "supabase:stop": "bunx supabase stop",
+    "supabase:reset": "node tests/setup/reset-local-db.js",
+    "supabase:check": "node tests/setup/check-local-env.js",
+    "test:local:full": "npm run supabase:reset && npm run test:local"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -73,6 +86,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^16.5.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.17",
     "typescript": "^5"

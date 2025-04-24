@@ -1,8 +1,8 @@
-import { supabase } from "@/lib/supa-client"
+import { db } from "@/lib/db-client"
 import type { TrainingPlanData } from "@/types/training-plan"
 
 /**
- * Fetches a single training plan by its ID from Supabase.
+ * Fetches a single training plan by its ID from the database.
  *
  * @param planId - The UUID of the plan to fetch.
  * @returns An object containing the plan data if found, null if not found,
@@ -17,8 +17,8 @@ export async function fetchPlanById(planId: string): Promise<TrainingPlanData | 
     throw new Error("Invalid Plan ID provided for fetching.")
   }
 
-  console.log(`Workspaceing plan data for ID: ${planId}`)
-  const { data, error, status } = await supabase
+  console.log(`Fetching plan data for ID: ${planId}`)
+  const { data, error, status } = await db
     .from("training_plans")
     .select("plan_data")
     .eq("id", planId)
@@ -32,7 +32,7 @@ export async function fetchPlanById(planId: string): Promise<TrainingPlanData | 
       return null
     } else {
       // Other unexpected database error
-      console.error("Supabase fetch error:", error)
+      console.error("Database fetch error:", error)
       // Re-throw the error to be handled by the caller (e.g., the page)
       throw new Error(`Failed to fetch plan: ${error.message}`)
     }
@@ -40,7 +40,7 @@ export async function fetchPlanById(planId: string): Promise<TrainingPlanData | 
 
   // Return the plan data if found
   if (data && data.plan_data) {
-    supabase
+    db
       .from("plan_access_log")
       .insert({ plan_id: planId }) // accessed_at defaults to now()
       .then(({ error: logError }) => {

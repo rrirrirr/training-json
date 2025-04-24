@@ -2,7 +2,7 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import type { TrainingPlanData } from "@/types/training-plan" // Adjust path as needed
-import { supabase } from "@/lib/supa-client" // Adjust path as needed
+import { db } from "@/lib/db-client" // Using our db abstraction
 
 // Type for plan metadata (remains the same)
 export interface PlanMetadata {
@@ -138,12 +138,12 @@ export const usePlanStore = create<PlanState>()(
 
           if (force || currentMetadata.length === 0) {
             console.log(
-              `[fetchPlanMetadata] Fetching from Supabase. Reason: ${force ? "Forced" : "List empty"}.`
+              `[fetchPlanMetadata] Fetching from database. Reason: ${force ? "Forced" : "List empty"}.`
             )
             set({ isLoading: true, error: null })
 
             // *** Fetch ordered by CREATED date descending ***
-            const { data, error } = await supabase
+            const { data, error } = await db
               .from("training_plans")
               .select("id, planName:plan_data->metadata->planName, created_at, last_accessed_at")
               .order("created_at", { ascending: false }) // Default sort by creation date
@@ -193,7 +193,7 @@ export const usePlanStore = create<PlanState>()(
             return null
           }
 
-          const { data, error, status } = await supabase
+          const { data, error, status } = await db
             .from("training_plans")
             .select("plan_data")
             .eq("id", planId)
@@ -208,7 +208,7 @@ export const usePlanStore = create<PlanState>()(
               return null
             } else {
               // Other unexpected database error
-              console.error("[fetchPlanById] Supabase fetch error:", error)
+              console.error("[fetchPlanById] Database fetch error:", error)
               set({
                 error: `Failed to fetch plan: ${error.message}`,
                 isLoading: false,
@@ -220,7 +220,7 @@ export const usePlanStore = create<PlanState>()(
           // Return the plan data if found
           if (data && data.plan_data) {
             // Log access
-            supabase
+            db
               .from("plan_access_log")
               .insert({ plan_id: planId }) // accessed_at defaults to now()
               .then(({ error: logError }) => {
@@ -248,9 +248,8 @@ export const usePlanStore = create<PlanState>()(
           return null
         }
       },
-      // Other actions remain the same, ensuring they sort by createdAt after adding
+      
       createPlan: async (name, planData) => {
-        /* ... implementation as before (ensure final set sorts list by createdAt) ... */
         try {
           set({ isLoading: true, error: null })
           if (!planData.metadata)
@@ -260,7 +259,7 @@ export const usePlanStore = create<PlanState>()(
             if (!planData.metadata.creationDate)
               planData.metadata.creationDate = new Date().toISOString()
           }
-          const { data, error } = await supabase
+          const { data, error } = await db
             .from("training_plans")
             .insert({ plan_data: planData })
             .select("id, created_at")
@@ -290,8 +289,8 @@ export const usePlanStore = create<PlanState>()(
           return null
         }
       },
+      
       createPlanFromEdit: async (originalId, updatedPlan, newName) => {
-        /* ... implementation as before (ensure final set sorts list by createdAt) ... */
         try {
           set({ isLoading: true, error: null })
           const planName = newName || `${updatedPlan.metadata?.planName || "Plan"} (Edited)`
@@ -301,7 +300,7 @@ export const usePlanStore = create<PlanState>()(
             updatedPlan.metadata.planName = planName
             updatedPlan.metadata.creationDate = new Date().toISOString()
           }
-          const { data, error } = await supabase
+          const { data, error } = await db
             .from("training_plans")
             .insert({ plan_data: updatedPlan })
             .select("id, created_at")
@@ -331,8 +330,8 @@ export const usePlanStore = create<PlanState>()(
           return null
         }
       },
+      
       updatePlan: async (planId, updatedPlan) => {
-        /* ... implementation as before (ensure final set sorts list by createdAt) ... */
         try {
           set({ isLoading: true, error: null })
           if (!updatedPlan.metadata) {
@@ -340,7 +339,7 @@ export const usePlanStore = create<PlanState>()(
             return false
           }
           const now = new Date().toISOString()
-          const { error } = await supabase
+          const { error } = await db
             .from("training_plans")
             .update({ plan_data: updatedPlan, last_accessed_at: now })
             .eq("id", planId)
@@ -366,8 +365,8 @@ export const usePlanStore = create<PlanState>()(
           return false
         }
       },
+      
       savePlan: async (plan, name) => {
-        /* ... uses createPlan ... */
         try {
           set({ isLoading: true, error: null })
           const planToCreate = { ...plan }
@@ -395,8 +394,8 @@ export const usePlanStore = create<PlanState>()(
           return null
         }
       },
+      
       savePlanFromExternal: async (plan, name) => {
-        /* ... uses createPlan ... */
         try {
           set({ isLoading: true, error: null })
           const planToSave = {
@@ -419,6 +418,7 @@ export const usePlanStore = create<PlanState>()(
           return null
         }
       },
+      
       removeLocalPlan: async (planId: string): Promise<boolean> => {
         // Make explicitly async
         console.log(`[removeLocalPlan] START - Removing plan ID: ${planId}`)
@@ -482,8 +482,8 @@ export const usePlanStore = create<PlanState>()(
           return false // Indicate failure
         }
       },
+      
       clearActivePlan: () => {
-        /* ... implementation as before ... */
         console.log(
           `[clearActivePlan] START - Clearing active plan. Current ID: ${get().activePlanId}`
         )
@@ -510,9 +510,10 @@ export const usePlanStore = create<PlanState>()(
         })
         console.log(`[clearActivePlan] END - State updated.`)
       },
+      
       // View state actions (remain the same)
       selectWeek: (weekNumber) => {
-        /* ... implementation as before ... */ if (
+        if (
           get().selectedWeek !== weekNumber ||
           (weekNumber !== null && get().viewMode !== "week")
         ) {
@@ -521,7 +522,7 @@ export const usePlanStore = create<PlanState>()(
             set({ viewMode: "week" })
             const p = get().activePlan
             if (p?.monthBlocks) {
-              const mb = p.monthBlocks.find((b) => b.weeks.includes(weekNumber as number))
+              const mb = p.monthBlocks.find((b) => b.weekNumbers && b.weekNumbers.includes(weekNumber))
               if (mb && get().selectedMonth !== mb.id) {
                 set({ selectedMonth: mb.id })
               }
@@ -529,13 +530,15 @@ export const usePlanStore = create<PlanState>()(
           }
         }
       },
+      
       selectMonth: (monthId) => {
-        /* ... implementation as before ... */ if (get().selectedMonth !== monthId) {
+        if (get().selectedMonth !== monthId) {
           set({ selectedMonth: monthId, selectedWeek: null, viewMode: "month" })
         }
       },
+      
       setViewMode: (mode) => {
-        /* ... implementation as before ... */ if (get().viewMode !== mode) {
+        if (get().viewMode !== mode) {
           set({ viewMode: mode })
           if (mode === "month") {
             set({ selectedWeek: null })
@@ -544,12 +547,12 @@ export const usePlanStore = create<PlanState>()(
             const sm = get().selectedMonth
             if (p?.monthBlocks) {
               const mb = p.monthBlocks.find((b) => b.id === sm)
-              if (mb && mb.weeks.length > 0) {
-                set({ selectedWeek: mb.weeks[0] })
+              if (mb && mb.weekNumbers && mb.weekNumbers.length > 0) {
+                set({ selectedWeek: mb.weekNumbers[0] })
               } else {
                 const fw = p.weeks?.[0]?.weekNumber
                 if (fw !== null && fw !== undefined) {
-                  const fwmb = p.monthBlocks.find((b) => b.weeks.includes(fw))
+                  const fwmb = p.monthBlocks.find((b) => b.weekNumbers && b.weekNumbers.includes(fw))
                   set({ selectedWeek: fw, selectedMonth: fwmb?.id ?? sm })
                 }
               }

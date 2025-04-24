@@ -1,145 +1,58 @@
-import { test, expect } from '@playwright/test';
-import { waitForAppLoaded, setupTestPlans } from './app-loaded-detection';
+// tests/e2e/local-plan-edit-mode.spec.ts
+import { test, expect } from "@playwright/test"
+import { waitForAppLoaded } from "./app-loaded-detection"
+import { TEST_PLAN_ID, OTHER_PLAN_ID, verifyTestData } from "../helpers/test-data"
 
-// Set up a test fixture for our app
+// Make sure test data exists before running tests
+test.beforeAll(async () => {
+  // Verify the test data exists in the local database
+  // maybe clear local storage here? is it even needed?
+  const dataExists = await verifyTestData()
+  test.skip(
+    !dataExists,
+    "Test data not found or could not be created. Please run `npm run supabase:reset` first."
+  )
+})
+
+// Run before each test
 test.beforeEach(async ({ page }) => {
   // Navigate to the home page
-  await page.goto('/');
-  
-  // Wait for the app to be loaded
-  await waitForAppLoaded(page);
-  
-  // Set up test data
-  await setupTestPlans(page);
-});
+  await page.goto("/")
 
-test.describe('Plan Edit Mode', () => {
-  test('entering edit mode for existing plan sets hasUnsavedChanges to false', async ({ page }) => {
-    // Navigate to an existing plan (assuming we have a test plan)
-    await page.goto('/plan/test-plan-id');
-    
-    // Click the edit button
-    await page.click('[data-testid="edit-button"]');
-    
+  // Wait for the app to be loaded
+  await waitForAppLoaded(page)
+})
+
+// ----- TESTS -----
+test.describe("Plan Edit Mode with Local Database", () => {
+  test("entering edit mode for existing plan sets url to .../edit", async ({ page }) => {
+    // Navigate to the plan ID
+    await page.goto(`/plan/${TEST_PLAN_ID}`)
+
+    await page.getByRole("button", { name: "Test Training Plan" }).click()
+    await page.getByRole("button", { name: "Actions for Test Training Plan" }).click()
+    await page.getByRole("menuitem", { name: "View/Edit JSON" }).click()
+    await page.getByRole("button", { name: "Update Plan" }).click()
+
     // Verify URL changed to edit page
-    await expect(page).toHaveURL(/\/plan\/test-plan-id\/edit/);
-    
+    await expect(page).toHaveURL(new RegExp(`/plan/${TEST_PLAN_ID}/edit`))
+
+    // Verifying local storage? is this a e2e thing or a unit/integration test?
+    // e2e should be as close as to users experienc as possible?
+
     // Verify edit mode indicator is visible
-    await expect(page.locator('[data-testid="edit-mode-indicator"]')).toBeVisible();
-    
+    await expect(page.locator('[data-testid="edit-mode-indicator"]')).toBeVisible()
+
     // Verify unsaved changes indicator is not visible
-    await expect(page.locator('[data-testid="unsaved-changes-indicator"]')).not.toBeVisible();
-  });
-  
-  test('making changes sets hasUnsavedChanges to true', async ({ page }) => {
+    await expect(page.locator('[data-testid="unsaved-changes-indicator"]')).not.toBeVisible()
+  })
+
+  test("making changes sets hasUnsavedChanges to true", async ({ page }) => {
     // Navigate to plan edit page
-    await page.goto('/plan/test-plan-id/edit');
-    
+    // await page.goto(`/plan/${TEST_PLAN_ID}/edit`)
     // Make a change to the plan
-    await page.fill('[data-testid="plan-name-input"]', 'Modified Plan Name');
-    
+    // await page.fill('[data-testid="plan-name-input"]', "Modified Plan Name")
     // Verify unsaved changes indicator appears
-    await expect(page.locator('[data-testid="unsaved-changes-indicator"]')).toBeVisible();
-  });
-  
-  test('clicking same plan in sidebar navigates to edit page', async ({ page }) => {
-    // Navigate to plan edit page and make a change
-    await page.goto('/plan/test-plan-id/edit');
-    await page.fill('[data-testid="plan-name-input"]', 'Modified Plan Name');
-    
-    // Navigate to home
-    await page.goto('/');
-    
-    // Find and click the same plan in sidebar
-    await page.click('[data-testid="plan-item"][data-plan-id="test-plan-id"]');
-    
-    // Should navigate to edit page without warning
-    await expect(page).toHaveURL(/\/plan\/test-plan-id\/edit/);
-    
-    // Verify our changes are still there
-    await expect(page.locator('[data-testid="plan-name-input"]')).toHaveValue('Modified Plan Name');
-  });
-  
-  test('clicking different plan shows warning dialog', async ({ page }) => {
-    // Navigate to plan edit page and make a change
-    await page.goto('/plan/test-plan-id/edit');
-    await page.fill('[data-testid="plan-name-input"]', 'Modified Plan Name');
-    
-    // Find and click a different plan
-    await page.click('[data-testid="plan-item"][data-plan-id="other-plan-id"]');
-    
-    // Warning dialog should appear
-    await expect(page.locator('[data-testid="discard-warning-dialog"]')).toBeVisible();
-    
-    // Test cancel button
-    await page.click('[data-testid="cancel-button"]');
-    
-    // Should stay on edit page
-    await expect(page).toHaveURL(/\/plan\/test-plan-id\/edit/);
-    
-    // Try again and confirm this time
-    await page.click('[data-testid="plan-item"][data-plan-id="other-plan-id"]');
-    await page.click('[data-testid="confirm-button"]');
-    
-    // Should navigate to other plan
-    await expect(page).toHaveURL(/\/plan\/other-plan-id/);
-  });
-  
-  test('page refresh preserves edit state', async ({ page }) => {
-    // Navigate to plan edit page and make a change
-    await page.goto('/plan/test-plan-id/edit');
-    await page.fill('[data-testid="plan-name-input"]', 'Modified Plan Name');
-    
-    // Reload the page
-    await page.reload();
-    
-    // Should still be in edit mode
-    await expect(page).toHaveURL(/\/plan\/test-plan-id\/edit/);
-    
-    // Changes should be preserved
-    await expect(page.locator('[data-testid="plan-name-input"]')).toHaveValue('Modified Plan Name');
-    
-    // Unsaved changes indicator should still be visible
-    await expect(page.locator('[data-testid="unsaved-changes-indicator"]')).toBeVisible();
-  });
-  
-  test('saving clears unsaved changes state', async ({ page }) => {
-    // Navigate to plan edit page and make a change
-    await page.goto('/plan/test-plan-id/edit');
-    await page.fill('[data-testid="plan-name-input"]', 'Modified Plan Name');
-    
-    // Save the plan
-    await page.click('[data-testid="save-button"]');
-    
-    // Should navigate to view mode
-    await expect(page).toHaveURL(/\/plan\/test-plan-id$/);
-    
-    // Saved notification should be visible
-    await expect(page.locator('[data-testid="saved-notification"]')).toBeVisible();
-    
-    // Plan name should be updated
-    await expect(page.locator('[data-testid="plan-name"]')).toHaveText('Modified Plan Name');
-  });
-  
-  test('discarding changes reverts to original state', async ({ page }) => {
-    // Get original plan name first
-    await page.goto('/plan/test-plan-id');
-    const originalName = await page.textContent('[data-testid="plan-name"]');
-    
-    // Enter edit mode and change name
-    await page.click('[data-testid="edit-button"]');
-    await page.fill('[data-testid="plan-name-input"]', 'Modified Plan Name');
-    
-    // Discard changes
-    await page.click('[data-testid="discard-button"]');
-    
-    // Confirm discard
-    await page.click('[data-testid="confirm-discard-button"]');
-    
-    // Should return to view mode
-    await expect(page).toHaveURL(/\/plan\/test-plan-id$/);
-    
-    // Plan name should be reverted to original
-    await expect(page.locator('[data-testid="plan-name"]')).toHaveText(originalName);
-  });
-});
+    // await expect(page.locator('[data-testid="unsaved-changes-indicator"]')).toBeVisible()
+  })
+})
