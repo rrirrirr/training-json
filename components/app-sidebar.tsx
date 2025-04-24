@@ -48,7 +48,6 @@ import { usePlanStore } from "@/store/plan-store"
 // Import the updated PlanSwitcher component AND PlanSwitcherItem
 import { PlanSwitcher, PlanSwitcherItem } from "./plan-switcher" // *** IMPORT PlanSwitcherItem ***
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { usePlanMode } from "@/contexts/plan-mode-context"
 import { useNewPlanModal } from "@/components/modals/new-plan-modal"
 
 interface AppSidebarProps {
@@ -67,7 +66,9 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
   const selectWeek = usePlanStore((state) => state.selectWeek)
   const selectMonth = usePlanStore((state) => state.selectMonth)
   const setViewMode = usePlanStore((state) => state.setViewMode)
-  const { mode, draftPlan, originalPlanId } = usePlanMode()
+  const mode = usePlanStore((state) => state.mode)
+  const draftPlan = usePlanStore((state) => state.draftPlan)
+  const originalPlanId = usePlanStore((state) => state.originalPlanId)
   const {
     openInfoDialog,
     openSettingsDialog,
@@ -83,6 +84,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
   const [showAnimation, setShowAnimation] = useState(false)
   const isMounted = useRef(false)
   const [isPlanDropdownOpen, setIsPlanDropdownOpen] = useState(false)
+  const fetchPlanById = usePlanStore((state) => state.fetchPlanById) // Get fetch action
 
   // --- Effects ---
   useEffect(() => {
@@ -164,11 +166,11 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
       if (planId === originalPlanId) {
         e.preventDefault()
         router.push(`/plan/${planId}/edit`)
-        setIsPlanDropdownOpen(false) 
+        setIsPlanDropdownOpen(false)
         setOpenMobile(false)
         return
       }
-      
+
       // Otherwise show warning for switching to a different plan
       const targetPlanPath = `/plan/${planId}`
       e.preventDefault()
@@ -194,44 +196,11 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
     }
   }
 
-  // --- Handlers for Edit/Delete actions (used by both inline PlanSwitcherItem and dropdown PlanSwitcher) ---
-  const handleEditPlan = (plan: PlanMetadata) => {
-    let planDataToShow = null
-    const currentActivePlanId = usePlanStore.getState().activePlanId
-    const currentActivePlan = usePlanStore.getState().activePlan
-
-    if (currentActivePlanId === plan.id && currentActivePlan) {
-      planDataToShow = { ...plan, data: currentActivePlan }
-    } else {
-      console.warn("AppSidebar: Editing JSON from metadata only for plan:", plan.id)
-      planDataToShow = {
-        id: plan.id,
-        name: plan.name,
-        data: {
-          metadata: { planName: plan.name },
-          weeks: [],
-          monthBlocks: [],
-          exerciseDefinitions: [],
-          weekTypes: [],
-        },
-        createdAt: plan.createdAt,
-        updatedAt: plan.updatedAt,
-      }
-    }
-    openJsonEditor(planDataToShow)
-    setIsPlanDropdownOpen(false) // Ensure dropdown closes if action originated there
-  }
-
-  const handleDeletePlan = (plan: PlanMetadata) => {
-    openDeleteDialog(plan)
-    setIsPlanDropdownOpen(false) // Ensure dropdown closes if action originated there
-  }
-
   // --- Plan Switcher Trigger Text Logic ---
   let triggerPlanName = "Select Plan"
   // Get the plan name without "Editing:" or "Viewing:" prefix
   let planNameOnly = ""
-  
+
   if (mode === "edit") {
     planNameOnly = draftPlan?.metadata?.planName || "Unnamed Plan"
     triggerPlanName = planNameOnly
@@ -244,6 +213,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
   } else if (!planMetadataList || planMetadataList.length === 0) {
     triggerPlanName = "No Plans Available"
   }
+
   // --- Toggle Button Component ---
   const ToggleButton = ({ className }: { className?: string }) =>
     handleToggleResize ? (
@@ -272,7 +242,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
   // --- Visibility Logic ---
   const shouldShowCreateButton = isMobile || (!isMobile && isRootRoute)
   const shouldShowInlineList = (isMobile || isRootRoute) && isOpen
-  const shouldShowPlanRelatedTriggers = !isMobile && !isRootRoute // fuck you gemini for adding this
+  const shouldShowPlanRelatedTriggers = !isMobile && !isRootRoute
   const shouldShowDropdownTrigger = !isMobile && !isRootRoute && isOpen
   const shouldShowCollapsedTrigger = !isRootRoute && !isOpen && !isMobile
   const shouldRenderDropdownContent = !isRootRoute && !isMobile
@@ -366,8 +336,6 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                     plan={plan}
                     isActive={plan.id === activePlanId && mode === "normal"}
                     onLinkClick={handlePlanLinkClick} // Use existing handler
-                    onEdit={handleEditPlan} // Use existing handler
-                    onDelete={handleDeletePlan} // Use existing handler
                     className="px-1"
                   />
                 ))
@@ -452,7 +420,13 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                         ) : (
                           <GalleryVerticalEnd className="h-4 w-4" />
                         )}
-                        <span className="sr-only">{mode === "edit" ? "Editing Plan" : mode === "view" ? "Viewing Plan" : "Select Plan"}</span>
+                        <span className="sr-only">
+                          {mode === "edit"
+                            ? "Editing Plan"
+                            : mode === "view"
+                              ? "Viewing Plan"
+                              : "Select Plan"}
+                        </span>
                       </Button>
                     </DropdownMenuTrigger>
                   </TooltipTrigger>
@@ -479,8 +453,6 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                     showCreateButton={true}
                     onPlanLinkClick={handlePlanLinkClick}
                     onViewAllClick={handleViewAllClick}
-                    onEditPlan={handleEditPlan}
-                    onDeletePlan={handleDeletePlan}
                     // Pass onClose if needed: onClose={() => setIsPlanDropdownOpen(false)}
                   />
                 </DropdownMenuContent>
@@ -490,7 +462,6 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
         </SidebarGroup>
 
         {/* Active Plan Navigation (Week/Month selectors etc.) */}
-        {/* Plan Mode Indicator - Added below plan switcher */}
         {/* Mode indicator removed as requested */}
         {shouldShowActivePlanNav && (
           <SidebarGroup
@@ -591,7 +562,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
       >
         {/* Collapsed toggle button */}
         {!isMobile && !isOpen && handleToggleResize && <ToggleButton className="mb-1" />}
-        
+
         {/* More Options Dropdown (moved from AppHeader) */}
         <DropdownMenu>
           <Tooltip>
@@ -613,7 +584,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        
+
         {/* Spacer */}
         {(isOpen || isMobile) && <div className="flex-grow"></div>}
         {/* Info Button */}

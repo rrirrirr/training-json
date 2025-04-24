@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import { usePathname } from "next/navigation"
-import { usePlanMode } from "@/contexts/plan-mode-context" // Import usePlanMode
+// Use mode from the store instead of context
 
 interface HeaderProps {}
 
@@ -36,7 +36,7 @@ export function AppHeader({}: HeaderProps) {
   const { toast } = useToast()
   const pathname = usePathname()
   const isRootRoute = pathname === "/"
-  const { mode } = usePlanMode() // Get the current mode
+  const mode = usePlanStore((state) => state.mode) // Get the current mode from the store
 
   // Determine if the sidebar is currently open
   const isSidebarOpen = sidebarState === "expanded"

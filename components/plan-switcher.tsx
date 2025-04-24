@@ -1,29 +1,28 @@
 // File: /components/plan-switcher.tsx
-
 "use client"
 
 import Link from "next/link"
-import { FileText, Trash2, MoreHorizontal, Plus, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button" // Keep Button import for potential use or reference
+import { useState } from "react"
+import { FileText, Trash2, MoreHorizontal, Plus, ChevronRight, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button" 
+import { useToast } from "@/components/ui/use-toast"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  // Separator removed visually
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
-import type { PlanMetadata } from "@/store/plan-store"
+import { usePlanStore, type PlanMetadata } from "@/store/plan-store"
 import React from "react"
 import { useNewPlanModal } from "@/components/modals/new-plan-modal"
+import { useUIState } from "@/contexts/ui-context"
 
 // --- PlanSwitcherItem Component ---
 interface PlanSwitcherItemProps {
   plan: PlanMetadata
   isActive: boolean
   onLinkClick: (e: React.MouseEvent, planId: string) => void
-  onEdit: (plan: PlanMetadata) => void
-  onDelete: (plan: PlanMetadata) => void
   className?: string
 }
 
@@ -31,22 +30,63 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
   plan,
   isActive,
   onLinkClick,
-  onEdit,
-  onDelete,
   className,
 }) => {
+  const { openJsonEditor, openDeleteDialog } = useUIState()
+  const { fetchPlanById, activePlan, activePlanId } = usePlanStore()
+  const [isFetchingData, setIsFetchingData] = useState<boolean>(false)
+  const { toast } = useToast()
+
   if (!plan) {
     return null
   }
 
-  const handleInnerMenuEdit = (e: React.MouseEvent) => {
+  const handleEditClick = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    onEdit(plan)
+    e.stopPropagation()
+    setIsFetchingData(true)
+    
+    try {
+      let planDataToEdit = null
+      
+      if (activePlanId === plan.id && activePlan) {
+        planDataToEdit = activePlan
+      } else {
+        planDataToEdit = await fetchPlanById(plan.id)
+      }
+      
+      if (planDataToEdit) {
+        const fullPlanObjectForEditor = {
+          id: plan.id,
+          name: plan.name,
+          data: planDataToEdit,
+          createdAt: plan.createdAt,
+          updatedAt: plan.updatedAt,
+        }
+        openJsonEditor(fullPlanObjectForEditor)
+      } else {
+        console.error(`PlanSwitcherItem: Failed to load data for ${plan.id}`)
+        toast({
+          title: "Error",
+          description: "Failed to load plan data for editing",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error(`PlanSwitcherItem: Error fetching data for ${plan.id}`, error)
+      toast({
+        title: "Error",
+        description: "An error occurred while loading the plan",
+        variant: "destructive",
+      })
+    } finally {
+      setIsFetchingData(false)
+    }
   }
 
-  const handleInnerMenuDelete = (e: React.MouseEvent) => {
+  const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    onDelete(plan)
+    openDeleteDialog(plan)
   }
 
   const wrapperClassName = cn(
@@ -113,15 +153,22 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
             <DropdownMenuItem
               className="h-8 px-2 hover:bg-muted flex items-center gap-2 cursor-pointer outline-none"
               onSelect={(e) => e.preventDefault()}
-              onClick={handleInnerMenuEdit}
+              onClick={handleEditClick}
+              disabled={isFetchingData}
             >
-              <FileText className="h-4 w-4 mr-1" /> View/Edit JSON
+              {isFetchingData ? (
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              ) : (
+                <FileText className="h-4 w-4 mr-1" />
+              )}
+              View/Edit JSON
             </DropdownMenuItem>
             {/* DropdownMenuItem already uses outline-none, focus changes bg/text, no ring classes present */}
             <DropdownMenuItem
               className="h-8 px-2 text-destructive hover:bg-muted hover:text-destructive focus:text-destructive focus:bg-destructive/10 flex items-center gap-2 cursor-pointer outline-none"
               onSelect={(e) => e.preventDefault()}
-              onClick={handleInnerMenuDelete}
+              onClick={handleDeleteClick}
+              disabled={isFetchingData}
             >
               <Trash2 className="h-4 w-4 mr-1" /> Delete
             </DropdownMenuItem>
@@ -141,8 +188,6 @@ interface PlanSwitcherProps {
   showCreateButton?: boolean
   onPlanLinkClick: (e: React.MouseEvent, planId: string) => void
   onViewAllClick: (e: React.MouseEvent) => void
-  onEditPlan: (plan: PlanMetadata) => void
-  onDeletePlan: (plan: PlanMetadata) => void
   // onClose?: () => void;
 }
 
@@ -154,8 +199,6 @@ export const PlanSwitcher: React.FC<PlanSwitcherProps> = ({
   showCreateButton = true,
   onPlanLinkClick,
   onViewAllClick,
-  onEditPlan,
-  onDeletePlan,
   // onClose
 }) => {
   const { open: openNewPlanModal } = useNewPlanModal()
@@ -177,8 +220,6 @@ export const PlanSwitcher: React.FC<PlanSwitcherProps> = ({
               plan={plan}
               isActive={plan.id === activePlanId && mode === "normal"}
               onLinkClick={onPlanLinkClick}
-              onEdit={onEditPlan}
-              onDelete={onDeletePlan}
             />
           ))
         ) : (

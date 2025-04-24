@@ -1,9 +1,9 @@
 /* File: /components/dialogs/sidebar-dialogs.tsx */
 "use client"
 
+import { useCallback } from "react"
 import { useUIState } from "@/contexts/ui-context"
-import { usePlanStore } from "@/store/plan-store"
-import { usePlanMode } from "@/contexts/plan-mode-context"
+import { usePlanStore, type PlanData } from "@/store/plan-store" // Ensure PlanData is correctly typed if needed
 import { useRouter } from "next/navigation" // Import useRouter
 import JsonEditor from "@/components/json-editor"
 import {
@@ -40,8 +40,52 @@ export function SidebarDialogs() {
     closeJsonEditor,
   } = useUIState()
 
-  const { mode, originalPlanId, exitMode } = usePlanMode()
+  const mode = usePlanStore((state) => state.mode)
+  const originalPlanId = usePlanStore((state) => state.originalPlanId)
+  const exitMode = usePlanStore((state) => state.exitMode)
   const removeLocalPlan = usePlanStore((state) => state.removeLocalPlan)
+  const updateDraftPlan = usePlanStore((state) => state.updateDraftPlan)
+  const _setModeState = usePlanStore((state) => state._setModeState)
+
+  // New callback for JsonEditor's onSave prop
+  const handleEditorSave = useCallback(
+    async (updatedData: PlanData): Promise<boolean> => {
+      // Re-implement the save logic here, interacting with the store
+      console.log("[SidebarDialogs] handleEditorSave called")
+      const currentMode = usePlanStore.getState().mode
+      const currentOriginalId = usePlanStore.getState().originalPlanId
+      const planId = planToViewJson?.id
+
+      if (!planId) {
+        console.error("[SidebarDialogs] Cannot save, plan ID missing.")
+        // Show toast error
+        return false
+      }
+
+      try {
+        if (currentMode === "edit" && currentOriginalId === planId) {
+          console.log("[SidebarDialogs] Updating draft plan in store")
+          updateDraftPlan(updatedData)
+        } else {
+          console.log("[SidebarDialogs] Entering edit mode via editor save")
+          // Assuming PlanData includes metadata for the name display if needed immediately
+          // Use toString() if planId might be a number
+          _setModeState("edit", updatedData, planId.toString(), true)
+          // Navigate to edit page after setting mode
+          const targetUrl = `/plan/${planId}/edit`
+          if (window.location.pathname !== targetUrl) {
+            router.replace(targetUrl)
+          }
+        }
+        return true // Indicate success
+      } catch (error) {
+        console.error("[SidebarDialogs] Error saving from editor:", error)
+        return false // Indicate failure
+      }
+      // Add router to dependency array if used inside useCallback for navigation logic
+    },
+    [planToViewJson, updateDraftPlan, _setModeState, router]
+  )
 
   // Make the handler async
   const handleConfirmDelete = async () => {
@@ -68,7 +112,8 @@ export function SidebarDialogs() {
 
       // Wait for the plan to be removed from the store
       console.log("[SidebarDialogs] Awaiting removeLocalPlan for:", id)
-      const success = await removeLocalPlan(id)
+      // Ensure id is passed as string if expected by removeLocalPlan
+      const success = await removeLocalPlan(id.toString())
       console.log("[SidebarDialogs] removeLocalPlan completed, success:", success)
 
       // Close the dialog regardless of success, as the item is gone locally
@@ -107,15 +152,23 @@ export function SidebarDialogs() {
   return (
     <>
       {/* JSON Editor Dialog */}
-      <JsonEditor isOpen={isJsonEditorOpen} onClose={closeJsonEditor} plan={planToViewJson} />
+      <JsonEditor
+        isOpen={isJsonEditorOpen}
+        onClose={closeJsonEditor}
+        plan={planToViewJson} // Pass the plan data to the editor
+        onSave={handleEditorSave} // Pass the save handler
+      />
 
       {/* Delete Plan Dialog */}
+      {/* Add the missing Dialog wrapper with open state and close handler */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={(open) => !open && closeDeleteDialog()}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Plan</DialogTitle>
             <DialogDescription>
-              Are you sure you want to remove "{planToDelete?.name}"? This action cannot be undone.
+              {/* Use optional chaining for safety */}
+              Are you sure you want to remove "{planToDelete?.name ?? "this plan"}"? This action
+              cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

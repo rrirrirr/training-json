@@ -1,48 +1,21 @@
 "use client"
 
 import { useState } from "react"
-import { usePlanMode } from "@/contexts/plan-mode-context"
+import { usePlanStore } from "@/store/plan-store"
 import { cn } from "@/lib/utils"
 
 export function PlanModeIndicator() {
   // We need to set up error handling without violating hooks rules
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
-  // First, create a safe wrapper to use the context
-  let modeData = null;
-  let contextError = null;
+  // Get data from the store
+  const mode = usePlanStore((state) => state.mode);
+  const draftPlan = usePlanStore((state) => state.draftPlan);
   
-  try {
-    // This must be called at the top level of the component
-    const { mode, draftPlan } = usePlanMode();
-    modeData = {
-      mode,
-      planName: draftPlan?.metadata?.planName || "Unnamed Plan"
-    };
-  } catch (err) {
-    contextError = err instanceof Error ? err.message : "Unknown error";
-    console.error("Error accessing PlanMode context:", err);
-  }
-  
-  // Show errors if any occurred
-  if (contextError) {
-    return (
-      <div className="px-4 py-2 border-b-2 border-red-500 bg-red-100 text-red-800 text-sm flex items-center justify-center">
-        <span className="mr-2">⚠️</span>
-        <span className="font-medium">Context Error: {contextError}</span>
-      </div>
-    );
-  }
-  
-  // If no mode data yet, show a loading state
-  if (!modeData) {
-    return (
-      <div className="px-4 py-2 border-b-2 border-gray-300 bg-gray-100 text-gray-800 text-sm flex items-center justify-center">
-        <span className="mr-2">⏳</span>
-        <span className="font-medium">Loading mode...</span>
-      </div>
-    );
-  }
+  const modeData = {
+    mode,
+    planName: draftPlan?.metadata?.planName || "Unnamed Plan"
+  };
   
   // Debug: Always show even in normal mode
   const forceShow = true;

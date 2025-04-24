@@ -1,8 +1,7 @@
-"use client"
-
-import { useState } from "react"
-import { usePlanMode } from "@/contexts/plan-mode-context" // Assuming context path is correct
-import { Button } from "@/components/ui/button" // Assuming Shadcn Button path
+// File: components/plan-mode-menu.tsx
+import React, { useState } from "react"
+import { usePlanStore } from "@/store/plan-store"
+import { Button } from "@/components/ui/button"
 import { Save, ArrowLeft, Edit, Loader2 } from "lucide-react"
 import {
   AlertDialog,
@@ -13,14 +12,21 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog" // Assuming Shadcn AlertDialog path
-import JsonEditor from "@/components/json-editor" // Updated import path
+} from "@/components/ui/alert-dialog"
+import JsonEditor from "@/components/json-editor"
 import { cn } from "@/lib/utils"
 import { SavedPlanToast } from "@/components/saved-plan-toast"
+import { useRouter } from "next/navigation"
 
 export function PlanModeMenu() {
-  const { mode, draftPlan, originalPlanId, exitMode, saveDraftPlan, saveViewedPlanToMyPlans } =
-    usePlanMode()
+  const router = useRouter()
+
+  const mode = usePlanStore((state) => state.mode)
+  const draftPlan = usePlanStore((state) => state.draftPlan)
+  const originalPlanId = usePlanStore((state) => state.originalPlanId)
+  const hasUnsavedChanges = usePlanStore((state) => state.hasUnsavedChanges)
+  const discardDraftPlan = usePlanStore((state) => state.discardDraftPlan) // Action only resets state now
+  const saveDraftOrViewedPlan = usePlanStore((state) => state.saveDraftOrViewedPlan)
 
   const [isSaving, setIsSaving] = useState(false)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
@@ -29,52 +35,59 @@ export function PlanModeMenu() {
 
   const planName = draftPlan?.metadata?.planName || "Unnamed Plan"
 
+  // --- Event Handlers ---
   const handleSave = async () => {
     setIsSaving(true)
-    try {
-      let planId;
-      
-      if (mode === "edit") {
-        planId = await saveDraftPlan();
-        if (planId) {
-          console.log("[PlanModeMenu] Plan saved successfully with ID:", planId);
-          setSavedPlanName(planName); // Set the plan name for the toast
-        } else {
-          console.error("[PlanModeMenu] Failed to save plan");
-          setIsSaving(false); // Reset only if save failed
-        }
-      } else if (mode === "view") {
-        planId = await saveViewedPlanToMyPlans();
-        if (planId) {
-          console.log("[PlanModeMenu] Viewed plan saved to my plans with ID:", planId);
-          setSavedPlanName(planName); // Set the plan name for the toast
-        } else {
-          console.error("[PlanModeMenu] Failed to save viewed plan");
-          setIsSaving(false); // Reset only if save failed
-        }
-      }
-      // Don't reset isSaving on success - the component will unmount with navigation
-    } catch (error) {
-      console.error("Error saving plan:", error)
-      setIsSaving(false) // Only reset on error
+    setSavedPlanName(null) // Reset saved name state
+    const savedId = await saveDraftOrViewedPlan() // Call store action
+
+    if (savedId) {
+      console.log("[PlanModeMenu] Save successful, ID:", savedId)
+      setSavedPlanName(planName) // Set name for toast
+
+      const targetUrl = `/plan/${savedId}`
+      console.log(`[PlanModeMenu] Navigating to ${targetUrl} after save.`)
+      router.replace(targetUrl) // Use replace to go to the view page
+
+      // No need to setIsSaving(false) here, navigation will unmount/rerender
+    } else {
+      console.error("[PlanModeMenu] Save failed.")
+      // Optionally show an error toast here
+      setIsSaving(false) // Allow retry if save failed
     }
   }
 
   const handleBackClick = () => {
-    if (mode === "edit") {
+    // Get current state directly for this check
+    const currentStoreState = usePlanStore.getState()
+    if (currentStoreState.mode === "edit" && currentStoreState.hasUnsavedChanges) {
       setShowExitConfirm(true)
     } else {
-      exitMode()
+      // Exit mode AND navigate immediately if no unsaved changes
+      const targetUrl = currentStoreState.originalPlanId
+        ? `/plan/${currentStoreState.originalPlanId}`
+        : "/"
+      discardDraftPlan() // Reset state
+      router.replace(targetUrl) // Navigate immediately
     }
   }
 
   const confirmDiscardChanges = () => {
-    // Call exitMode directly and close the dialog
-    exitMode()
-    // Close the dialog after exitMode completes
-    setTimeout(() => {
-      setShowExitConfirm(false)
-    }, 50)
+    console.log("[PlanModeMenu] Confirming discard changes...")
+    setShowExitConfirm(false)
+    const planIdToNavigateTo = usePlanStore.getState().originalPlanId // Get ID before resetting
+
+    discardDraftPlan() // Reset state via store action
+
+    // *** Perform navigation AFTER state reset ***
+    const targetUrl = planIdToNavigateTo ? `/plan/${planIdToNavigateTo}` : "/"
+    console.log(`[PlanModeMenu] State reset. Navigating to: ${targetUrl}`)
+    router.replace(targetUrl)
+  }
+
+  const cancelDiscardChanges = () => {
+    console.log("[PlanModeMenu] Cancelling discard changes.")
+    setShowExitConfirm(false)
   }
 
   const handleOpenJsonEditor = () => {
@@ -83,28 +96,21 @@ export function PlanModeMenu() {
     }
   }
 
-  // Only render the menu in edit or view mode
+  // --- Render Logic (remains the same) ---
   if (mode === "normal") {
     return null
   }
+  const backButtonText =
+    mode === "edit" ? (hasUnsavedChanges ? "Cancel Edits" : "Back to View") : "Back"
 
   return (
     <>
-      {/* Main Header Area */}
-      <div
-        id="plan-mode-menu-anchor"
-        className={cn(
-          "w-full border-b",
-          mode === "edit"
-            ? "bg-[var(--edit-mode-bg)] border-[var(--edit-mode-border)]"
-            : "bg-[var(--view-mode-bg)] border-[var(--view-mode-border)]"
-        )}
-      >
+      {/* Header Area */}
+      <div id="plan-mode-menu-anchor" className={cn(/* existing styles */)}>
         <div className="mx-auto flex w-full max-w-5xl flex-col items-start gap-4 px-4 py-4 sm:gap-5 sm:px-6 sm:py-5 lg:px-8">
-          {/* Increased padding & gap */}
-          {/* Back Button (styled more like a link) */}
+          {/* Back Button */}
           <Button
-            variant="link" // Changed to link variant
+            variant="link"
             size="sm"
             onClick={handleBackClick}
             data-testid="discard-button"
@@ -116,36 +122,45 @@ export function PlanModeMenu() {
             )}
           >
             <ArrowLeft className="h-4 w-4 mr-1.5" />
-            {mode === "edit" ? "Cancel Edits" : "Back"}
+            {backButtonText}
           </Button>
-          {/* Main Content Row (stacks vertically on mobile, row on sm+) */}
+
+          {/* Main Content Row */}
           <div className="flex w-full flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             {/* Left Section: Status and Plan Name */}
-            <div className="flex flex-col gap-1">
-              {/* Vertical gap for status/name */}
+            <div className="flex flex-col gap-1 min-w-0">
               <div
                 className={cn(
                   "flex items-center text-sm font-oswald font-light uppercase tracking-wide",
                   mode === "edit" ? "text-[var(--edit-mode-text)]" : "text-[var(--view-mode-text)]"
                 )}
               >
-                {/* Status line */}
                 {mode === "edit" ? (
                   <>
-                    <Edit className="h-3.5 w-3.5 mr-1.5" />
-                    <span>Editing Plan</span>
+                    <Edit className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" /> <span>Editing Plan</span>
                   </>
                 ) : (
-                  <span>Viewing Plan</span>
+                  <span>Viewing Plan</span> /* Or handle View mode specific icon */
+                )}
+                {mode === "edit" && hasUnsavedChanges && (
+                  <span
+                    className="ml-2 text-red-600 dark:text-red-400 font-bold flex-shrink-0"
+                    title="Unsaved changes"
+                  >
+                    *
+                  </span>
                 )}
               </div>
-              <h1 className="text-xl sm:text-2xl text-foreground line-clamp-1 font-oswald font-light uppercase tracking-wide" data-testid="plan-name">
-                {/* Plan Name - larger & bolder */}
+              <h1
+                className="text-xl sm:text-2xl text-foreground truncate font-oswald font-light uppercase tracking-wide"
+                data-testid="plan-name"
+              >
                 {planName}
               </h1>
             </div>
+
             {/* Right Section: Action Buttons */}
-            <div className="flex w-full items-center justify-start gap-2 sm:w-auto">
+            <div className="flex w-full items-center justify-start gap-2 sm:w-auto flex-shrink-0">
               {mode === "edit" && (
                 <Button
                   variant="outline"
@@ -164,13 +179,13 @@ export function PlanModeMenu() {
                 </Button>
               )}
               <Button
-                variant="default" // Primary action style
+                variant="default"
                 size="sm"
                 onClick={handleSave}
-                disabled={isSaving}
+                disabled={isSaving || (mode === "edit" && !hasUnsavedChanges)}
                 data-testid="save-button"
                 className={cn(
-                  "w-full sm:w-auto", // Full width on mobile
+                  "w-full sm:w-auto",
                   mode === "edit"
                     ? "bg-[var(--edit-mode-text)] text-white hover:bg-[var(--edit-mode-hover-text)]"
                     : "bg-[var(--view-mode-text)] text-white hover:bg-[var(--view-mode-hover-text)]"
@@ -178,51 +193,46 @@ export function PlanModeMenu() {
               >
                 {isSaving ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Saving...
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...
                   </>
                 ) : (
                   <>
-                    <Save className="h-4 w-4 mr-1.5 sm:mr-2" />
+                    <Save className="h-4 w-4 mr-1.5 sm:mr-2" />{" "}
                     <span className="hidden sm:inline">
                       {mode === "edit" ? "Save Plan" : "Save to My Plans"}
-                    </span>
-                    <span className="sm:hidden">Save</span> {/* Shorter text */}
+                    </span>{" "}
+                    <span className="sm:hidden">Save</span>
                   </>
                 )}
               </Button>
             </div>
-            {/* End Right Section */}
           </div>
-          {/* End Main Content Row */}
         </div>
-        {/* End Max Width Container */}
       </div>
-      {/* End Main Header Area */}
-      {/* Alert Dialog with mode-specific styling */}
-      <AlertDialog
-        open={showExitConfirm}
-        onOpenChange={(open) => {
-          // Only update the dialog state
-          setShowExitConfirm(open)
-        }}
-      >
-        <AlertDialogContent className={mode === "edit" ? "border-[var(--edit-mode-border)]" : ""} data-testid="discard-warning-dialog">
+
+      {/* Alert Dialog for Discard Confirmation */}
+      <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+        <AlertDialogContent
+          className={cn(mode === "edit" ? "border-[var(--edit-mode-border)]" : "")}
+          data-testid="discard-warning-dialog"
+        >
           <AlertDialogHeader>
-            <AlertDialogTitle className={mode === "edit" ? "text-[var(--edit-mode-text)]" : ""}>
+            <AlertDialogTitle className={cn(mode === "edit" ? "text-[var(--edit-mode-text)]" : "")}>
               Discard unsaved changes?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              If you exit now, your unsaved changes will be lost. This action cannot be undone.
+              Your unsaved changes will be lost. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
-              className={
+              onClick={cancelDiscardChanges}
+              className={cn(
                 mode === "edit"
                   ? "border-[var(--edit-mode-border)] text-[var(--edit-mode-text)]"
                   : ""
-              }
+              )}
+              data-testid="cancel-button"
             >
               Cancel
             </AlertDialogCancel>
@@ -236,6 +246,7 @@ export function PlanModeMenu() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
       {/* JSON Editor Modal */}
       {isJsonEditorOpen && draftPlan && (
         <JsonEditor
@@ -248,6 +259,8 @@ export function PlanModeMenu() {
           }}
         />
       )}
+
+      {/* Saved Plan Toast Notification */}
       {savedPlanName && <SavedPlanToast planName={savedPlanName} />}
     </>
   )

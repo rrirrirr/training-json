@@ -1,9 +1,9 @@
 "use client"
 
-import { usePlanMode } from "@/contexts/plan-mode-context"
+import { usePlanStore } from "@/store/plan-store"
 
 export function UnsavedChangesIndicator() {
-  const { hasUnsavedChanges } = usePlanMode()
+  const hasUnsavedChanges = usePlanStore((state) => state.hasUnsavedChanges)
 
   if (!hasUnsavedChanges) {
     return null

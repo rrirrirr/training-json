@@ -2,11 +2,12 @@
 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { usePlanMode } from "@/contexts/plan-mode-context"
+import { usePlanStore } from "@/store/plan-store" 
 import { useState, useEffect } from "react"
 
 export function PlanNameInput() {
-  const { draftPlan, updateDraftPlan } = usePlanMode()
+  const draftPlan = usePlanStore((state) => state.draftPlan)
+  const updateDraftPlan = usePlanStore((state) => state.updateDraftPlan)
   const [planName, setPlanName] = useState("")
 
   // Initialize the plan name from the draft plan

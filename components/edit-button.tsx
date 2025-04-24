@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/ui/button"
 import { Edit } from "lucide-react"
-import { usePlanMode } from "@/contexts/plan-mode-context"
 import { usePlanStore } from "@/store/plan-store"
+import { useRouter } from "next/navigation"
 
 interface EditButtonProps {
   planId: string
@@ -11,14 +11,13 @@ interface EditButtonProps {
 }
 
 export function EditButton({ planId, className }: EditButtonProps) {
-  const { enterEditMode } = usePlanMode()
-  const getPlanById = usePlanStore((state) => state.getPlanById)
+  const router = useRouter()
+  const fetchPlanById = usePlanStore((state) => state.fetchPlanById)
 
   const handleEditClick = async () => {
-    const plan = await getPlanById(planId)
-    if (plan) {
-      enterEditMode(plan, planId)
-    }
+    // Instead of directly calling enterEditMode, we'll navigate to the edit page
+    // The PlanPageHandler will handle loading the plan and setting the mode
+    router.push(`/plan/${planId}/edit`)
   }
 
   return (

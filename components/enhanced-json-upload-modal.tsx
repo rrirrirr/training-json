@@ -35,7 +35,6 @@ import { copyJsonErrorForAI } from "@/utils/copy-for-ai"
 import Link from "next/link"
 import { usePlanStore } from "@/store/plan-store"
 import JsonEditor from "@/components/json-editor"
-import { usePlanMode } from "@/contexts/plan-mode-context"
 
 interface EnhancedJsonUploadModalProps {
   isOpen: boolean
@@ -59,13 +58,13 @@ export default function EnhancedJsonUploadModal({
 
   // Get the createPlan function from the Zustand store
   const createPlan = usePlanStore((state) => state.createPlan)
-
-  // Get the enterEditMode function from the plan mode context
-  const { mode, enterEditMode } = usePlanMode()
+  // Get data and actions from the Zustand store
+  const mode = usePlanStore((state) => state.mode)
+  const _setModeState = usePlanStore((state) => state._setModeState)
 
   // Log initial state
   console.log("[EnhancedJsonUploadModal] Initial mode:", mode)
-  console.log("[EnhancedJsonUploadModal] enterEditMode function exists:", !!enterEditMode)
+  console.log("[EnhancedJsonUploadModal] _setModeState function exists:", !!_setModeState)
 
   // Separate notification states for regular copy and AI copy
   const [showCopyNotification, setShowCopyNotification] = useState(false)
@@ -143,21 +142,26 @@ export default function EnhancedJsonUploadModal({
         } else {
           console.log("[validateAndImport] No onImport callback - entering edit mode directly")
           console.log("[validateAndImport] Current mode before entering edit mode:", mode)
-          console.log("[validateAndImport] enterEditMode function type:", typeof enterEditMode)
+          console.log("[validateAndImport] _setModeState function type:", typeof _setModeState)
 
-          // Instead of immediately saving to Supabase, enter edit mode
+          // Instead of immediately saving to Supabase, set edit mode
           try {
             console.log("[validateAndImport] Entering edit mode with data:", {
               planName: data.metadata?.planName,
               weeksCount: data.weeks?.length || 0,
             })
-            enterEditMode(data)
+            // Use _setModeState instead of enterEditMode
+            _setModeState("edit", data, null, true)
             console.log("[validateAndImport] Successfully entered edit mode")
-            console.log("[validateAndImport] Mode after enterEditMode called:", mode)
+            console.log("[validateAndImport] Mode after setting edit mode:", mode)
 
-            // Close the modal only - let enterEditMode handle the navigation
+            // Close the modal
             onClose()
-            
+
+            // Navigate to the edit page
+            router.push("/plan/edit")
+            onClose()
+
             // Don't navigate here - enterEditMode handles the navigation
           } catch (editModeError) {
             console.error("[validateAndImport] Error entering edit mode:", editModeError)
@@ -184,7 +188,7 @@ export default function EnhancedJsonUploadModal({
         setIsSubmitting(false)
       }
     },
-    [enterEditMode, onImport, onClose]
+    [_setModeState, onImport, onClose, router, mode]
   )
 
   const handleImportFromText = () => {
