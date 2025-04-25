@@ -3,20 +3,34 @@ import { createClient } from "@supabase/supabase-js"
 import type { TrainingPlanData } from "@/types/training-plan"
 import type { Database } from "@/lib/supa-client"
 import * as dotenv from "dotenv"
+import * as path from "path"
+import * as fs from "fs"
 
-// Load environment variables from .env.test.local
-dotenv.config({ path: ".env.test.local" })
+// Load environment variables from .env.test.local or .env.test if exists
+const testLocalPath = path.resolve(".env.test.local")
+const testPath = path.resolve(".env.test")
+
+if (fs.existsSync(testLocalPath)) {
+  console.log("Loading environment from .env.test.local")
+  dotenv.config({ path: testLocalPath })
+} else if (fs.existsSync(testPath)) {
+  console.log("Loading environment from .env.test")
+  dotenv.config({ path: testPath })
+} else {
+  console.log("No test environment file found, using default values")
+}
 
 // Create a dedicated local test client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+// Apply defaults for local dev/test if not defined in env
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "http://127.0.0.1:54321"
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0"
 
 console.log("Using Supabase URL:", supabaseUrl)
 
 let testClient: any = null
 
 try {
-  // if supabaseURl === undefined throw error
+  // Create the Supabase client - we have fallbacks for URL and key so this should work
   testClient = createClient<Database>(supabaseUrl, supabaseKey)
 } catch (error) {
   console.error("Failed to create Supabase client:", error)
