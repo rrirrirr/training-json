@@ -156,7 +156,9 @@ test.describe("Plan Edit Mode with Local Database", () => {
 
   test("Canceling unsaved changes should", async ({ page }) => {})
 
-  test("Saving changes should take us to the new plan id page", async ({ page }) => {})
+  test("Saving changes should exit edit mode and take us to the new plan id page", async ({
+    page,
+  }) => {})
 
   test("Creating new plan should put us in edit mode", async ({ page }) => {})
 
