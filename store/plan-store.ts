@@ -193,31 +193,70 @@ export const usePlanStore = create<PlanState>()(
         try {
           const currentMetadata = get().planMetadataList
           const isLoading = get().isLoading
+
           // Avoid fetching if already loading unless forced
           if (isLoading && !force) {
             console.log("[fetchPlanMetadata] Already loading, skipping fetch.")
             return
           }
 
+          // Only fetch metadata if we're forcing a refresh or if the list is empty
           if (force || currentMetadata.length === 0) {
             console.log(
-              `[fetchPlanMetadata] Fetching from database. Reason: ${force ? "Forced" : "List empty"}.`
+              `[fetchPlanMetadata] Fetching metadata. Reason: ${force ? "Forced" : "List empty"}.`
             )
             set({ isLoading: true, error: null })
-            const { data, error } = await db
-              .from("training_plans")
-              .select("id, planName:plan_data->metadata->planName, created_at, last_accessed_at")
-              .order("created_at", { ascending: false })
-              .limit(50)
-            if (error) throw error
-            const planMetadata: PlanMetadata[] = (data ?? []).map((plan: any) => ({
-              id: plan.id,
-              name: plan.planName || "Unnamed Plan",
-              createdAt: plan.created_at,
-              updatedAt: plan.last_accessed_at || plan.created_at,
-            }))
-            console.log(`[fetchPlanMetadata] Fetched ${planMetadata.length} items.`)
-            set({ planMetadataList: planMetadata, isLoading: false })
+
+            // Only fetch up-to-date information about plans that are ALREADY in our local store
+            // If the list is empty, we don't fetch anything from the database
+            if (currentMetadata.length > 0) {
+              // Extract IDs of plans in our local store
+              const localPlanIds = currentMetadata.map((plan) => plan.id)
+
+              // Fetch up-to-date information only for plans we already know about
+              const { data, error } = await db
+                .from("training_plans")
+                .select("id, planName:plan_data->metadata->planName, created_at, last_accessed_at")
+                .in("id", localPlanIds)
+                .order("created_at", { ascending: false })
+
+              if (error) throw error
+
+              // Map the data and filter out any plans that might no longer exist in the database
+              const updatedPlanMetadata: PlanMetadata[] = (data ?? []).map((plan: any) => ({
+                id: plan.id,
+                name: plan.planName || "Unnamed Plan",
+                createdAt: plan.created_at,
+                updatedAt: plan.last_accessed_at || plan.created_at,
+              }))
+
+              console.log(
+                `[fetchPlanMetadata] Updated ${updatedPlanMetadata.length} items out of ${localPlanIds.length} local plans.`
+              )
+
+              // If some plans were not found in the database, remove them from local store
+              if (updatedPlanMetadata.length < localPlanIds.length) {
+                const missingPlanIds = localPlanIds.filter(
+                  (id) => !updatedPlanMetadata.some((plan) => plan.id === id)
+                )
+                console.log(
+                  `[fetchPlanMetadata] ${missingPlanIds.length} plans not found in DB, removing from local store:`,
+                  missingPlanIds
+                )
+
+                // Keep only plans that exist in the database
+                set({ planMetadataList: updatedPlanMetadata, isLoading: false })
+              } else {
+                // All local plans still exist in the database
+                set({ planMetadataList: updatedPlanMetadata, isLoading: false })
+              }
+            } else {
+              // List is empty and we're not fetching from the database
+              console.log(
+                "[fetchPlanMetadata] Local plan list is empty. Not fetching from database."
+              )
+              set({ isLoading: false })
+            }
           } else {
             console.log(
               `[fetchPlanMetadata] Metadata list exists (${currentMetadata.length} items) and not forced. Setting loading false.`
@@ -251,8 +290,26 @@ export const usePlanStore = create<PlanState>()(
 
           if (error) {
             if (status === 406) {
-              console.log(`[fetchPlanById] Plan with ID ${planId} not found.`)
-              set({ isLoading: false }) // Set loading false
+              console.log(`[fetchPlanById] Plan with ID ${planId} not found in database.`)
+
+              // Check if this plan exists in our local store
+              const planMetadataList = get().planMetadataList
+              const planExistsLocally = planMetadataList.some((plan) => plan.id === planId)
+
+              if (planExistsLocally) {
+                console.log(
+                  `[fetchPlanById] Plan ${planId} exists locally but not in DB. Removing from local store.`
+                )
+                // Plan exists locally but not in DB - remove it from local store
+                await get().removeLocalPlan(planId)
+                set({
+                  error: `Plan with ID ${planId} no longer exists in the database and has been removed from your local plans.`,
+                  isLoading: false,
+                })
+              } else {
+                set({ isLoading: false }) // Set loading false
+              }
+
               return null // Not found is not a store error, just return null
             } else {
               console.error("[fetchPlanById] Database fetch error:", error)
@@ -657,20 +714,12 @@ export const usePlanStore = create<PlanState>()(
         }
       },
       removeLocalPlan: async (planId) => {
-        console.log(`[removeLocalPlan] START - Removing plan ID: ${planId}`)
+        console.log(`[removeLocalPlan] START - Removing plan ID: ${planId} from local store only`)
         const state = get()
         let wasActive = state.activePlanId === planId
         let wasBeingEdited = state.mode === "edit" && state.originalPlanId === planId
         try {
-          // Remove from DB (assuming this is desired)
-          const { error: dbError } = await db.from("training_plans").delete().eq("id", planId)
-          if (dbError) {
-            console.error(`[removeLocalPlan] DB delete error for ${planId}:`, dbError)
-            set({ error: `Failed to delete plan from database: ${dbError.message}` })
-            return false // Stop if DB delete fails
-          }
-
-          // Update local state
+          // Update local state only - no Supabase deletion
           const listAfterFilter = state.planMetadataList.filter((p) => p.id !== planId)
           let stateUpdate: Partial<PlanState> = { planMetadataList: listAfterFilter, error: null }
 
@@ -693,7 +742,10 @@ export const usePlanStore = create<PlanState>()(
           return true
         } catch (err) {
           console.error("[removeLocalPlan] Error:", err)
-          set({ error: err instanceof Error ? err.message : "Unknown error removing plan" })
+          set({
+            error:
+              err instanceof Error ? err.message : "Unknown error removing plan from local store",
+          })
           return false
         }
       },
@@ -762,11 +814,19 @@ export const usePlanStore = create<PlanState>()(
         // This runs AFTER Zustand has loaded its persisted state
         if (typeof window === "undefined") return // Prevent SSR execution
         if (state) {
-          console.log(
-            "[Store Rehydrate] Rehydrated state, initializing draft state and fetching metadata."
-          )
+          console.log("[Store Rehydrate] Rehydrated state, initializing draft state.")
           state._initializeState() // Try to load draft state from localStorage
-          state.fetchPlanMetadata() // Fetch fresh metadata
+
+          // Don't fetch metadata from the database on initialization
+          // We'll use the persisted metadata that's already in the store
+          console.log(
+            "[Store Rehydrate] Using persisted plan metadata. Not fetching from database."
+          )
+
+          // Just ensure loading state is set to false
+          if (state.isLoading) {
+            state.isLoading = false
+          }
         } else {
           console.warn("[Store Rehydrate] No state found during rehydration.")
         }
