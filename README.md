@@ -180,17 +180,29 @@ t-json/
 ```
 
 ## Local Development
+## Documentation
+
+Comprehensive documentation is available in the `docs` directory:
+
+- [**JSON Structure**](docs/json-structure.md) - Detailed explanation of the training plan JSON data format
+- [**Plan Storage System**](docs/plan-storage-system.md) - How plan data is stored, cached, and retrieved
+- [**Plan Mode Architecture**](docs/plan-mode-architecture.md) - Architecture of plan editing, viewing, and normal modes
+- [**Local Development**](docs/local-development.md) - Setting up and using Supabase locally for development
+- [**Test Setup**](docs/test-setup.md) - How to set up and run tests
+
+See the [documentation index](docs/README.md) for a complete overview.
+
+## Local Development
 
 This project uses:
 - **Next.js**: For the React framework and routing
 - **TypeScript**: For type safety
 - **Tailwind CSS**: For styling
 - **Shadcn UI**: For component library
-- **Context API**: For state management
+- **Zustand**: For state management
 - **next-themes**: For theme switching and detection
 
 ### Commands
-
 - `npm run dev`: Start the development server
 - `npm run build`: Build the application for production
 - `npm start`: Start the production server after building
