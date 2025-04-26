@@ -1,3 +1,5 @@
+// components/app-sidebar.tsx
+
 "use client"
 
 // Import necessary components and icons
@@ -40,9 +42,11 @@ import {
   DropdownMenuTrigger,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu"
+// *** ADDED useEffect and useState imports ***
 import { useEffect, useState, useRef } from "react"
 import type { WeekType, TrainingPlanData } from "@/types/training-plan"
 import type { PlanMetadata } from "@/store/plan-store" // Import PlanMetadata
+// *** ADDED usePathname import ***
 import { useRouter, usePathname } from "next/navigation"
 import { usePlanStore } from "@/store/plan-store"
 // Import the updated PlanSwitcher component AND PlanSwitcherItem
@@ -57,7 +61,7 @@ interface AppSidebarProps {
 export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
   // --- Hooks, State, Utils ---
   const router = useRouter()
-  const pathname = usePathname()
+  const pathname = usePathname() // Get current pathname
   const activePlanId = usePlanStore((state) => state.activePlanId)
   const planMetadataList = usePlanStore((state) => state.planMetadataList as PlanMetadata[])
   const selectedWeek = usePlanStore((state) => state.selectedWeek)
@@ -83,8 +87,11 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
   const [weekTypes, setWeekTypes] = useState<WeekType[]>([])
   const [showAnimation, setShowAnimation] = useState(false)
   const isMounted = useRef(false)
+  // State for plan dropdown visibility
   const [isPlanDropdownOpen, setIsPlanDropdownOpen] = useState(false)
   const fetchPlanById = usePlanStore((state) => state.fetchPlanById) // Get fetch action
+  // Keep track of the previous pathname to detect changes
+  const previousPathnameRef = useRef(pathname)
 
   // --- Effects ---
   useEffect(() => {
@@ -101,6 +108,24 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
     const currentPlanData = mode !== "normal" ? draftPlan : usePlanStore.getState().activePlan
     setWeekTypes(currentPlanData?.weekTypes?.filter((wt) => wt) || [])
   }, [mode, draftPlan, activePlanId]) // Re-run if activePlan changes too
+
+  // *** ADDED EFFECT to close dropdown on navigation ***
+  useEffect(() => {
+    if (isPlanDropdownOpen && pathname !== previousPathnameRef.current) {
+      // Regex to check if the path is /plan/.../edit
+      const isEditPage = /^\/plan\/[^/]+\/edit$/.test(pathname)
+      // Regex to check if the previous path was a plan view page
+      const wasPlanPage = /^\/plan\/[^/]+$/.test(previousPathnameRef.current)
+
+      // Close if navigating TO an edit page OR navigating AWAY from a plan page (but not to edit)
+      if (isEditPage || (wasPlanPage && !isEditPage)) {
+        console.log("[AppSidebar Effect] Path changed, closing plan dropdown.")
+        setIsPlanDropdownOpen(false)
+      }
+    }
+    // Update the ref to the current pathname for the next check
+    previousPathnameRef.current = pathname
+  }, [pathname, isPlanDropdownOpen]) // Depend on pathname and dropdown state
 
   const planToDisplay: TrainingPlanData | null | undefined =
     mode !== "normal" ? draftPlan : usePlanStore.getState().activePlan
@@ -165,9 +190,10 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
       // If this is the same plan that's being edited, navigate to its edit page instead of showing warning
       if (planId === originalPlanId) {
         e.preventDefault()
-        router.push(`/plan/${planId}/edit`)
+        // router.push(`/plan/${planId}/edit`) // Navigation happens via Link onClick now
         setIsPlanDropdownOpen(false)
         setOpenMobile(false)
+        // Let the Link component handle navigation
         return
       }
 
@@ -183,6 +209,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
     setOpenMobile(false)
     // Close dropdown in normal mode when navigating
     setIsPlanDropdownOpen(false)
+    // Let the Link component handle the navigation if no warning/block
   }
 
   // Handles "View All" click (both inline and dropdown)
@@ -193,6 +220,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
       setIsPlanDropdownOpen(false)
     } else {
       setIsPlanDropdownOpen(false)
+      // Let the Link component handle navigation
     }
   }
 
@@ -241,8 +269,8 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
 
   // --- Visibility Logic ---
   const shouldShowCreateButton = isMobile || (!isMobile && isRootRoute)
-  const shouldShowInlineList = (isMobile || isRootRoute) && isOpen
-  const shouldShowPlanRelatedTriggers = !isMobile && !isRootRoute
+  const shouldShowInlineList = !isMobile && isRootRoute && isOpen // Changed: only show on desktop root
+  const shouldShowPlanRelatedTriggers = !isRootRoute
   const shouldShowDropdownTrigger = !isMobile && !isRootRoute && isOpen
   const shouldShowCollapsedTrigger = !isRootRoute && !isOpen && !isMobile
   const shouldRenderDropdownContent = !isRootRoute && !isMobile
@@ -275,6 +303,8 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm",
               isOpen || isMobile ? "block truncate" : "inline-block"
             )}
+            // Close dropdown if navigating home
+            onClick={() => setIsPlanDropdownOpen(false)}
           >
             <h1
               className={cn(
@@ -297,7 +327,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
           )}
         >
           {/* New Plan Button */}
-          {shouldShowCreateButton && (
+          {(isOpen || isMobile) && ( // Only show button text when open or mobile
             <div className={cn("mb-2", isOpen || isMobile ? "w-full" : "w-auto")}>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -321,54 +351,11 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
             </div>
           )}
 
-          {/* Inline list shown ONLY on desktop root when sidebar is open */}
-          {shouldShowInlineList && (
-            <div className="w-full flex flex-col gap-y-0.5 mt-2">
-              <h3 className="text-sm font-semibold px-2 py-1 text-muted-foreground mb-1">
-                Recent Plans
-              </h3>
-              {/* Render the list using PlanSwitcherItem */}
-              {recentPlansToShow.length > 0 ? (
-                recentPlansToShow.map((plan) => (
-                  // *** USE PlanSwitcherItem DIRECTLY ***
-                  <PlanSwitcherItem
-                    key={plan.id}
-                    plan={plan}
-                    isActive={plan.id === activePlanId && mode === "normal"}
-                    onLinkClick={handlePlanLinkClick} // Use existing handler
-                    className="px-1"
-                  />
-                ))
-              ) : (
-                <div className="px-2 py-1.5 text-sm text-muted-foreground italic">
-                  No plans found
-                </div>
-              )}
-              {/* View All Plans Link - Styling matches PlanSwitcher */}
-              {planMetadataList.length > desktopListLimit && (
-                <div className={cn("px-2 py-2 rounded-sm", "hover:bg-accent")}>
-                  <Link
-                    href="/plans"
-                    passHref
-                    className={cn(
-                      "flex w-full items-center text-sm text-muted-foreground outline-none",
-                      "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    )}
-                    onClick={handleViewAllClick}
-                    draggable="false"
-                  >
-                    <span className="mr-auto">View All Plans</span>
-                    <ChevronRight className="size-4 ml-2" />
-                  </Link>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* --- Dropdown Menu for Plan Switching (shown when not on root route) --- */}
+          {/* --- Dropdown Menu for Plan Switching (shown when NOT on root route) --- */}
           {shouldShowPlanRelatedTriggers && (
+            // *** ADDED open and onOpenChange props ***
             <DropdownMenu open={isPlanDropdownOpen} onOpenChange={setIsPlanDropdownOpen}>
-              {/* Expanded/Mobile Trigger */}
+              {/* Expanded Trigger */}
               {shouldShowDropdownTrigger && (
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -450,7 +437,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                     activePlanId={activePlanId}
                     mode={mode}
                     limit={dropdownListLimit}
-                    showCreateButton={true}
+                    showCreateButton={true} // Show create button inside dropdown
                     onPlanLinkClick={handlePlanLinkClick}
                     onViewAllClick={handleViewAllClick}
                     // Pass onClose if needed: onClose={() => setIsPlanDropdownOpen(false)}
@@ -459,10 +446,53 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
               )}
             </DropdownMenu>
           )}
+
+          {/* Inline list shown ONLY on desktop root when sidebar is open */}
+          {shouldShowInlineList && (
+            <div className="w-full flex flex-col gap-y-0.5 mt-4 border-t pt-4">
+              <h3 className="text-sm font-semibold px-2 py-1 text-muted-foreground mb-1">
+                Recent Plans
+              </h3>
+              {/* Render the list using PlanSwitcherItem */}
+              {recentPlansToShow.length > 0 ? (
+                recentPlansToShow.map((plan) => (
+                  // *** USE PlanSwitcherItem DIRECTLY ***
+                  <PlanSwitcherItem
+                    key={plan.id}
+                    plan={plan}
+                    isActive={plan.id === activePlanId && mode === "normal"}
+                    onLinkClick={handlePlanLinkClick} // Use existing handler
+                    className="px-1"
+                  />
+                ))
+              ) : (
+                <div className="px-2 py-1.5 text-sm text-muted-foreground italic">
+                  No plans found
+                </div>
+              )}
+              {/* View All Plans Link - Styling matches PlanSwitcher */}
+              {planMetadataList.length > desktopListLimit && (
+                <div className={cn("px-2 py-2 rounded-sm", "hover:bg-accent")}>
+                  <Link
+                    href="/plans"
+                    passHref
+                    className={cn(
+                      "flex w-full items-center text-sm text-muted-foreground outline-none",
+                      "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    )}
+                    onClick={handleViewAllClick}
+                    draggable="false"
+                  >
+                    <span className="mr-auto">View All Plans</span>
+                    <ChevronRight className="size-4 ml-2" />
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
         </SidebarGroup>
 
         {/* Active Plan Navigation (Week/Month selectors etc.) */}
-        {/* Mode indicator removed as requested */}
         {shouldShowActivePlanNav && (
           <SidebarGroup
             className={cn(
