@@ -2,6 +2,7 @@ import { TrainingPlanData } from "@/types/training-plan"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { db } from "@/lib/db-client"
+import { getPlanFromCache, cachePlan, hasPlanInCache, removePlanFromCache } from "./session-cache"
 import { PlanMetadata } from "./plan-store" // Assuming PlanMetadata is exported
 
 // --- Types --- (Keep existing types: PlanMetadata, PlanMode)
@@ -279,9 +280,37 @@ export const usePlanStore = create<PlanState>()(
             // Don't set store error here, let the caller handle null return
             return null
           }
-          console.log(`[fetchPlanById] Fetching plan data for ID: ${planId}`)
-          set({ isLoading: true, error: null }) // Set loading true for this specific fetch
 
+          console.log(`[fetchPlanById] Fetching plan data for ID: ${planId}`)
+          set({ isLoading: true, error: null })
+
+          // First check if this plan exists in our metadata list
+          const planMetadataList = get().planMetadataList
+          const planExistsLocally = planMetadataList.some((plan) => plan.id === planId)
+
+          if (!planExistsLocally) {
+            console.log(
+              `[fetchPlanById] Plan ${planId} not in local store. Won't fetch from database.`
+            )
+            set({
+              error: `Plan with ID ${planId} is not in your local store.`,
+              isLoading: false,
+            })
+            return null
+          }
+
+          // Check in-memory session cache first (using imported functions)
+          if (hasPlanInCache(planId)) {
+            console.log(`[fetchPlanById] Found plan ${planId} in session cache. Using cached data.`)
+            const cachedPlan = getPlanFromCache(planId)
+            set({ isLoading: false })
+            return cachedPlan
+          }
+
+          // If not in session cache, fetch from database
+          console.log(
+            `[fetchPlanById] Plan ${planId} not in session cache. Fetching from database.`
+          )
           const { data, error, status } = await db
             .from("training_plans")
             .select("plan_data")
@@ -292,25 +321,21 @@ export const usePlanStore = create<PlanState>()(
             if (status === 406) {
               console.log(`[fetchPlanById] Plan with ID ${planId} not found in database.`)
 
-              // Check if this plan exists in our local store
-              const planMetadataList = get().planMetadataList
-              const planExistsLocally = planMetadataList.some((plan) => plan.id === planId)
-
+              // Remove from local store if it exists locally but not in DB
               if (planExistsLocally) {
                 console.log(
                   `[fetchPlanById] Plan ${planId} exists locally but not in DB. Removing from local store.`
                 )
-                // Plan exists locally but not in DB - remove it from local store
                 await get().removeLocalPlan(planId)
                 set({
                   error: `Plan with ID ${planId} no longer exists in the database and has been removed from your local plans.`,
                   isLoading: false,
                 })
               } else {
-                set({ isLoading: false }) // Set loading false
+                set({ isLoading: false })
               }
 
-              return null // Not found is not a store error, just return null
+              return null
             } else {
               console.error("[fetchPlanById] Database fetch error:", error)
               set({ error: `Failed to fetch plan: ${error.message}`, isLoading: false })
@@ -319,6 +344,10 @@ export const usePlanStore = create<PlanState>()(
           }
 
           if (data?.plan_data) {
+            // Store the plan data in the session cache
+            cachePlan(planId, data.plan_data as TrainingPlanData)
+            console.log(`[fetchPlanById] Cached plan ${planId} in session memory.`)
+
             // Log access asynchronously
             db.from("plan_access_log")
               .insert({ plan_id: planId })
@@ -326,11 +355,12 @@ export const usePlanStore = create<PlanState>()(
                 if (logError)
                   console.error(`[fetchPlanById] Failed to log access for ${planId}:`, logError)
               })
-            set({ isLoading: false }) // Set loading false on success
+
+            set({ isLoading: false })
             return data.plan_data as TrainingPlanData
           }
 
-          set({ isLoading: false }) // Set loading false if no data found
+          set({ isLoading: false })
           return null
         } catch (err) {
           console.error("[fetchPlanById] Error:", err)
@@ -719,6 +749,29 @@ export const usePlanStore = create<PlanState>()(
         let wasActive = state.activePlanId === planId
         let wasBeingEdited = state.mode === "edit" && state.originalPlanId === planId
         try {
+          // Remove cached plan data from localStorage
+          if (typeof window !== "undefined") {
+            const cachedPlanKey = `planData_${planId}`
+            try {
+              localStorage.removeItem(cachedPlanKey)
+              console.log(
+                `[removeLocalPlan] Removed cached plan data for ${planId} from localStorage.`
+              )
+            } catch (err) {
+              console.error(`[removeLocalPlan] Error removing cached plan data for ${planId}:`, err)
+              // Non-critical error, continue even if removal fails
+            }
+          }
+
+          // Remove from session cache as well
+          try {
+            removePlanFromCache(planId)
+            console.log(`[removeLocalPlan] Removed plan ${planId} from session cache.`)
+          } catch (err) {
+            console.error(`[removeLocalPlan] Error removing plan from session cache:`, err)
+            // Non-critical error, continue
+          }
+
           // Update local state only - no Supabase deletion
           const listAfterFilter = state.planMetadataList.filter((p) => p.id !== planId)
           let stateUpdate: Partial<PlanState> = { planMetadataList: listAfterFilter, error: null }
