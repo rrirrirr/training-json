@@ -372,6 +372,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                       planMetadataList.length === 0 && mode === "normal" && "text-muted-foreground"
                     )}
                     disabled={planMetadataList.length === 0 && mode === "normal"}
+                    data-testid="plan-switcher-trigger"
                   >
                     {mode === "edit" ? (
                       <Edit className="mr-2 h-4 w-4 shrink-0" />

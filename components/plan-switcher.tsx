@@ -4,7 +4,7 @@
 import Link from "next/link"
 import { useState } from "react"
 import { FileText, Trash2, MoreHorizontal, Plus, ChevronRight, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button" 
+import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import {
   DropdownMenu,
@@ -43,18 +43,16 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
 
   const handleEditClick = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    e.stopPropagation()
+    // Fetch data and open editor logic (remains the same)
     setIsFetchingData(true)
-    
     try {
       let planDataToEdit = null
-      
       if (activePlanId === plan.id && activePlan) {
         planDataToEdit = activePlan
       } else {
         planDataToEdit = await fetchPlanById(plan.id)
       }
-      
+
       if (planDataToEdit) {
         const fullPlanObjectForEditor = {
           id: plan.id,
@@ -92,23 +90,23 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
   const wrapperClassName = cn(
     "flex w-full items-center p-2 group/item relative overflow-hidden min-h-[48px] rounded-md",
     "hover:bg-accent",
-    // REMOVED focus ring classes: focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1 focus-within:ring-offset-background
     isActive && "bg-accent",
     className
   )
 
   return (
-    <div className={wrapperClassName} data-testid="plan-item" data-plan-id={plan.id}>
+    // Changed outer div to use data-testid="plan-item-${plan.id}" for more specific targeting if needed
+    <div className={wrapperClassName} data-testid={`plan-item-${plan.id}`} data-plan-id={plan.id}>
       <div className="flex-grow min-w-0 mr-2 self-center">
         <Link
           href={`/plan/${plan.id}`}
           onClick={(e) => onLinkClick(e, plan.id)}
-          // REMOVED focus ring classes: focus:outline-none focus-visible:ring-1 focus-visible:ring-ring
-          // ADDED outline-none
           className="block rounded-sm outline-none"
           aria-current={isActive ? "page" : undefined}
           draggable="false"
           onPointerDown={(e) => e.stopPropagation()}
+          // Added data-testid for the link itself if needed for navigation checks
+          data-testid={`plan-link-${plan.id}`}
         >
           <div className="flex flex-col pl-2 py-1">
             <span
@@ -129,12 +127,10 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
             <Button
               variant="ghost"
               size="icon"
-              // REMOVED focus ring classes: focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0
-              // ADDED outline-none
               className="h-8 w-8 text-muted-foreground hover:bg-secondary data-[state=open]:bg-accent outline-none"
               aria-label={`Actions for ${plan.name}`}
-              // onClick={(e) => e.stopPropagation()}
-              // onPointerDown={(e) => e.stopPropagation()}
+              // Added data-testid for the actions trigger button
+              data-testid={`plan-actions-trigger-${plan.id}`}
             >
               <MoreHorizontal className="h-4 w-4" />
               <span className="sr-only">Plan Actions</span>
@@ -145,16 +141,16 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
             align="center"
             className="w-auto p-1"
             onFocusOutside={(e) => {
-              // Keep existing logic if needed
+              /* Keep existing logic if needed */
             }}
-            // onClick={(e) => e.stopPropagation()}
           >
-            {/* DropdownMenuItem already uses outline-none, no ring classes present */}
             <DropdownMenuItem
               className="h-8 px-2 hover:bg-muted flex items-center gap-2 cursor-pointer outline-none"
               onSelect={(e) => e.preventDefault()}
               onClick={handleEditClick}
               disabled={isFetchingData}
+              // Added data-testid for the "View/Edit JSON" menu item
+              data-testid={`edit-json-menu-item-${plan.id}`}
             >
               {isFetchingData ? (
                 <Loader2 className="h-4 w-4 mr-1 animate-spin" />
@@ -163,12 +159,13 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
               )}
               View/Edit JSON
             </DropdownMenuItem>
-            {/* DropdownMenuItem already uses outline-none, focus changes bg/text, no ring classes present */}
             <DropdownMenuItem
               className="h-8 px-2 text-destructive hover:bg-muted hover:text-destructive focus:text-destructive focus:bg-destructive/10 flex items-center gap-2 cursor-pointer outline-none"
               onSelect={(e) => e.preventDefault()}
               onClick={handleDeleteClick}
               disabled={isFetchingData}
+              // Added data-testid for the "Delete" menu item
+              data-testid={`delete-plan-menu-item-${plan.id}`}
             >
               <Trash2 className="h-4 w-4 mr-1" /> Delete
             </DropdownMenuItem>
@@ -180,6 +177,7 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
 }
 
 // --- PlanSwitcher Component ---
+// (This part remains unchanged as the updates were within PlanSwitcherItem)
 interface PlanSwitcherProps {
   plans: PlanMetadata[]
   activePlanId: string | null
@@ -188,7 +186,6 @@ interface PlanSwitcherProps {
   showCreateButton?: boolean
   onPlanLinkClick: (e: React.MouseEvent, planId: string) => void
   onViewAllClick: (e: React.MouseEvent) => void
-  // onClose?: () => void;
 }
 
 export const PlanSwitcher: React.FC<PlanSwitcherProps> = ({
@@ -199,13 +196,11 @@ export const PlanSwitcher: React.FC<PlanSwitcherProps> = ({
   showCreateButton = true,
   onPlanLinkClick,
   onViewAllClick,
-  // onClose
 }) => {
   const { open: openNewPlanModal } = useNewPlanModal()
   const displayPlans = plans.slice(0, limit)
 
   const handleCreateClick = () => {
-    // onClose?.();
     openNewPlanModal()
   }
 
@@ -223,10 +218,7 @@ export const PlanSwitcher: React.FC<PlanSwitcherProps> = ({
             />
           ))
         ) : (
-          <div className="px-3 py-2 text-sm text-muted-foreground italic">
-            {/* Increased padding slightly */}
-            No plans found
-          </div>
+          <div className="px-3 py-2 text-sm text-muted-foreground italic">No plans found</div>
         )}
       </div>
 
@@ -236,7 +228,6 @@ export const PlanSwitcher: React.FC<PlanSwitcherProps> = ({
           {plans.length > limit && (
             <DropdownMenuItem
               asChild
-              // No focus ring classes here initially, already has outline-none
               className="p-0 cursor-default outline-none focus:bg-transparent data-[highlighted]:bg-transparent"
             >
               <div>
@@ -244,13 +235,13 @@ export const PlanSwitcher: React.FC<PlanSwitcherProps> = ({
                   href="/plans"
                   passHref
                   className={cn(
-                    "flex w-full items-center text-sm text-muted-foreground rounded-sm outline-none", // Already has outline-none
+                    "flex w-full items-center text-sm text-muted-foreground rounded-sm outline-none",
                     "px-2 py-2",
                     "hover:bg-accent"
-                    // REMOVED focus ring classes: focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
                   )}
                   onClick={onViewAllClick}
                   draggable="false"
+                  data-testid="view-all-plans-link" // Added testid
                 >
                   <span className="mr-auto">View All Plans</span>
                   <ChevronRight className="size-4 ml-2" />
@@ -261,14 +252,14 @@ export const PlanSwitcher: React.FC<PlanSwitcherProps> = ({
           {showCreateButton && (
             <DropdownMenuItem
               className={cn(
-                "relative flex cursor-pointer select-none items-center justify-start gap-x-2 rounded-md px-3 py-2 text-sm font-medium outline-none transition-colors", // Already has outline-none
-                "bg-primary text-primary-foreground", // Primary button colors
-                "hover:bg-primary/90", // Primary button hover
-                // REMOVED focus ring classes: focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-background
-                "data-[disabled]:pointer-events-none data-[disabled]:opacity-50", // Disabled state
+                "relative flex cursor-pointer select-none items-center justify-start gap-x-2 rounded-md px-3 py-2 text-sm font-medium outline-none transition-colors",
+                "bg-primary text-primary-foreground",
+                "hover:bg-primary/90",
+                "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
                 "m-2"
               )}
               onSelect={handleCreateClick}
+              data-testid="create-new-plan-button" // Added testid
             >
               <Plus className="h-4 w-4 mr-2" />
               <span>New Plan</span>

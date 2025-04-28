@@ -302,7 +302,7 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave }: JsonEditor
   // --- Dialog Labels and Button Text ---
   const dialogTitle = plan?.id ? `Edit JSON: ${plan.name || plan.id}` : "Edit JSON"
   const dialogDescription = "Directly edit the underlying JSON data for this plan."
-  const saveButtonText = "Update Plan"
+  const saveButtonText = "View Draft"
 
   // --- Disable States ---
   // Disable save if submitting, no text, or if there is *any* error present
@@ -416,6 +416,7 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave }: JsonEditor
                 onClick={handleSave}
                 disabled={disableSaveButton}
                 className="min-w-[120px]" // Give save button some minimum width
+                data-testid="save-draft"
               >
                 {/* Conditional rendering for button content based on state */}
                 {isSubmitting ? (
