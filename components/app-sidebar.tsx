@@ -81,6 +81,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
     openJsonEditor, // Get functions to open dialogs/editor
   } = useUIState()
   const { state: sidebarState, isMobile, setOpenMobile } = useSidebar()
+  console.log(`--- AppSidebar RENDER --- State: ${sidebarState}`)
   const { toast } = useToast()
   const isOpen = sidebarState === "expanded"
   const { open: openNewPlanModal } = useNewPlanModal()
