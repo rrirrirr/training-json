@@ -161,14 +161,20 @@ export const usePlanStore = create<PlanState>()(
         console.log(
           `[Store Internal] Setting mode: ${mode}, originalId: ${originalId}, unsaved: ${unsaved}`
         )
+        // *** REMOVED Metadata List Update Logic ***
+        // let updatedMetadataList = get().planMetadataList
+        // if (mode === 'view' && originalId && draft) { ... } -> REMOVED
+
         set({
           mode: mode,
           draftPlan: draft,
           originalPlanId: originalId,
           hasUnsavedChanges: unsaved,
+          // planMetadataList: updatedMetadataList, // REMOVED - Don't update list here
           error: null, // Clear errors on mode change
         })
-        // Persist draft state manually
+
+        // Persist draft state manually (existing logic remains)
         if (typeof window === "undefined") return
         try {
           if (mode === "normal") {
@@ -275,77 +281,85 @@ export const usePlanStore = create<PlanState>()(
       },
       fetchPlanById: async (planId) => {
         try {
+          // 1. Validate Input ID
           if (!planId || typeof planId !== "string" || planId.toLowerCase() === "undefined") {
             console.error("[fetchPlanById] Called with invalid ID:", planId)
-            // Don't set store error here, let the caller handle null return
+            // Return null for invalid ID, caller should handle.
             return null
           }
 
           console.log(`[fetchPlanById] Fetching plan data for ID: ${planId}`)
-          set({ isLoading: true, error: null })
+          set({ isLoading: true, error: null }) // Set loading true
 
-          // First check if this plan exists in our metadata list
-          const planMetadataList = get().planMetadataList
-          const planExistsLocally = planMetadataList.some((plan) => plan.id === planId)
-
-          if (!planExistsLocally) {
-            console.log(
-              `[fetchPlanById] Plan ${planId} not in local store. Won't fetch from database.`
-            )
-            set({
-              error: `Plan with ID ${planId} is not in your local store.`,
-              isLoading: false,
-            })
-            return null
-          }
-
-          // Check in-memory session cache first (using imported functions)
+          // 2. Check Session Cache
           if (hasPlanInCache(planId)) {
             console.log(`[fetchPlanById] Found plan ${planId} in session cache. Using cached data.`)
             const cachedPlan = getPlanFromCache(planId)
-            set({ isLoading: false })
-            return cachedPlan
+            set({ isLoading: false }) // Set loading false after cache check
+
+            if (cachedPlan) {
+              // Construct the consistent return object from cached data
+              console.log(`[fetchPlanById] Returning cached plan data structure for ${planId}`)
+              return {
+                planData: cachedPlan,
+                planName: cachedPlan.metadata?.planName || "Cached Plan",
+                createdAt: cachedPlan.metadata?.creationDate || new Date().toISOString(),
+              }
+            } else {
+              // Log cache inconsistency but proceed to DB fetch
+              console.error(
+                `[fetchPlanById] Cache inconsistency: hasPlanInCache true but getPlanFromCache null for ${planId}. Fetching from DB.`
+              )
+            }
           }
 
-          // If not in session cache, fetch from database
+          // 3. Fetch from Database if not in cache or cache inconsistent
           console.log(
-            `[fetchPlanById] Plan ${planId} not in session cache. Fetching from database.`
+            `[fetchPlanById] Plan ${planId} not in session cache or cache failed. Fetching from database.`
           )
           const { data, error, status } = await db
             .from("training_plans")
-            .select("plan_data")
+            // Select required fields for the return object
+            .select("plan_data, planName:plan_data->metadata->planName, created_at")
             .eq("id", planId)
             .single()
 
+          // 4. Handle Database Errors
           if (error) {
             if (status === 406) {
+              // 406 typically means 'Not Acceptable' often due to .single() finding 0 or >1 rows
               console.log(`[fetchPlanById] Plan with ID ${planId} not found in database.`)
+              // Check if it existed locally *before* failing DB fetch
+              const planMetadataList = get().planMetadataList
+              const planExistsLocally = planMetadataList.some((plan) => plan.id === planId)
 
-              // Remove from local store if it exists locally but not in DB
               if (planExistsLocally) {
                 console.log(
                   `[fetchPlanById] Plan ${planId} exists locally but not in DB. Removing from local store.`
                 )
-                await get().removeLocalPlan(planId)
+                await get().removeLocalPlan(planId) // Ensure removal is awaited
                 set({
-                  error: `Plan with ID ${planId} no longer exists in the database and has been removed from your local plans.`,
+                  error: `Plan with ID ${planId} no longer exists and has been removed locally.`,
                   isLoading: false,
                 })
               } else {
-                set({ isLoading: false })
+                // If it wasn't local and not in DB, just set error
+                set({ error: `Plan with ID ${planId} not found.`, isLoading: false })
               }
-
-              return null
+              return null // Return null as plan not found
             } else {
+              // Handle other DB errors
               console.error("[fetchPlanById] Database fetch error:", error)
               set({ error: `Failed to fetch plan: ${error.message}`, isLoading: false })
               return null
             }
           }
 
+          // 5. Process Successful Database Fetch
           if (data?.plan_data) {
-            // Store the plan data in the session cache
-            cachePlan(planId, data.plan_data as TrainingPlanData)
+            const fetchedPlanData = data.plan_data as TrainingPlanData
+            // Cache the fetched data
+            cachePlan(planId, fetchedPlanData)
             console.log(`[fetchPlanById] Cached plan ${planId} in session memory.`)
 
             // Log access asynchronously
@@ -356,20 +370,30 @@ export const usePlanStore = create<PlanState>()(
                   console.error(`[fetchPlanById] Failed to log access for ${planId}:`, logError)
               })
 
-            set({ isLoading: false })
-            return data.plan_data as TrainingPlanData
+            set({ isLoading: false }) // Set loading false on success
+            console.log(`[fetchPlanById] Returning DB fetched plan data structure for ${planId}`)
+            // Construct and return the consistent object structure
+            return {
+              planData: fetchedPlanData,
+              planName: data.planName || "Unnamed Plan", // Use fetched name or default
+              createdAt: data.created_at || new Date().toISOString(), // Use fetched date or default
+            }
           }
 
-          set({ isLoading: false })
+          // 6. Handle Case: No Data Returned from DB (Should be caught by 406, but as safety)
+          console.log(`[fetchPlanById] No plan_data found in DB response for ${planId}.`)
+          set({ isLoading: false, error: `No plan data found for ID ${planId}.` })
           return null
         } catch (err) {
-          console.error("[fetchPlanById] Error:", err)
+          // 7. Catch Unhandled Errors
+          console.error("[fetchPlanById] Unexpected error:", err)
           set({
             error: err instanceof Error ? err.message : "Unknown error fetching plan",
             isLoading: false,
           })
           return null
         }
+        // No finally block needed for isLoading as it's handled in success/error paths now
       },
 
       // --- Plan Loading & Mode Setting ---
@@ -392,6 +416,7 @@ export const usePlanStore = create<PlanState>()(
 
           let effectiveEditIntent = editIntent
           let planDataToUse: TrainingPlanData | null = null
+          // Removed fetchedPlanName and fetchedCreatedAt - not needed here anymore
           let usePersistedDraft = false
           let persistedUnsaved = false
 
@@ -421,62 +446,75 @@ export const usePlanStore = create<PlanState>()(
                 )
                 planDataToUse = null // Ensure we fetch fresh data
                 usePersistedDraft = false
-                // Keep effectiveEditIntent as original if parsing fails? Or still force edit? Let's force edit.
-                effectiveEditIntent = true
+                effectiveEditIntent = true // Still force edit
               }
             }
           }
 
           // --- Fetch plan data if not using persisted draft ---
           if (!usePersistedDraft) {
-            planDataToUse = await get().fetchPlanById(planId)
-            // fetchPlanById handles its own loading state changes
-            // If fetchPlanById returns null (not found), set an error and return
-            if (!planDataToUse) {
-              console.error(`[Store Action] Plan ${planId} not found or failed to fetch.`)
-              set({ error: `Plan with ID ${planId} not found.`, isLoading: false })
-              return
+            // *** MODIFICATION START ***
+            // Call fetchPlanById - it now returns { planData, planName, createdAt } or null
+            const fetchResult = await get().fetchPlanById(planId)
+
+            // Check if fetchResult is valid and extract planData
+            if (fetchResult && typeof fetchResult === "object" && "planData" in fetchResult) {
+              planDataToUse = fetchResult.planData as TrainingPlanData // <-- Extract the actual plan data
+              console.log(
+                `[Store Action] Successfully fetched plan ${planId}. Name: ${fetchResult.planName}`
+              )
+            } else {
+              // Handle case where plan is not found or fetch failed (fetchPlanById returns null or unexpected)
+              console.error(`[Store Action] Plan ${planId} not found or fetch failed.`)
+              // Error should be set by fetchPlanById, but double-check
+              if (!get().error) {
+                set({
+                  error: `Plan with ID ${planId} not found or could not be loaded.`,
+                  isLoading: false,
+                })
+              }
+              return // Stop execution
             }
+            // *** MODIFICATION END ***
           }
 
           // If somehow planDataToUse is still null, something went wrong
           if (!planDataToUse) {
-            throw new Error(`Failed to load plan data for ID: ${planId}`)
+            // This path should ideally not be reached if the logic above is correct
+            console.error(`[Store Action] Plan data for ${planId} became null unexpectedly.`)
+            throw new Error(`Failed to load or resolve plan data for ID: ${planId}`)
           }
 
-          // --- Set the appropriate mode ---
           const currentState = get()
           const isOwned = currentState.planMetadataList.some((p) => p.id === planId)
 
-          // Conflict check: Only matters if trying to START editing (effectiveEditIntent is true)
-          // while ALREADY editing a DIFFERENT plan with unsaved changes.
+          // --- Conflict Check (Existing logic remains the same) ---
           if (
             effectiveEditIntent &&
             currentState.mode === "edit" &&
             currentState.hasUnsavedChanges &&
-            currentState.originalPlanId !== null && // Ensure we were editing *something*
-            currentState.originalPlanId !== planId // Ensure it's a *different* plan
+            currentState.originalPlanId !== null &&
+            currentState.originalPlanId !== planId
           ) {
             console.warn(
               `[Store Action] Edit conflict: Trying to edit ${planId} while unsaved changes exist for ${currentState.originalPlanId}.`
             )
-            // Set error state to indicate conflict - UI (PlanPageHandler) should handle this
             set({
-              error: `EDIT_CONFLICT:${planId}`, // Include target ID in error
+              error: `EDIT_CONFLICT:${planId}`,
               isLoading: false,
             })
-            // Do not change the mode yet, let the UI prompt the user
             return
           }
 
-          // No conflict or not applicable, proceed to set mode
+          // --- Set the appropriate mode ---
           if (effectiveEditIntent) {
             console.log(
               `[Store Action] Entering edit mode for plan ${planId}. Using ${usePersistedDraft ? "persisted" : "fetched"} data.`
             )
+            // *** Pass the correctly extracted planDataToUse ***
             get()._setModeState(
               "edit",
-              planDataToUse,
+              planDataToUse, // Pass the actual TrainingPlanData
               planId,
               usePersistedDraft ? persistedUnsaved : false
             )
@@ -487,9 +525,11 @@ export const usePlanStore = create<PlanState>()(
             }
             if (isOwned) {
               console.log(`[Store Action] Setting active plan ${planId}.`)
+              // *** Pass the correctly extracted planDataToUse ***
               get()._setActivePlanInternal(planDataToUse, planId) // Sets mode='normal'
             } else {
               console.log(`[Store Action] Entering view mode for plan ${planId}.`)
+              // *** Pass the correctly extracted planDataToUse ***
               get()._setModeState("view", planDataToUse, planId, false)
             }
           }
@@ -497,7 +537,11 @@ export const usePlanStore = create<PlanState>()(
           console.error(`[Store Action] Error in loadPlanAndSetMode for ${planId}:`, err)
           set({ error: err instanceof Error ? err.message : "Failed to load plan" })
         } finally {
-          set({ isLoading: false }) // Ensure loading is always set to false at the end
+          // Ensure loading is always set to false at the end,
+          // unless an error was set within fetchPlanById which already set it to false.
+          if (get().isLoading) {
+            set({ isLoading: false })
+          }
         }
       },
 
@@ -639,49 +683,107 @@ export const usePlanStore = create<PlanState>()(
           originalPlanId,
           _createPlanInternal,
           _updatePlanInternal,
-          _setActivePlanInternal,
+          _setActivePlanInternal, // Ensure this is destructured
+          activePlanId, // Added to return if already normal
         } = get()
+
         if (!draftPlan) {
           set({ error: "No plan data to save." })
           return null
         }
-        if (mode === "normal") return null
+
+        // If already in normal mode, do nothing (shouldn't be possible to call save, but safe check)
+        if (mode === "normal") {
+          console.log("[Store Action] Already in normal mode, no save needed.")
+          return activePlanId // Return current active ID
+        }
+
         set({ isLoading: true, error: null })
+
         try {
           let savedPlanId: string | null = null
           let success = false
-          const planToSave = {
-            ...draftPlan,
-            metadata: {
-              ...(draftPlan.metadata || {}),
-              planName:
-                draftPlan.metadata?.planName || (mode === "view" ? "Saved Plan" : "My Plan"),
-              creationDate: draftPlan.metadata?.creationDate || new Date().toISOString(),
-            },
+
+          // *** Handle VIEW mode: Save locally only ***
+          if (mode === "view" && originalPlanId) {
+            console.log(`[Store Action] Saving viewed plan ${originalPlanId} locally.`)
+            // Ensure metadata is present, provide defaults if not
+            const planToSaveLocally = {
+              ...draftPlan,
+              metadata: {
+                ...(draftPlan.metadata || {}),
+                planName: draftPlan.metadata?.planName || "Saved Plan", // Use a default if missing
+                creationDate: draftPlan.metadata?.creationDate || new Date().toISOString(),
+              },
+            }
+            // Directly set the plan as active. This adds metadata locally and switches mode.
+            _setActivePlanInternal(planToSaveLocally, originalPlanId)
+            savedPlanId = originalPlanId // The ID is the one we were viewing
+            success = true // Mark as successful local save/activation
+
+            console.log(`[Store Action] Successfully activated viewed plan ${savedPlanId} locally.`)
           }
-          if (mode === "edit" && originalPlanId) {
-            success = await _updatePlanInternal(originalPlanId, planToSave)
-            savedPlanId = success ? originalPlanId : null
-          } else {
-            const planName = planToSave.metadata.planName
-            savedPlanId = await _createPlanInternal(planName, planToSave)
-            success = savedPlanId !== null
+          // *** Handle EDIT mode: Save to Database ***
+          else if (mode === "edit") {
+            // Ensure metadata is present before DB save
+            const planToSaveToDb = {
+              ...draftPlan,
+              metadata: {
+                ...(draftPlan.metadata || {}),
+                planName: draftPlan.metadata?.planName || "My Plan", // Use a default if missing
+                creationDate: draftPlan.metadata?.creationDate || new Date().toISOString(),
+              },
+            }
+
+            if (originalPlanId) {
+              // Update existing plan in DB
+              console.log(`[Store Action] Updating existing plan ${originalPlanId} in DB.`)
+              success = await _updatePlanInternal(originalPlanId, planToSaveToDb)
+              savedPlanId = success ? originalPlanId : null
+            } else {
+              // Create new plan in DB
+              console.log(`[Store Action] Creating new plan in DB.`)
+              const planName = planToSaveToDb.metadata.planName // Get potentially defaulted name
+              savedPlanId = await _createPlanInternal(planName, planToSaveToDb)
+              success = savedPlanId !== null
+            }
+
+            // If DB operation was successful, set the plan as active (which also resets mode)
+            if (success && savedPlanId) {
+              console.log(
+                `[Store Action] DB operation successful for ${savedPlanId}. Setting active.`
+              )
+              // Pass the data that was actually saved to DB
+              _setActivePlanInternal(planToSaveToDb, savedPlanId)
+            } else {
+              // Throw error if DB operation failed in edit mode
+              throw new Error(`Failed to ${originalPlanId ? "update" : "create"} plan in database.`)
+            }
           }
-          if (success && savedPlanId) {
-            _setActivePlanInternal(planToSave, savedPlanId) // Set active, resets mode to normal
-            return savedPlanId
-          } else {
-            throw new Error("Failed to save plan to database.")
+          // *** Handle unexpected modes ***
+          else {
+            console.warn(`[Store Action] saveDraftOrViewedPlan called in unexpected mode: ${mode}`)
+            throw new Error(`Cannot save in mode: ${mode}`)
           }
+
+          // Return the ID if save/local activation was successful
+          return savedPlanId
         } catch (err) {
+          console.error("[Store Action] Error in saveDraftOrViewedPlan:", err)
           set({
             error: err instanceof Error ? err.message : "Failed to save plan",
-            isLoading: false,
+            isLoading: false, // Ensure loading is off on error
           })
           return null
+        } finally {
+          // isLoading is reset within _setActivePlanInternal or the catch block,
+          // ensure it's off otherwise.
+          if (get().isLoading) {
+            set({ isLoading: false })
+          }
         }
-        // isLoading is reset within _setActivePlanInternal or the catch block
       },
+
       _createPlanInternal: async (name, planData) => {
         try {
           if (!planData.metadata)
