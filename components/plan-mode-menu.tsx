@@ -169,8 +169,8 @@ export function PlanModeMenu() {
                   disabled={!draftPlan}
                   className={cn(
                     "w-full sm:w-auto",
-                    "border-[var(--edit-mode-border)] text-[var(--edit-mode-text)]",
-                    "hover:bg-[var(--edit-mode-hover-bg)] hover:text-[var(--edit-mode-hover-text)]"
+                    "border-edit-mode-border text-edit-mode-text",
+                    "hover:bg-edit-mode-hover-bg hover:text-edit-mode-hover-text"
                   )}
                 >
                   <Edit className="h-4 w-4 mr-1.5 sm:mr-2" />
@@ -187,8 +187,8 @@ export function PlanModeMenu() {
                 className={cn(
                   "w-full sm:w-auto",
                   mode === "edit"
-                    ? "bg-[var(--edit-mode-text)] text-white hover:bg-[var(--edit-mode-hover-text)]"
-                    : "bg-[var(--view-mode-text)] text-white hover:bg-[var(--view-mode-hover-text)]"
+                    ? "text-edit-mode-text hover:bg-edit-mode-hover-text"
+                    : "text-view-mode-text hover:bg-view-mode-hover-text"
                 )}
               >
                 {isSaving ? (
@@ -200,7 +200,7 @@ export function PlanModeMenu() {
                     <Save className="h-4 w-4 mr-1.5 sm:mr-2" />{" "}
                     <span className="hidden sm:inline">
                       {mode === "edit" ? "Save Plan" : "Save to My Plans"}
-                    </span>{" "}
+                    </span>
                     <span className="sm:hidden">Save</span>
                   </>
                 )}
