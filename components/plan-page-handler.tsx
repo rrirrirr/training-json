@@ -5,6 +5,7 @@ import { usePlanStore } from "@/store/plan-store"
 import { Loader2 } from "lucide-react"
 import { PlanModeMenu } from "@/components/plan-mode-menu"
 import PlanViewer from "@/components/plan-viewer"
+import { Button } from "./ui/button"
 // Removed UIState import as conflict dialog is now handled by store error state
 
 interface PlanPageHandlerProps {
