@@ -101,7 +101,7 @@ export default function WeekSelector({
   }
 
   return (
-    <nav className="py-4">
+    <nav className="py-4" data-testid="week-view-container">
       <h2 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
         Weeks
       </h2>

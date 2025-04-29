@@ -22,7 +22,7 @@ export default function BlockSelector({
   const { theme } = useTheme()
 
   return (
-    <div className="py-4">
+    <div className="py-4" data-testid="month-view-container">
       <h2 className="justify-self-start text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
         Block
       </h2>
