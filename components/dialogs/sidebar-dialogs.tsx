@@ -35,6 +35,7 @@ export function SidebarDialogs() {
     isSwitchWarningOpen,
     planToSwitchToId,
     closeSwitchWarningDialog,
+    openSwitchWarningDialog,
     isJsonEditorOpen,
     planToViewJson,
     closeJsonEditor,
@@ -50,41 +51,92 @@ export function SidebarDialogs() {
   // New callback for JsonEditor's onSave prop
   const handleEditorSave = useCallback(
     async (updatedData: PlanData): Promise<boolean> => {
-      // Re-implement the save logic here, interacting with the store
       console.log("[SidebarDialogs] handleEditorSave called")
-      const currentMode = usePlanStore.getState().mode
-      const currentOriginalId = usePlanStore.getState().originalPlanId
+      const currentStore = usePlanStore.getState()
+      const currentMode = currentStore.mode
+      const currentOriginalId = currentStore.originalPlanId
+      const hasUnsavedChanges = currentStore.hasUnsavedChanges
       const planId = planToViewJson?.id
 
       if (!planId) {
         console.error("[SidebarDialogs] Cannot save, plan ID missing.")
-        // Show toast error
         return false
       }
 
+      console.log(`[SidebarDialogs] Current URL: ${window.location.pathname}`)
+      console.log(`[SidebarDialogs] Current mode: ${currentMode}`)
+      console.log(`[SidebarDialogs] Current originalId: ${currentOriginalId}`)
+      console.log(`[SidebarDialogs] Target planId: ${planId}`)
+      console.log(`[SidebarDialogs] Has unsaved changes: ${hasUnsavedChanges}`)
+
       try {
+        // Check if we're in edit mode with unsaved changes and trying to edit a different plan
+        if (currentMode === "edit" && hasUnsavedChanges && currentOriginalId !== planId) {
+          console.log("[SidebarDialogs] Showing switch warning dialog for plan:", planId)
+
+          // Close the JSON editor first
+          closeJsonEditor()
+
+          // Then open the switch warning dialog
+          openSwitchWarningDialog(planId)
+
+          return true // Consider this a "success" from the dialog's perspective
+        }
+
+        const targetUrl = `/plan/${planId}/edit`
+
         if (currentMode === "edit" && currentOriginalId === planId) {
+          // We're already editing this plan, just update the draft
           console.log("[SidebarDialogs] Updating draft plan in store")
           updateDraftPlan(updatedData)
-        } else {
-          console.log("[SidebarDialogs] Entering edit mode via editor save")
-          // Assuming PlanData includes metadata for the name display if needed immediately
-          // Use toString() if planId might be a number
+
+          // Always navigate even if we're conceptually already on the right page
+          // This handles the case where we navigated away from the edit page
+          console.log(`[SidebarDialogs] Navigating to ${targetUrl} (same plan)`)
+          router.push(targetUrl)
+        } else if (currentMode === "edit" && currentOriginalId !== planId && !hasUnsavedChanges) {
+          // We're editing a different plan but don't have unsaved changes
+          console.log("[SidebarDialogs] Exiting edit mode for current plan before editing new plan")
+
+          // Exit current edit mode without navigation
+          exitMode({ navigateTo: false })
+
+          // Now set mode for the new plan
+          console.log("[SidebarDialogs] Entering edit mode for new plan")
           _setModeState("edit", updatedData, planId.toString(), true)
-          // Navigate to edit page after setting mode
-          const targetUrl = `/plan/${planId}/edit`
-          if (window.location.pathname !== targetUrl) {
-            router.replace(targetUrl)
-          }
+
+          // Navigate to the new plan's edit page
+          console.log(`[SidebarDialogs] Navigating to ${targetUrl} (different plan)`)
+          router.push(targetUrl)
+        } else {
+          // Normal case - not in edit mode, just entering edit mode for this plan
+          console.log("[SidebarDialogs] Entering edit mode via editor save")
+
+          // Set the mode state first
+          _setModeState("edit", updatedData, planId.toString(), true)
+
+          // Navigate to the edit page
+          console.log(`[SidebarDialogs] Navigating to ${targetUrl} (new edit)`)
+          router.push(targetUrl)
         }
+
+        // Close the dialog
+        closeJsonEditor()
         return true // Indicate success
       } catch (error) {
         console.error("[SidebarDialogs] Error saving from editor:", error)
         return false // Indicate failure
       }
-      // Add router to dependency array if used inside useCallback for navigation logic
     },
-    [planToViewJson, updateDraftPlan, _setModeState, router]
+    [
+      planToViewJson,
+      updateDraftPlan,
+      _setModeState,
+      router,
+      exitMode,
+      closeJsonEditor,
+      openSwitchWarningDialog,
+    ]
   )
 
   // Make the handler async
