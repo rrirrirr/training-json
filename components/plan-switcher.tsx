@@ -1,4 +1,3 @@
-// File: /components/plan-switcher.tsx
 "use client"
 
 import Link from "next/link"
@@ -6,6 +5,7 @@ import { useState } from "react"
 import { FileText, Trash2, MoreHorizontal, Plus, ChevronRight, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
+import { useRouter } from "next/navigation"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +17,7 @@ import { usePlanStore, type PlanMetadata } from "@/store/plan-store"
 import React from "react"
 import { useNewPlanModal } from "@/components/modals/new-plan-modal"
 import { useUIState } from "@/contexts/ui-context"
+import { TrainingPlanData } from "@/types/training-plan" // Import TrainingPlanData
 
 // --- PlanSwitcherItem Component ---
 interface PlanSwitcherItemProps {
@@ -33,7 +34,9 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
   className,
 }) => {
   const { openJsonEditor, openDeleteDialog } = useUIState()
-  const { fetchPlanById, activePlan, activePlanId } = usePlanStore()
+  const router = useRouter()
+  // Fetch function now returns { planData, planName, createdAt } | null
+  const fetchPlanById = usePlanStore((state) => state.fetchPlanById)
   const [isFetchingData, setIsFetchingData] = useState<boolean>(false)
   const { toast } = useToast()
 
@@ -43,30 +46,32 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
 
   const handleEditClick = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    // Fetch data and open editor logic (remains the same)
     setIsFetchingData(true)
     try {
-      let planDataToEdit = null
-      if (activePlanId === plan.id && activePlan) {
-        planDataToEdit = activePlan
-      } else {
-        planDataToEdit = await fetchPlanById(plan.id)
-      }
+      // Fetch the plan data using the store action
+      const fetchResult = await fetchPlanById(plan.id)
 
-      if (planDataToEdit) {
+      // *** FIX: Check fetchResult and extract planData ***
+      if (fetchResult && fetchResult.planData) {
+        const planDataToEdit = fetchResult.planData // Extract the actual plan data
+
+        // Construct the object for the editor using the extracted data
         const fullPlanObjectForEditor = {
           id: plan.id,
-          name: plan.name,
-          data: planDataToEdit,
-          createdAt: plan.createdAt,
-          updatedAt: plan.updatedAt,
+          name: plan.name, // Use metadata name from the list item
+          data: planDataToEdit, // Pass the extracted plan data
+          createdAt: plan.createdAt, // Use metadata createdAt
+          updatedAt: plan.updatedAt, // Use metadata updatedAt
         }
+        
+        // Open the JSON editor with the fetched data
         openJsonEditor(fullPlanObjectForEditor)
       } else {
+        // Handle case where plan data couldn't be fetched
         console.error(`PlanSwitcherItem: Failed to load data for ${plan.id}`)
         toast({
           title: "Error",
-          description: "Failed to load plan data for editing",
+          description: "Failed to load plan data for editing.",
           variant: "destructive",
         })
       }
@@ -74,7 +79,7 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
       console.error(`PlanSwitcherItem: Error fetching data for ${plan.id}`, error)
       toast({
         title: "Error",
-        description: "An error occurred while loading the plan",
+        description: "An error occurred while loading the plan.",
         variant: "destructive",
       })
     } finally {
@@ -95,7 +100,6 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
   )
 
   return (
-    // Changed outer div to use data-testid="plan-item-${plan.id}" for more specific targeting if needed
     <div className={wrapperClassName} data-testid={`plan-item-${plan.id}`} data-plan-id={plan.id}>
       <div className="flex-grow min-w-0 mr-2 self-center">
         <Link
@@ -105,7 +109,6 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
           aria-current={isActive ? "page" : undefined}
           draggable="false"
           onPointerDown={(e) => e.stopPropagation()}
-          // Added data-testid for the link itself if needed for navigation checks
           data-testid={`plan-link-${plan.id}`}
         >
           <div className="flex flex-col pl-2 py-1">
@@ -129,7 +132,6 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
               size="icon"
               className="h-8 w-8 text-muted-foreground hover:bg-secondary data-[state=open]:bg-accent outline-none"
               aria-label={`Actions for ${plan.name}`}
-              // Added data-testid for the actions trigger button
               data-testid={`plan-actions-trigger-${plan.id}`}
             >
               <MoreHorizontal className="h-4 w-4" />
@@ -149,7 +151,6 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
               onSelect={(e) => e.preventDefault()}
               onClick={handleEditClick}
               disabled={isFetchingData}
-              // Added data-testid for the "View/Edit JSON" menu item
               data-testid={`edit-json-menu-item-${plan.id}`}
             >
               {isFetchingData ? (
@@ -164,7 +165,6 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
               onSelect={(e) => e.preventDefault()}
               onClick={handleDeleteClick}
               disabled={isFetchingData}
-              // Added data-testid for the "Delete" menu item
               data-testid={`delete-plan-menu-item-${plan.id}`}
             >
               <Trash2 className="h-4 w-4 mr-1" /> Delete
@@ -177,7 +177,6 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
 }
 
 // --- PlanSwitcher Component ---
-// (This part remains unchanged as the updates were within PlanSwitcherItem)
 interface PlanSwitcherProps {
   plans: PlanMetadata[]
   activePlanId: string | null
@@ -241,7 +240,7 @@ export const PlanSwitcher: React.FC<PlanSwitcherProps> = ({
                   )}
                   onClick={onViewAllClick}
                   draggable="false"
-                  data-testid="view-all-plans-link" // Added testid
+                  data-testid="view-all-plans-link"
                 >
                   <span className="mr-auto">View All Plans</span>
                   <ChevronRight className="size-4 ml-2" />
@@ -256,10 +255,10 @@ export const PlanSwitcher: React.FC<PlanSwitcherProps> = ({
                 "bg-primary text-primary-foreground",
                 "hover:bg-primary/90",
                 "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-                "m-2"
+                "m-2" // Adjusted margin
               )}
               onSelect={handleCreateClick}
-              data-testid="create-new-plan-button" // Added testid
+              data-testid="create-new-plan-button"
             >
               <Plus className="h-4 w-4 mr-2" />
               <span>New Plan</span>

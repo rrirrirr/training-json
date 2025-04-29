@@ -2,6 +2,9 @@
 
 import React, { createContext, useContext, useState, useCallback } from "react"
 
+// Import usePlanStore for accessing plan state
+import { usePlanStore } from "@/store/plan-store"
+
 // Define the shape of our UI context
 import type { PlanMetadata } from "@/store/plan-store"
 
@@ -140,7 +143,25 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   }, [])
   
   const openJsonEditor = useCallback((planData: any) => {
-    setPlanToViewJson(planData)
+    // Check if we're in edit mode and have unsaved changes for this plan
+    const currentStore = usePlanStore.getState()
+    const isEditingThisPlan = currentStore.mode === "edit" && 
+                             currentStore.hasUnsavedChanges && 
+                             currentStore.originalPlanId === planData.id
+    
+    // If we're editing this plan and have unsaved changes, use the draft data
+    if (isEditingThisPlan && currentStore.draftPlan) {
+      console.log("[UIContext] Using draft plan data for JSON editor as it has unsaved changes")
+      setPlanToViewJson({
+        ...planData,
+        data: currentStore.draftPlan
+      })
+    } else {
+      // Otherwise use the provided plan data
+      console.log("[UIContext] Using provided plan data for JSON editor")
+      setPlanToViewJson(planData)
+    }
+    
     setIsJsonEditorOpen(true)
   }, [])
   

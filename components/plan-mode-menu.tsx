@@ -13,13 +13,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import JsonEditor from "@/components/json-editor"
 import { cn } from "@/lib/utils"
 import { SavedPlanToast } from "@/components/saved-plan-toast"
 import { useRouter } from "next/navigation"
+import { useUIState } from "@/contexts/ui-context" // Import useUIState from UIContext
 
 export function PlanModeMenu() {
   const router = useRouter()
+  const { openJsonEditor } = useUIState() // Use the UIContext's openJsonEditor function
 
   const mode = usePlanStore((state) => state.mode)
   const draftPlan = usePlanStore((state) => state.draftPlan)
@@ -30,7 +31,6 @@ export function PlanModeMenu() {
 
   const [isSaving, setIsSaving] = useState(false)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
-  const [isJsonEditorOpen, setIsJsonEditorOpen] = useState(false)
   const [savedPlanName, setSavedPlanName] = useState<string | null>(null)
 
   const planName = draftPlan?.metadata?.planName || "Unnamed Plan"
@@ -92,7 +92,12 @@ export function PlanModeMenu() {
 
   const handleOpenJsonEditor = () => {
     if (draftPlan) {
-      setIsJsonEditorOpen(true)
+      // Use the centralized JSON editor from UIContext
+      openJsonEditor({
+        id: originalPlanId || "draft-plan",
+        name: draftPlan.metadata?.planName || "Draft Plan",
+        data: draftPlan,
+      })
     }
   }
 
@@ -247,18 +252,7 @@ export function PlanModeMenu() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* JSON Editor Modal */}
-      {isJsonEditorOpen && draftPlan && (
-        <JsonEditor
-          isOpen={isJsonEditorOpen}
-          onClose={() => setIsJsonEditorOpen(false)}
-          plan={{
-            id: originalPlanId || "draft-plan",
-            name: draftPlan.metadata?.planName || "Draft Plan",
-            data: draftPlan,
-          }}
-        />
-      )}
+      {/* JSON Editor is now managed by UIContext */}
 
       {/* Saved Plan Toast Notification */}
       {savedPlanName && <SavedPlanToast planName={savedPlanName} />}
