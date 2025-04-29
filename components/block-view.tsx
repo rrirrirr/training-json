@@ -104,7 +104,7 @@ export default function BlockView({ monthBlock, trainingPlan }: BlockViewProps) 
               onClick={() => scrollToWeek(week.weekNumber)}
               // ... button classes ...
             >
-              Vecka {week.weekNumber}
+              Week {week.weekNumber}
               {week.weekType && week.weekType !== "-" && ` (${week.weekType})`}
             </button>
           ))}
