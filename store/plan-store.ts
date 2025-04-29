@@ -1,11 +1,9 @@
-import { TrainingPlanData } from "@/types/training-plan"
+import { TrainingPlanData, PlanMode, PlanMetadata } from "@/types/training-plan" // Assuming types are in types/training-plan
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { db } from "@/lib/db-client"
 import { getPlanFromCache, cachePlan, hasPlanInCache, removePlanFromCache } from "./session-cache"
-import { PlanMetadata } from "./plan-store" // Assuming PlanMetadata is exported
-
-// --- Types --- (Keep existing types: PlanMetadata, PlanMode)
+// Removed duplicate PlanMetadata import
 
 // --- Helper: Create New Plan Template ---
 const createNewPlanTemplate = (name = "New Training Plan"): TrainingPlanData => ({
@@ -51,11 +49,14 @@ interface PlanState {
 
   // Data Fetching & Metadata
   fetchPlanMetadata: (force?: boolean) => Promise<void>
-  fetchPlanById: (planId: string) => Promise<TrainingPlanData | null>
+  fetchPlanById: (
+    planId: string
+  ) => Promise<{ planData: TrainingPlanData; planName: string; createdAt: string } | null> // Adjusted return type
 
   // Plan Loading & Mode Setting
   loadPlanAndSetMode: (planId: string | null, editIntent: boolean) => Promise<void>
   startNewPlanEdit: () => Promise<void>
+  startEditingPlan: (planId: string) => Promise<boolean> // New centralized function for edit logic
 
   // Active Plan Management
   _setActivePlanInternal: (plan: TrainingPlanData, planId: string) => void
@@ -75,7 +76,7 @@ interface PlanState {
 
   // Saving
   saveDraftOrViewedPlan: () => Promise<string | null>
-  _createPlanInternal: (name: string, planData: TrainingPlanData) => Promise<string | null>
+  _createPlanInternal: (planData: TrainingPlanData) => Promise<string | null> // Takes planData directly
   _updatePlanInternal: (planId: string, updatedPlan: TrainingPlanData) => Promise<boolean>
   removeLocalPlan: (planId: string) => Promise<boolean>
 
@@ -161,16 +162,12 @@ export const usePlanStore = create<PlanState>()(
         console.log(
           `[Store Internal] Setting mode: ${mode}, originalId: ${originalId}, unsaved: ${unsaved}`
         )
-        // *** REMOVED Metadata List Update Logic ***
-        // let updatedMetadataList = get().planMetadataList
-        // if (mode === 'view' && originalId && draft) { ... } -> REMOVED
 
         set({
           mode: mode,
           draftPlan: draft,
           originalPlanId: originalId,
           hasUnsavedChanges: unsaved,
-          // planMetadataList: updatedMetadataList, // REMOVED - Don't update list here
           error: null, // Clear errors on mode change
         })
 
@@ -284,21 +281,19 @@ export const usePlanStore = create<PlanState>()(
           // 1. Validate Input ID
           if (!planId || typeof planId !== "string" || planId.toLowerCase() === "undefined") {
             console.error("[fetchPlanById] Called with invalid ID:", planId)
-            // Return null for invalid ID, caller should handle.
             return null
           }
 
           console.log(`[fetchPlanById] Fetching plan data for ID: ${planId}`)
-          set({ isLoading: true, error: null }) // Set loading true
+          set({ isLoading: true, error: null })
 
           // 2. Check Session Cache
           if (hasPlanInCache(planId)) {
-            console.log(`[fetchPlanById] Found plan ${planId} in session cache. Using cached data.`)
+            console.log(`[fetchPlanById] Found plan ${planId} in session cache.`)
             const cachedPlan = getPlanFromCache(planId)
-            set({ isLoading: false }) // Set loading false after cache check
+            set({ isLoading: false })
 
             if (cachedPlan) {
-              // Construct the consistent return object from cached data
               console.log(`[fetchPlanById] Returning cached plan data structure for ${planId}`)
               return {
                 planData: cachedPlan,
@@ -306,20 +301,14 @@ export const usePlanStore = create<PlanState>()(
                 createdAt: cachedPlan.metadata?.creationDate || new Date().toISOString(),
               }
             } else {
-              // Log cache inconsistency but proceed to DB fetch
-              console.error(
-                `[fetchPlanById] Cache inconsistency: hasPlanInCache true but getPlanFromCache null for ${planId}. Fetching from DB.`
-              )
+              console.error(`[fetchPlanById] Cache inconsistency for ${planId}. Fetching from DB.`)
             }
           }
 
-          // 3. Fetch from Database if not in cache or cache inconsistent
-          console.log(
-            `[fetchPlanById] Plan ${planId} not in session cache or cache failed. Fetching from database.`
-          )
+          // 3. Fetch from Database
+          console.log(`[fetchPlanById] Fetching ${planId} from database.`)
           const { data, error, status } = await db
             .from("training_plans")
-            // Select required fields for the return object
             .select("plan_data, planName:plan_data->metadata->planName, created_at")
             .eq("id", planId)
             .single()
@@ -327,28 +316,20 @@ export const usePlanStore = create<PlanState>()(
           // 4. Handle Database Errors
           if (error) {
             if (status === 406) {
-              // 406 typically means 'Not Acceptable' often due to .single() finding 0 or >1 rows
-              console.log(`[fetchPlanById] Plan with ID ${planId} not found in database.`)
-              // Check if it existed locally *before* failing DB fetch
-              const planMetadataList = get().planMetadataList
-              const planExistsLocally = planMetadataList.some((plan) => plan.id === planId)
-
+              console.log(`[fetchPlanById] Plan ${planId} not found in database.`)
+              const planExistsLocally = get().planMetadataList.some((plan) => plan.id === planId)
               if (planExistsLocally) {
-                console.log(
-                  `[fetchPlanById] Plan ${planId} exists locally but not in DB. Removing from local store.`
-                )
-                await get().removeLocalPlan(planId) // Ensure removal is awaited
+                console.log(`[fetchPlanById] Removing stale local plan ${planId}.`)
+                await get().removeLocalPlan(planId)
                 set({
-                  error: `Plan with ID ${planId} no longer exists and has been removed locally.`,
+                  error: `Plan ${planId} no longer exists and removed locally.`,
                   isLoading: false,
                 })
               } else {
-                // If it wasn't local and not in DB, just set error
-                set({ error: `Plan with ID ${planId} not found.`, isLoading: false })
+                set({ error: `Plan ${planId} not found.`, isLoading: false })
               }
-              return null // Return null as plan not found
+              return null
             } else {
-              // Handle other DB errors
               console.error("[fetchPlanById] Database fetch error:", error)
               set({ error: `Failed to fetch plan: ${error.message}`, isLoading: false })
               return null
@@ -358,30 +339,28 @@ export const usePlanStore = create<PlanState>()(
           // 5. Process Successful Database Fetch
           if (data?.plan_data) {
             const fetchedPlanData = data.plan_data as TrainingPlanData
-            // Cache the fetched data
             cachePlan(planId, fetchedPlanData)
-            console.log(`[fetchPlanById] Cached plan ${planId} in session memory.`)
+            console.log(`[fetchPlanById] Cached plan ${planId}.`)
 
-            // Log access asynchronously
+            // Log access
             db.from("plan_access_log")
               .insert({ plan_id: planId })
               .then(({ error: logError }) => {
                 if (logError)
-                  console.error(`[fetchPlanById] Failed to log access for ${planId}:`, logError)
+                  console.error(`[fetchPlanById] Failed log access ${planId}:`, logError)
               })
 
-            set({ isLoading: false }) // Set loading false on success
-            console.log(`[fetchPlanById] Returning DB fetched plan data structure for ${planId}`)
-            // Construct and return the consistent object structure
+            set({ isLoading: false })
+            console.log(`[fetchPlanById] Returning DB fetched data for ${planId}`)
             return {
               planData: fetchedPlanData,
-              planName: data.planName || "Unnamed Plan", // Use fetched name or default
-              createdAt: data.created_at || new Date().toISOString(), // Use fetched date or default
+              planName: data.planName || "Unnamed Plan",
+              createdAt: data.created_at || new Date().toISOString(),
             }
           }
 
-          // 6. Handle Case: No Data Returned from DB (Should be caught by 406, but as safety)
-          console.log(`[fetchPlanById] No plan_data found in DB response for ${planId}.`)
+          // 6. Handle No Data Case
+          console.log(`[fetchPlanById] No plan_data found for ${planId}.`)
           set({ isLoading: false, error: `No plan data found for ID ${planId}.` })
           return null
         } catch (err) {
@@ -393,7 +372,6 @@ export const usePlanStore = create<PlanState>()(
           })
           return null
         }
-        // No finally block needed for isLoading as it's handled in success/error paths now
       },
 
       // --- Plan Loading & Mode Setting ---
@@ -401,26 +379,23 @@ export const usePlanStore = create<PlanState>()(
         console.log(
           `[Store Action] loadPlanAndSetMode called. planId: ${planId}, editIntent: ${editIntent}`
         )
-        set({ isLoading: true, error: null }) // Start loading
+        set({ isLoading: true, error: null })
 
         try {
-          // --- Handle New Plan Intent ---
+          // Handle New Plan Intent
           if (planId === null && editIntent) {
             await get().startNewPlanEdit()
-            // startNewPlanEdit sets isLoading to false
             return
           }
 
-          // --- Validate Plan ID ---
           if (!planId) throw new Error("Invalid request: Plan ID is missing.")
 
           let effectiveEditIntent = editIntent
           let planDataToUse: TrainingPlanData | null = null
-          // Removed fetchedPlanName and fetchedCreatedAt - not needed here anymore
           let usePersistedDraft = false
           let persistedUnsaved = false
 
-          // --- Check for existing draft for THIS planId ---
+          // Check for existing draft for THIS planId
           if (typeof window !== "undefined") {
             const persistedDraftMode = localStorage.getItem(DRAFT_MODE_KEY)
             const persistedDraftOriginalId = localStorage.getItem(DRAFT_ORIGINAL_ID_KEY)
@@ -431,64 +406,44 @@ export const usePlanStore = create<PlanState>()(
               persistedDraftOriginalId === planId &&
               persistedDraftPlanJson
             ) {
-              console.log(
-                `[Store Action] Found existing draft for target plan ${planId}. Will use draft.`
-              )
+              console.log(`[Store Action] Found existing draft for ${planId}.`)
               try {
                 planDataToUse = JSON.parse(persistedDraftPlanJson)
                 persistedUnsaved = localStorage.getItem(DRAFT_UNSAVED_KEY) === "true"
                 usePersistedDraft = true
-                effectiveEditIntent = true // Force edit mode if draft exists
+                effectiveEditIntent = true // Force edit mode
               } catch (e) {
-                console.error(
-                  "[Store Action] Error parsing persisted draft plan, fetching fresh.",
-                  e
-                )
-                planDataToUse = null // Ensure we fetch fresh data
+                console.error("[Store Action] Error parsing draft, fetching fresh.", e)
+                planDataToUse = null
                 usePersistedDraft = false
-                effectiveEditIntent = true // Still force edit
+                effectiveEditIntent = true
               }
             }
           }
 
-          // --- Fetch plan data if not using persisted draft ---
+          // Fetch plan data if not using persisted draft
           if (!usePersistedDraft) {
-            // *** MODIFICATION START ***
-            // Call fetchPlanById - it now returns { planData, planName, createdAt } or null
             const fetchResult = await get().fetchPlanById(planId)
-
-            // Check if fetchResult is valid and extract planData
-            if (fetchResult && typeof fetchResult === "object" && "planData" in fetchResult) {
-              planDataToUse = fetchResult.planData as TrainingPlanData // <-- Extract the actual plan data
-              console.log(
-                `[Store Action] Successfully fetched plan ${planId}. Name: ${fetchResult.planName}`
-              )
+            if (fetchResult?.planData) {
+              planDataToUse = fetchResult.planData
+              console.log(`[Store Action] Fetched plan ${planId}.`)
             } else {
-              // Handle case where plan is not found or fetch failed (fetchPlanById returns null or unexpected)
               console.error(`[Store Action] Plan ${planId} not found or fetch failed.`)
-              // Error should be set by fetchPlanById, but double-check
               if (!get().error) {
-                set({
-                  error: `Plan with ID ${planId} not found or could not be loaded.`,
-                  isLoading: false,
-                })
+                set({ error: `Plan ${planId} not found.`, isLoading: false })
               }
-              return // Stop execution
+              return
             }
-            // *** MODIFICATION END ***
           }
 
-          // If somehow planDataToUse is still null, something went wrong
           if (!planDataToUse) {
-            // This path should ideally not be reached if the logic above is correct
-            console.error(`[Store Action] Plan data for ${planId} became null unexpectedly.`)
-            throw new Error(`Failed to load or resolve plan data for ID: ${planId}`)
+            throw new Error(`Failed to load plan data for ${planId}`)
           }
 
           const currentState = get()
           const isOwned = currentState.planMetadataList.some((p) => p.id === planId)
 
-          // --- Conflict Check (Existing logic remains the same) ---
+          // Conflict Check
           if (
             effectiveEditIntent &&
             currentState.mode === "edit" &&
@@ -497,39 +452,30 @@ export const usePlanStore = create<PlanState>()(
             currentState.originalPlanId !== planId
           ) {
             console.warn(
-              `[Store Action] Edit conflict: Trying to edit ${planId} while unsaved changes exist for ${currentState.originalPlanId}.`
+              `[Store Action] Edit conflict: Unsaved changes for ${currentState.originalPlanId}.`
             )
-            set({
-              error: `EDIT_CONFLICT:${planId}`,
-              isLoading: false,
-            })
+            set({ error: `EDIT_CONFLICT:${planId}`, isLoading: false })
             return
           }
 
-          // --- Set the appropriate mode ---
+          // Set the appropriate mode
           if (effectiveEditIntent) {
-            console.log(
-              `[Store Action] Entering edit mode for plan ${planId}. Using ${usePersistedDraft ? "persisted" : "fetched"} data.`
-            )
-            // *** Pass the correctly extracted planDataToUse ***
+            console.log(`[Store Action] Entering edit mode for ${planId}.`)
             get()._setModeState(
               "edit",
-              planDataToUse, // Pass the actual TrainingPlanData
+              planDataToUse,
               planId,
               usePersistedDraft ? persistedUnsaved : false
             )
           } else {
-            // Entering view or normal mode
             if (currentState.mode !== "normal") {
-              get().exitMode() // Reset state fully before setting new active/view
+              get().exitMode()
             }
             if (isOwned) {
               console.log(`[Store Action] Setting active plan ${planId}.`)
-              // *** Pass the correctly extracted planDataToUse ***
-              get()._setActivePlanInternal(planDataToUse, planId) // Sets mode='normal'
+              get()._setActivePlanInternal(planDataToUse, planId)
             } else {
-              console.log(`[Store Action] Entering view mode for plan ${planId}.`)
-              // *** Pass the correctly extracted planDataToUse ***
+              console.log(`[Store Action] Entering view mode for ${planId}.`)
               get()._setModeState("view", planDataToUse, planId, false)
             }
           }
@@ -537,8 +483,6 @@ export const usePlanStore = create<PlanState>()(
           console.error(`[Store Action] Error in loadPlanAndSetMode for ${planId}:`, err)
           set({ error: err instanceof Error ? err.message : "Failed to load plan" })
         } finally {
-          // Ensure loading is always set to false at the end,
-          // unless an error was set within fetchPlanById which already set it to false.
           if (get().isLoading) {
             set({ isLoading: false })
           }
@@ -547,10 +491,64 @@ export const usePlanStore = create<PlanState>()(
 
       startNewPlanEdit: async () => {
         console.log("[Store Action] startNewPlanEdit called.")
-        // Conflict check is handled by loadPlanAndSetMode via EDIT_CONFLICT error
         const newPlanTemplate = get().createNewPlanTemplate()
-        get()._setModeState("edit", newPlanTemplate, null, true) // New plan starts unsaved
+        get()._setModeState("edit", newPlanTemplate, null, true)
         set({ selectedWeek: null, selectedMonth: 1, viewMode: "month", isLoading: false })
+      },
+      // Centralized function to trigger edit mode for a specific plan
+      startEditingPlan: async (planId) => {
+        console.log(`[Store Action] startEditingPlan called for planId: ${planId}`)
+        if (!planId) {
+          console.error("[Store Action] startEditingPlan called with invalid planId")
+          set({ error: "Invalid plan ID for editing" })
+          return false
+        }
+
+        const currentState = get()
+        
+        // Check for edit conflicts with other plans
+        if (
+          currentState.mode === "edit" &&
+          currentState.hasUnsavedChanges &&
+          currentState.originalPlanId !== null &&
+          currentState.originalPlanId !== planId
+        ) {
+          console.warn(
+            `[Store Action] Edit conflict detected: Already editing ${currentState.originalPlanId} with unsaved changes`
+          )
+          set({ error: `EDIT_CONFLICT:${planId}` })
+          return false
+        }
+        
+        try {
+          // If we're already editing the requested plan, just return success
+          if (
+            currentState.mode === "edit" && 
+            currentState.originalPlanId === planId
+          ) {
+            console.log(`[Store Action] Already editing plan ${planId}, skipping reload`)
+            return true
+          }
+          
+          // Use the existing loadPlanAndSetMode with editIntent=true
+          await get().loadPlanAndSetMode(planId, true)
+          
+          // Check if the operation was successful
+          const updatedState = get()
+          const success = 
+            updatedState.mode === "edit" && 
+            updatedState.originalPlanId === planId &&
+            !updatedState.error
+            
+          return success
+        } catch (err) {
+          console.error(`[Store Action] Error in startEditingPlan for ${planId}:`, err)
+          set({ 
+            error: err instanceof Error ? err.message : "Failed to start editing plan",
+            isLoading: false
+          })
+          return false
+        }
       },
 
       // --- Active Plan Management ---
@@ -559,19 +557,22 @@ export const usePlanStore = create<PlanState>()(
         if (typeof window !== "undefined") localStorage.setItem("lastViewedPlanId", planId)
         const currentMetadataList = get().planMetadataList
         const now = new Date().toISOString()
+        const planName = plan.metadata?.planName || "Unnamed Plan" // Get name from plan data
+        const createdAt = plan.metadata?.creationDate || now // Get creation date or use now
+
         const metadataExists = currentMetadataList.some((p) => p.id === planId)
         let nextMetadataList = metadataExists
           ? currentMetadataList.map((meta) =>
               meta.id === planId
-                ? { ...meta, name: plan.metadata?.planName || meta.name, updatedAt: now }
+                ? { ...meta, name: planName, updatedAt: now } // Update name and timestamp
                 : meta
             )
           : [
               ...currentMetadataList,
               {
                 id: planId,
-                name: plan.metadata?.planName || "Unnamed Plan",
-                createdAt: plan.metadata?.creationDate || now,
+                name: planName, // Use name from plan data
+                createdAt: createdAt, // Use creation date from plan data or now
                 updatedAt: now,
               },
             ]
@@ -586,7 +587,7 @@ export const usePlanStore = create<PlanState>()(
           activePlan: plan,
           activePlanId: planId,
           planMetadataList: nextMetadataList,
-          mode: "normal", // Explicitly set mode to normal
+          mode: "normal",
           draftPlan: null,
           originalPlanId: null,
           hasUnsavedChanges: false,
@@ -597,41 +598,30 @@ export const usePlanStore = create<PlanState>()(
           isLoading: false,
         })
 
-        // Ensure draft state is cleared from localStorage when successfully entering normal mode via save
         if (typeof window !== "undefined") {
           try {
-            console.log(
-              "[Store Internal _setActivePlanInternal] Clearing draft keys from localStorage."
-            )
+            console.log("[Store Internal _setActivePlanInternal] Clearing draft keys.")
             localStorage.removeItem(DRAFT_MODE_KEY)
             localStorage.removeItem(DRAFT_PLAN_KEY)
             localStorage.removeItem(DRAFT_ORIGINAL_ID_KEY)
             localStorage.removeItem(DRAFT_UNSAVED_KEY)
           } catch (e) {
-            console.error("Failed to clear draft state from localStorage:", e)
+            console.error("Failed to clear draft state:", e)
           }
         }
       },
-      // This action clears BOTH active plan AND resets mode
       clearActivePlan: () => {
-        console.log(
-          "[Store Action] clearActivePlan called (clearing active plan AND exiting mode)."
-        )
+        console.log("[Store Action] clearActivePlan called.")
         if (typeof window !== "undefined") localStorage.removeItem("lastViewedPlanId")
-        get().exitMode() // Reset mode/draft first
-        set({ activePlan: null, activePlanId: null }) // Then clear active plan
-        // View state reset is handled within exitMode now based on null activePlan
+        get().exitMode()
+        set({ activePlan: null, activePlanId: null })
       },
-      // *** NEW ACTION *** Only clears the active selection, leaves mode/draft intact
       clearActivePlanSelection: () => {
-        console.log(
-          "[Store Action] clearActivePlanSelection called (clearing only active plan ID/data)."
-        )
+        console.log("[Store Action] clearActivePlanSelection called.")
         if (typeof window !== "undefined") localStorage.removeItem("lastViewedPlanId")
         set({
           activePlan: null,
           activePlanId: null,
-          // Optionally reset view selections to default when no plan is active
           selectedMonth: 1,
           selectedWeek: null,
           viewMode: "month",
@@ -647,15 +637,13 @@ export const usePlanStore = create<PlanState>()(
           console.warn("[Store Action] updateDraftPlan called when not in edit mode.")
         }
       },
-      // Simplified: only resets state, navigation handled by caller
       exitMode: () => {
-        console.log("[Store Action] exitMode called. Resetting mode/draft state to normal.")
+        console.log("[Store Action] exitMode called.")
         const currentState = get()
         if (currentState.mode !== "normal") {
-          currentState._setModeState("normal", null, null, false) // Clear mode/draft/originalId/unsaved
+          currentState._setModeState("normal", null, null, false)
         }
-        // Reset view state based on the *active* plan (which might be null now if clearActivePlan was just called)
-        const activePlanForViewReset = get().activePlan // Read the potentially null activePlan
+        const activePlanForViewReset = get().activePlan
         const firstMonthId = activePlanForViewReset?.monthBlocks?.[0]?.id ?? 1
         const firstWeek =
           activePlanForViewReset?.weeks?.sort((a, b) => a.weekNumber - b.weekNumber)[0]
@@ -664,17 +652,16 @@ export const usePlanStore = create<PlanState>()(
           selectedMonth: firstMonthId,
           selectedWeek: firstWeek,
           viewMode: firstWeek !== null ? "week" : "month",
-          isLoading: false, // Ensure loading is off
-          error: null, // Ensure error is cleared
+          isLoading: false,
+          error: null,
         })
       },
-      // Calls simplified exitMode
       discardDraftPlan: () => {
         console.log("[Store Action] discardDraftPlan called.")
         get().exitMode()
       },
 
-      // --- Saving --- (Keep existing logic, it seems okay)
+      // --- Saving ---
       saveDraftOrViewedPlan: async () => {
         console.log("[Store Action] saveDraftOrViewedPlan called.")
         const {
@@ -683,8 +670,8 @@ export const usePlanStore = create<PlanState>()(
           originalPlanId,
           _createPlanInternal,
           _updatePlanInternal,
-          _setActivePlanInternal, // Ensure this is destructured
-          activePlanId, // Added to return if already normal
+          _setActivePlanInternal,
+          activePlanId,
         } = get()
 
         if (!draftPlan) {
@@ -692,10 +679,9 @@ export const usePlanStore = create<PlanState>()(
           return null
         }
 
-        // If already in normal mode, do nothing (shouldn't be possible to call save, but safe check)
         if (mode === "normal") {
           console.log("[Store Action] Already in normal mode, no save needed.")
-          return activePlanId // Return current active ID
+          return activePlanId
         }
 
         set({ isLoading: true, error: null })
@@ -704,105 +690,85 @@ export const usePlanStore = create<PlanState>()(
           let savedPlanId: string | null = null
           let success = false
 
-          // *** Handle VIEW mode: Save locally only ***
+          // Ensure metadata is present and valid before saving
+          const planToSave = {
+            ...draftPlan,
+            metadata: {
+              ...(draftPlan.metadata || {}),
+              planName:
+                draftPlan.metadata?.planName || (originalPlanId ? "Updated Plan" : "New Plan"),
+              creationDate: draftPlan.metadata?.creationDate || new Date().toISOString(),
+            },
+          }
+
           if (mode === "view" && originalPlanId) {
+            // Save viewed plan locally by setting it active
             console.log(`[Store Action] Saving viewed plan ${originalPlanId} locally.`)
-            // Ensure metadata is present, provide defaults if not
-            const planToSaveLocally = {
-              ...draftPlan,
-              metadata: {
-                ...(draftPlan.metadata || {}),
-                planName: draftPlan.metadata?.planName || "Saved Plan", // Use a default if missing
-                creationDate: draftPlan.metadata?.creationDate || new Date().toISOString(),
-              },
-            }
-            // Directly set the plan as active. This adds metadata locally and switches mode.
-            _setActivePlanInternal(planToSaveLocally, originalPlanId)
-            savedPlanId = originalPlanId // The ID is the one we were viewing
-            success = true // Mark as successful local save/activation
+            _setActivePlanInternal(planToSave, originalPlanId)
+            savedPlanId = originalPlanId
+            success = true
+            console.log(`[Store Action] Activated viewed plan ${savedPlanId}.`)
+          } else if (mode === "edit") {
+            // Save edited plan to DB
+            // Plans are immutable, so we always create a new plan
+            console.log(`[Store Action] Creating new plan in DB (immutable design).`)
+            
+            // Always create a new plan with the same name (immutable design)
+            savedPlanId = await _createPlanInternal(planToSave)
+            success = savedPlanId !== null
 
-            console.log(`[Store Action] Successfully activated viewed plan ${savedPlanId} locally.`)
-          }
-          // *** Handle EDIT mode: Save to Database ***
-          else if (mode === "edit") {
-            // Ensure metadata is present before DB save
-            const planToSaveToDb = {
-              ...draftPlan,
-              metadata: {
-                ...(draftPlan.metadata || {}),
-                planName: draftPlan.metadata?.planName || "My Plan", // Use a default if missing
-                creationDate: draftPlan.metadata?.creationDate || new Date().toISOString(),
-              },
-            }
-
-            if (originalPlanId) {
-              // Update existing plan in DB
-              console.log(`[Store Action] Updating existing plan ${originalPlanId} in DB.`)
-              success = await _updatePlanInternal(originalPlanId, planToSaveToDb)
-              savedPlanId = success ? originalPlanId : null
-            } else {
-              // Create new plan in DB
-              console.log(`[Store Action] Creating new plan in DB.`)
-              const planName = planToSaveToDb.metadata.planName // Get potentially defaulted name
-              savedPlanId = await _createPlanInternal(planName, planToSaveToDb)
-              success = savedPlanId !== null
-            }
-
-            // If DB operation was successful, set the plan as active (which also resets mode)
             if (success && savedPlanId) {
-              console.log(
-                `[Store Action] DB operation successful for ${savedPlanId}. Setting active.`
-              )
-              // Pass the data that was actually saved to DB
-              _setActivePlanInternal(planToSaveToDb, savedPlanId)
+              console.log(`[Store Action] DB op successful for ${savedPlanId}. Setting active.`)
+              _setActivePlanInternal(planToSave, savedPlanId)
             } else {
-              // Throw error if DB operation failed in edit mode
-              throw new Error(`Failed to ${originalPlanId ? "update" : "create"} plan in database.`)
+              throw new Error(`Failed to ${originalPlanId ? "update" : "create"} plan in DB.`)
             }
-          }
-          // *** Handle unexpected modes ***
-          else {
-            console.warn(`[Store Action] saveDraftOrViewedPlan called in unexpected mode: ${mode}`)
+          } else {
             throw new Error(`Cannot save in mode: ${mode}`)
           }
 
-          // Return the ID if save/local activation was successful
           return savedPlanId
         } catch (err) {
           console.error("[Store Action] Error in saveDraftOrViewedPlan:", err)
           set({
             error: err instanceof Error ? err.message : "Failed to save plan",
-            isLoading: false, // Ensure loading is off on error
+            isLoading: false,
           })
           return null
         } finally {
-          // isLoading is reset within _setActivePlanInternal or the catch block,
-          // ensure it's off otherwise.
           if (get().isLoading) {
             set({ isLoading: false })
           }
         }
       },
 
-      _createPlanInternal: async (name, planData) => {
+      // Takes the full planData object directly
+      _createPlanInternal: async (planData) => {
         try {
-          if (!planData.metadata)
-            planData.metadata = { planName: name, creationDate: new Date().toISOString() }
-          else {
-            planData.metadata.planName = name
-            if (!planData.metadata.creationDate)
-              planData.metadata.creationDate = new Date().toISOString()
+          // Ensure metadata exists (should be handled by saveDraftOrViewedPlan)
+          if (!planData.metadata?.planName) {
+            throw new Error("Cannot create plan: Plan name is missing in metadata.")
           }
+          if (!planData.metadata?.creationDate) {
+            planData.metadata.creationDate = new Date().toISOString()
+          }
+
+          console.log(
+            `[Store Internal] Creating plan in DB with name: ${planData.metadata.planName}`
+          )
           const { data, error } = await db
             .from("training_plans")
-            .insert({ plan_data: planData })
+            .insert({ plan_data: planData }) // Insert the whole object
             .select("id, created_at")
             .single()
+
           if (error) throw error
           if (!data) throw new Error("No data returned after insert.")
+
+          // Update metadata list locally
           const newPlanMetadata: PlanMetadata = {
             id: data.id,
-            name: planData.metadata?.planName || name,
+            name: planData.metadata.planName, // Use name from the inserted data
             createdAt: data.created_at,
             updatedAt: data.created_at,
           }
@@ -820,24 +786,36 @@ export const usePlanStore = create<PlanState>()(
       },
       _updatePlanInternal: async (planId, updatedPlan) => {
         try {
-          if (!updatedPlan.metadata) throw new Error("Update failed: Plan metadata is missing.")
+          if (!updatedPlan.metadata?.planName) {
+            throw new Error("Update failed: Plan name is missing in metadata.")
+          }
           const now = new Date().toISOString()
+          console.log(
+            `[Store Internal] Updating plan ${planId} in DB with name: ${updatedPlan.metadata.planName}`
+          )
           const { error } = await db
             .from("training_plans")
             .update({ plan_data: updatedPlan, last_accessed_at: now })
             .eq("id", planId)
+
           if (error) throw error
+
+          // Update metadata list locally
           const currentMetadata = get().planMetadataList
           const updatedList = currentMetadata.map((meta) =>
             meta.id === planId
-              ? { ...meta, name: updatedPlan.metadata!.planName || meta.name, updatedAt: now }
+              ? { ...meta, name: updatedPlan.metadata!.planName, updatedAt: now } // Use name from updated data
               : meta
           )
           updatedList.sort(
             (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           )
           set({ planMetadataList: updatedList })
-          if (get().activePlanId === planId) set({ activePlan: updatedPlan }) // Update activePlan if it's the one being edited
+
+          // Update active plan data if it's the one being edited
+          if (get().activePlanId === planId) {
+            set({ activePlan: updatedPlan })
+          }
           return true
         } catch (err) {
           console.error("Error in _updatePlanInternal:", err)
@@ -846,66 +824,38 @@ export const usePlanStore = create<PlanState>()(
         }
       },
       removeLocalPlan: async (planId) => {
-        console.log(`[removeLocalPlan] START - Removing plan ID: ${planId} from local store only`)
+        console.log(`[removeLocalPlan] START - Removing plan ID: ${planId}`)
         const state = get()
         let wasActive = state.activePlanId === planId
         let wasBeingEdited = state.mode === "edit" && state.originalPlanId === planId
         try {
-          // Remove cached plan data from localStorage
-          if (typeof window !== "undefined") {
-            const cachedPlanKey = `planData_${planId}`
-            try {
-              localStorage.removeItem(cachedPlanKey)
-              console.log(
-                `[removeLocalPlan] Removed cached plan data for ${planId} from localStorage.`
-              )
-            } catch (err) {
-              console.error(`[removeLocalPlan] Error removing cached plan data for ${planId}:`, err)
-              // Non-critical error, continue even if removal fails
-            }
-          }
+          // Remove from session cache
+          removePlanFromCache(planId)
+          console.log(`[removeLocalPlan] Removed plan ${planId} from session cache.`)
 
-          // Remove from session cache as well
-          try {
-            removePlanFromCache(planId)
-            console.log(`[removeLocalPlan] Removed plan ${planId} from session cache.`)
-          } catch (err) {
-            console.error(`[removeLocalPlan] Error removing plan from session cache:`, err)
-            // Non-critical error, continue
-          }
-
-          // Update local state only - no Supabase deletion
+          // Update local state
           const listAfterFilter = state.planMetadataList.filter((p) => p.id !== planId)
           let stateUpdate: Partial<PlanState> = { planMetadataList: listAfterFilter, error: null }
 
           if (wasActive || wasBeingEdited) {
-            console.log(
-              `[removeLocalPlan] Plan ${planId} was active or being edited. Clearing active/draft state.`
-            )
+            console.log(`[removeLocalPlan] Plan ${planId} was active/edited. Clearing state.`)
             if (typeof window !== "undefined") localStorage.removeItem("lastViewedPlanId")
-            // Ensure we exit edit/view mode if the deleted plan was the target
-            get().exitMode() // Resets mode to normal, clears draft etc.
-            // exitMode already updates view state, merge its results
-            stateUpdate = { ...stateUpdate, ...get() }
+            get().exitMode()
+            stateUpdate = { ...stateUpdate, ...get() } // Merge results from exitMode
           } else {
-            console.log(
-              `[removeLocalPlan] Plan ${planId} was not active/edited. Only updating list.`
-            )
+            console.log(`[removeLocalPlan] Plan ${planId} was not active/edited.`)
           }
           set(stateUpdate)
           console.log(`[removeLocalPlan] END - State set. Returning true.`)
           return true
         } catch (err) {
           console.error("[removeLocalPlan] Error:", err)
-          set({
-            error:
-              err instanceof Error ? err.message : "Unknown error removing plan from local store",
-          })
+          set({ error: err instanceof Error ? err.message : "Unknown error removing plan" })
           return false
         }
       },
 
-      // --- View Selection --- (Keep existing logic)
+      // --- View Selection ---
       selectWeek: (weekNumber) => {
         if (
           get().selectedWeek !== weekNumber ||
@@ -955,30 +905,20 @@ export const usePlanStore = create<PlanState>()(
       },
     }),
     {
-      name: "training-plan-storage-v2", // Consider versioning if schema changes significantly
+      name: "training-plan-storage-v2",
       partialize: (state) => ({
-        // Only persist non-draft state here
         activePlanId: state.activePlanId,
         planMetadataList: state.planMetadataList,
-        // Persist view state? Maybe - user might expect it.
         selectedWeek: state.selectedWeek,
         selectedMonth: state.selectedMonth,
         viewMode: state.viewMode,
       }),
       onRehydrateStorage: () => (state) => {
-        // This runs AFTER Zustand has loaded its persisted state
-        if (typeof window === "undefined") return // Prevent SSR execution
+        if (typeof window === "undefined") return
         if (state) {
           console.log("[Store Rehydrate] Rehydrated state, initializing draft state.")
-          state._initializeState() // Try to load draft state from localStorage
-
-          // Don't fetch metadata from the database on initialization
-          // We'll use the persisted metadata that's already in the store
-          console.log(
-            "[Store Rehydrate] Using persisted plan metadata. Not fetching from database."
-          )
-
-          // Just ensure loading state is set to false
+          state._initializeState()
+          console.log("[Store Rehydrate] Using persisted plan metadata.")
           if (state.isLoading) {
             state.isLoading = false
           }
@@ -986,15 +926,9 @@ export const usePlanStore = create<PlanState>()(
           console.warn("[Store Rehydrate] No state found during rehydration.")
         }
       },
-      // Deprecated in Zustand v4, use onRehydrateStorage
-      // version: 1, // Example versioning
-      // migrate: (persistedState, version) => { ... migration logic ... }
     }
   )
 )
-
-// Initialize store after definition (run this once in your app, e.g., in layout)
-// Removed immediate calls, rely on onRehydrateStorage or explicit call in layout/provider
 
 // --- Selector for Display List ---
 export const selectSortedPlanMetadata = (state: PlanState): PlanMetadata[] => {
@@ -1006,7 +940,6 @@ export const selectSortedPlanMetadata = (state: PlanState): PlanMetadata[] => {
 
   metadataList.forEach((plan) => {
     try {
-      // Ensure updatedAt is a valid date string before parsing
       const updatedAtTime =
         plan.updatedAt && typeof plan.updatedAt === "string"
           ? new Date(plan.updatedAt).getTime()
@@ -1014,7 +947,7 @@ export const selectSortedPlanMetadata = (state: PlanState): PlanMetadata[] => {
 
       if (isNaN(updatedAtTime)) {
         console.warn(`Invalid updatedAt date for plan ${plan.id}: ${plan.updatedAt}`)
-        olderPlans.push(plan) // Treat invalid dates as older
+        olderPlans.push(plan)
       } else if (updatedAtTime >= twentyFourHoursAgo) {
         recentPlans.push(plan)
       } else {
@@ -1022,11 +955,10 @@ export const selectSortedPlanMetadata = (state: PlanState): PlanMetadata[] => {
       }
     } catch (e) {
       console.warn(`Error processing date for plan ${plan.id}:`, e)
-      olderPlans.push(plan) // Treat errors as older
+      olderPlans.push(plan)
     }
   })
 
-  // Sort recent plans by updatedAt descending
   recentPlans.sort((a, b) => {
     const dateA =
       a.updatedAt && typeof a.updatedAt === "string" ? new Date(a.updatedAt).getTime() : 0
@@ -1035,7 +967,6 @@ export const selectSortedPlanMetadata = (state: PlanState): PlanMetadata[] => {
     return dateB - dateA
   })
 
-  // Sort older plans by createdAt descending (assuming list from DB is already sorted this way mostly)
   olderPlans.sort((a, b) => {
     const dateA =
       a.createdAt && typeof a.createdAt === "string" ? new Date(a.createdAt).getTime() : 0
@@ -1046,9 +977,3 @@ export const selectSortedPlanMetadata = (state: PlanState): PlanMetadata[] => {
 
   return [...recentPlans, ...olderPlans]
 }
-
-// Initialize after definition (if needed, otherwise rely on rehydration)
-// if (typeof window !== "undefined") {
-//   usePlanStore.getState()._initializeState();
-//   usePlanStore.getState().fetchPlanMetadata();
-// }
