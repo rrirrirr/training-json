@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react"
 import { PlanModeMenu } from "@/components/plan-mode-menu"
 import PlanViewer from "@/components/plan-viewer"
 import { Button } from "./ui/button"
-// Removed UIState import as conflict dialog is now handled by store error state
+import { useUIState } from "@/contexts/ui-context" // Re-add UIState import for conflict dialog
 
 interface PlanPageHandlerProps {
   planId: string | null
@@ -15,6 +15,9 @@ interface PlanPageHandlerProps {
 
 export default function PlanPageHandler({ planId, editIntent }: PlanPageHandlerProps) {
   const router = useRouter()
+  
+  // Import UI state for showing conflict dialog
+  const { openSwitchWarningDialog } = useUIState()
 
   // --- Select state from Zustand Store ---
   const mode = usePlanStore((state) => state.mode)
@@ -97,13 +100,17 @@ export default function PlanPageHandler({ planId, editIntent }: PlanPageHandlerP
     )
   }
 
-  // Handle Edit Conflict Error specifically (optional, can use generic error)
+  // Handle Edit Conflict Error specifically by showing dialog
   if (storeError?.startsWith("EDIT_CONFLICT")) {
     const targetId = storeError.split(":")[1]
-    // You could show a specific conflict message or dialog here,
-    // or let the generic error handler below catch it.
-    // For simplicity, we'll let the generic handler show the message.
-    console.warn(`[PlanPageHandler] Rendering Conflict Error UI for target ${targetId}`)
+    console.warn(`[PlanPageHandler] Opening conflict dialog for target ${targetId} with edit intent: ${editIntent}`)
+    console.warn(`[PlanPageHandler] targetId value and type: ${targetId} (${typeof targetId})`)
+    
+    // Use the UI context to open the switch warning dialog with edit intent
+    openSwitchWarningDialog(targetId, editIntent)
+    
+    // Return null to prevent rendering anything else while dialog is shown
+    return null
   }
 
   // Handle Generic Errors (including conflict if not handled above)
