@@ -34,6 +34,7 @@ export function SidebarDialogs() {
     closeDeleteDialog,
     isSwitchWarningOpen,
     planToSwitchToId,
+    isSwitchToEditMode,
     closeSwitchWarningDialog,
     openSwitchWarningDialog,
     isJsonEditorOpen,
@@ -44,6 +45,7 @@ export function SidebarDialogs() {
   const mode = usePlanStore((state) => state.mode)
   const originalPlanId = usePlanStore((state) => state.originalPlanId)
   const exitMode = usePlanStore((state) => state.exitMode)
+  const loadPlanAndSetMode = usePlanStore((state) => state.loadPlanAndSetMode)
   const removeLocalPlan = usePlanStore((state) => state.removeLocalPlan)
   const updateDraftPlan = usePlanStore((state) => state.updateDraftPlan)
   const _setModeState = usePlanStore((state) => state._setModeState)
@@ -188,19 +190,42 @@ export function SidebarDialogs() {
       closeDeleteDialog() // Close dialog even if something went wrong
     }
   }
-
-  const handleConfirmSwitch = () => {
+  const handleConfirmSwitch = async () => {
     if (planToSwitchToId) {
-      // Ensure edit mode is exited cleanly before switching
-      if (mode === "edit") {
-        exitMode({ navigateTo: false }) // Exit mode state without navigating
+      try {
+        console.log(`[SidebarDialogs] handleConfirmSwitch for plan: ${planToSwitchToId}`)
+
+        // Check if planToSwitchToId already contains 'plan/' prefix and remove it
+        const planId = planToSwitchToId.startsWith("/plan/")
+          ? planToSwitchToId.substring(6) // Remove '/plan/' prefix
+          : planToSwitchToId.startsWith("plan/")
+            ? planToSwitchToId.substring(5) // Remove 'plan/' prefix
+            : planToSwitchToId
+
+        console.log(`[SidebarDialogs] Original planToSwitchToId: ${planToSwitchToId}`)
+        console.log(`[SidebarDialogs] Cleaned planId: ${planId}`)
+
+        // First exit any current edit mode
+        if (mode === "edit") {
+          console.log(`[SidebarDialogs] Exiting current edit mode...`)
+          exitMode({ navigateTo: false })
+        }
+        
+        // Close the dialog
+        closeSwitchWarningDialog()
+        
+        // Determine the target URL and perform a full page reload
+        const targetUrl = isSwitchToEditMode ? `/plan/${planId}/edit` : `/plan/${planId}`
+        console.log(`[SidebarDialogs] Hard reloading page to: ${targetUrl}`)
+        
+        // Use window.location.href for a full page reload 
+        // This is more reliable than router.push for complex state changes
+        window.location.href = targetUrl
+      } catch (error) {
+        console.error(`[SidebarDialogs] Error in handleConfirmSwitch:`, error)
       }
-      console.log("[SidebarDialogs] Switching plan via router.push to:", planToSwitchToId)
-      router.push(planToSwitchToId) // Use router.push
-      closeSwitchWarningDialog()
     }
   }
-
   return (
     <>
       {/* JSON Editor Dialog */}
@@ -248,9 +273,18 @@ export function SidebarDialogs() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={closeSwitchWarningDialog}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel
+              onClick={() => {
+                closeSwitchWarningDialog()
+                // Navigate home when Cancel is clicked, as expected by the test
+                // Use window.location.href for a full page reload
+                window.location.href = "/"
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleConfirmSwitch} // Triggers navigation via router.push
+              onClick={handleConfirmSwitch} // Now uses window.location.href for reliable reload
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Discard & switch
