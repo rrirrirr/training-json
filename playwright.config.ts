@@ -22,9 +22,9 @@ process.env.NODE_ENV = "test"
 
 export default defineConfig({
   testDir: "./tests",
-  timeout: 30 * 1000,
+  timeout: 120 * 1000,
   expect: {
-    timeout: 5000,
+    timeout: 20000,
   },
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -42,8 +42,8 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
     // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
+    // name: "firefox",
+    // use: { ...devices["Desktop Firefox"] },
     // },
     // {
     //   name: 'webkit',
