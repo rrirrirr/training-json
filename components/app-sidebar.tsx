@@ -190,12 +190,26 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
     if (mode === "edit") {
       // If this is the same plan that's being edited, navigate to its edit page instead of showing warning
       if (planId === originalPlanId) {
+        // Always prevent the default link behavior first
         e.preventDefault()
-        // router.push(`/plan/${planId}/edit`) // Navigation happens via Link onClick now
+
+        const targetEditPath = `/plan/${planId}/edit`
+        const currentPath = pathname // Assumes pathname is available from usePathname hook
+
+        // Only navigate if we are NOT already on the target edit page
+        if (currentPath !== targetEditPath) {
+          console.log(`[AppSidebar] Navigating to edit page for current plan: ${targetEditPath}`)
+          router.push(targetEditPath) // Use router.push for client-side nav
+        } else {
+          // If already on the edit page, maybe just ensure menus close
+          console.log(`[AppSidebar] Already on edit page for ${planId}. Closing menus.`)
+        }
+
+        // Close menus regardless of navigation
         setIsPlanDropdownOpen(false)
-        setOpenMobile(false)
-        // Let the Link component handle navigation
-        return
+        setOpenMobile(false) // Assuming setOpenMobile controls mobile sidebar/sheet
+
+        return // Important: Stop further execution of the handler
       }
 
       // Otherwise show warning for switching to a different plan
