@@ -317,7 +317,7 @@ export default function EnhancedJsonUploadModal({
                       Validating...
                     </>
                   ) : (
-                    "Continue to Editor"
+                    "View Plan"
                   )}
                 </Button>
               </div>
@@ -347,7 +347,7 @@ export default function EnhancedJsonUploadModal({
                       Validating...
                     </>
                   ) : (
-                    "Continue to Editor"
+                    "View Plan"
                   )}
                 </Button>
               </div>
