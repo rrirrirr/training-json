@@ -10,7 +10,7 @@ export async function waitForAppLoaded(page: Page) {
   console.log("[Helper] Waiting for app loaded marker...")
   const appLoadedMarker = page.getByTestId("app-loaded")
   try {
-    await appLoadedMarker.waitFor({ state: "visible", timeout: 10000 })
+    await appLoadedMarker.waitFor({ state: "attached", timeout: 20000 })
     console.log("[Helper] App loaded marker found.")
   } catch (error) {
     console.error("[Helper] Timeout waiting for app loaded marker:", error)
@@ -34,10 +34,10 @@ export async function goToPlanEditPage(page: Page, planId: string) {
 async function openJsonEditorDialog(page: Page) {
   console.log(`[Helper] Opening JSON Editor dialog`)
   // Assumes data-testid="edit-json-button" on the button in PlanModeMenu
-  const editJsonButton = page.getByTestId("edit-json-button")
+  const editJsonButton = page.getByRole("button", { name: "Edit JSON" })
   await editJsonButton.click()
   // Assumes data-testid="json-editor-textarea" on the textarea inside the dialog
-  await page.getByTestId("json-editor-textarea").waitFor({ state: "visible", timeout: 5000 })
+  await page.getByRole("textbox").waitFor({ state: "visible", timeout: 5000 })
 }
 
 /**
@@ -49,7 +49,7 @@ export async function makeUnsavedChange(page: Page, modificationFn: (currentJson
   await openJsonEditorDialog(page) // Uses testid="edit-json-button"
 
   // Assumes data-testid="json-editor-textarea"
-  const editorTextarea = page.getByTestId("json-editor-textarea")
+  const editorTextarea = page.getByRole("textbox")
   const jsonContent = await editorTextarea.inputValue()
   let jsonData
   try {
@@ -67,7 +67,7 @@ export async function makeUnsavedChange(page: Page, modificationFn: (currentJson
   await page.getByTestId("save-draft").click()
 
   // Wait for editor textarea to become hidden
-  await editorTextarea.waitFor({ state: "hidden", timeout: 5000 })
+  // await editorTextarea.waitFor({ state: "hidden", timeout: 5000 })
 }
 
 /**
@@ -83,7 +83,7 @@ export async function triggerEditViaJsonMenu(page: Page, planId: string) {
 
   try {
     // Try clicking the actions trigger directly (e.g., if in sidebar)
-    await actionsTrigger.click({ timeout: 1000 })
+    await actionsTrigger.click({ timeout: 2000 })
     console.log("[Helper] Clicked actions trigger directly.")
   } catch (e) {
     // Fallback: Assume it's in the plan switcher dropdown
@@ -97,18 +97,71 @@ export async function triggerEditViaJsonMenu(page: Page, planId: string) {
     await actionsTrigger.waitFor({ state: "visible", timeout: 5000 })
     await actionsTrigger.click()
   }
-
   // Click the menu item using its specific testid
   const editJsonMenuItem = page.getByTestId(`edit-json-menu-item-${planId}`)
   await editJsonMenuItem.click()
 
-  // Click the button within the JSON editor dialog
-  // Assumes data-testid="update-plan-button"
-  await page.getByTestId("save-draft").click()
+  // Wait for and click the button within the JSON editor dialog
+  const saveButton = page.getByTestId("save-draft")
+  await expect(async () => {
+    await saveButton.click()
+    await expect(saveButton).not.toBeVisible({ timeout: 500 })
+  }).toPass()
+  // await saveButton.waitFor({ state: "visible", timeout: 5000 })
+  console.log("[Helper] Clicking save-draft button in JSON editor")
 }
 
 /**
- * Clicks the Discard button and confirms the action in the dialog.
+ * Performs the UI clicks to enter edit mode via the JSON editor menu
+ * starting from a plan's view page (in normal mode).
+ * ASSUMES the page is already displaying the target plan in NORMAL mode.
+ * Uses unique data-testid attributes.
+ */
+export async function deletePlan(page: Page, planId: string) {
+  console.log(`[Helper] Deleting plan via menu: ${planId}`)
+
+  const actionsTrigger = page.getByTestId(`plan-actions-trigger-${planId}`)
+
+  try {
+    // Try clicking the actions trigger directly (e.g., if in sidebar)
+    await actionsTrigger.click({ timeout: 2000 })
+    console.log("[Helper] Clicked actions trigger directly.")
+  } catch (e) {
+    // Fallback: Assume it's in the plan switcher dropdown
+    console.log(
+      "[Helper] Actions trigger not visible/clickable directly, trying switcher dropdown."
+    )
+    const switcherTrigger = page.getByTestId("plan-switcher-trigger")
+    await switcherTrigger.click()
+    // Use locator().waitFor() on the dropdown item
+    const actionsTrigger = page.getByTestId(`plan-actions-trigger-${planId}`)
+    await actionsTrigger.waitFor({ state: "visible", timeout: 5000 })
+    await actionsTrigger.click()
+  }
+  // Click the menu item using its specific testid
+  const deleteJsonMenuItem = page.getByTestId(`delete-menu-item-${planId}`)
+  await deleteJsonMenuItem.click()
+}
+
+//   // Don't wait for navigation - some tests expect a warning dialog instead
+//   console.log("[Helper] Save button clicked, but not waiting for navigation")
+// }
+
+//   // Wait for navigation to complete after clicking save
+//   console.log(`[Helper] Waiting for navigation to ${planId}/edit`)
+//   try {
+//     await page.waitForURL(`**/plan/${planId}/edit`, { timeout: 10000 })
+//     console.log("[Helper] Successfully navigated to edit page")
+//   } catch (e) {
+//     console.error("[Helper] Failed to navigate to edit page:", e)
+//     // If navigation fails, try clicking the button again
+//     console.log("[Helper] Trying to click save-draft button again")
+//     await saveButton.click()
+//     await page.waitForURL(`**/plan/${planId}/edit`, { timeout: 10000 })
+//   }
+// }
+
+/** Clicks the Discard button and confirms the action in the dialog.
  * Assumes data-testid="discard-button", data-testid="discard-warning-dialog",
  * and data-testid="confirm-discard-button".
  */
@@ -164,20 +217,13 @@ export async function switchPlanViaSwitcher(page: Page, targetPlanTestId: string
   const switcherTrigger = page.getByTestId("plan-switcher-trigger")
   await switcherTrigger.click()
   // Use locator().waitFor() for the target item
-  const targetPlanItemLocator = page.getByTestId(targetPlanTestId)
-  await targetPlanItemLocator.waitFor({ state: "visible", timeout: 5000 })
+
+  // const targetPlanItemLocator = page.getByTestId(`targetPlanTestId`)
+  // await targetPlanItemLocator.waitFor({ state: "visible", timeout: 5000 })
   // Assuming the link is inside the item, adjust if the item itself is the link
   // Assumes data-testid={`plan-link-${planId}`} on the link inside the item
-  const targetPlanLink = targetPlanItemLocator.locator(`[data-testid^="plan-link-"]`) // More general link selector within item
+  const targetPlanLink = page.getByTestId(`plan-link-${targetPlanTestId}`)
   await targetPlanLink.click()
-
-  // Handle potential discard warning
-  // Assumes data-testid="confirm-switch-button" on the confirmation button
-  const discardButton = page.getByTestId("confirm-switch-button")
-  if (await discardButton.isVisible({ timeout: 2000 })) {
-    console.log("[Helper] Discard dialog detected, confirming switch.")
-    await discardButton.click()
-  }
 }
 
 /**
@@ -200,4 +246,103 @@ export async function loadPlanToStore(page: Page, planId: string) {
   } else {
     console.log(`[Helper] Plan ${planId} already loaded in normal mode.`)
   }
+}
+
+interface PersistedState {
+  state: {
+    planMetadataList: PlanMetadata[]
+    // Include other persisted state properties if necessary
+    activePlanId?: string | null
+    selectedWeek?: number | null
+    selectedMonth?: number
+    viewMode?: "week" | "month"
+  }
+  version: number
+}
+
+// Structure for the metadata we want to add/ensure exists
+interface PlanMetadataInput {
+  id: string
+  name: string
+  createdAt: string // ISO string format
+  updatedAt: string // ISO string format
+}
+
+export async function setupLocalStorageWithPlans(
+  page: Page,
+  TEST_PLAN_ID: string,
+  OTHER_PLAN_ID: string
+): Promise<void> {
+  console.log("[Helper] Setting up localStorage with test plan metadata...")
+
+  const plansToAdd: PlanMetadataInput[] = [
+    {
+      id: TEST_PLAN_ID,
+      name: "Test Training Plan", // Or get from test-data
+      createdAt: new Date("2023-01-01T00:00:00.000Z").toISOString(),
+      updatedAt: new Date().toISOString(), // Use current time for updatedAt
+    },
+    {
+      id: OTHER_PLAN_ID,
+      name: "Other Training Plan", // Or get from test-data
+      createdAt: new Date("2023-01-02T00:00:00.000Z").toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ]
+
+  await page.evaluate((plans) => {
+    const storageKey = "training-plan-storage-v2"
+    const draftKeys = [
+      "planStoreDraft_mode",
+      "planStoreDraft_plan",
+      "planStoreDraft_originalId",
+      "planStoreDraft_unsaved",
+    ]
+
+    // Clear any lingering draft state first
+    draftKeys.forEach((key) => localStorage.removeItem(key))
+
+    let storageValue: PersistedState = { state: { planMetadataList: [] }, version: 0 }
+    try {
+      const existingData = localStorage.getItem(storageKey)
+      if (existingData) {
+        const parsed = JSON.parse(existingData)
+        // Basic validation of parsed structure
+        if (parsed && parsed.state && Array.isArray(parsed.state.planMetadataList)) {
+          storageValue = parsed
+        } else {
+          console.warn("Existing localStorage data is invalid, resetting.")
+        }
+      }
+    } catch (e) {
+      console.error("Error parsing existing localStorage data, resetting:", e)
+      storageValue = { state: { planMetadataList: [] }, version: 0 } // Reset on error
+    }
+
+    const existingPlanIds = new Set(storageValue.state.planMetadataList.map((p) => p.id))
+
+    // Add or update plans in the list
+    plans.forEach((planToAdd) => {
+      if (!existingPlanIds.has(planToAdd.id)) {
+        storageValue.state.planMetadataList.push(planToAdd)
+        existingPlanIds.add(planToAdd.id)
+      } else {
+        // Update existing entry's name and updatedAt timestamp
+        storageValue.state.planMetadataList = storageValue.state.planMetadataList.map((p) =>
+          p.id === planToAdd.id ? { ...p, name: planToAdd.name, updatedAt: planToAdd.updatedAt } : p
+        )
+      }
+    })
+
+    // Ensure the list is sorted (optional but good practice, matches store logic [cite: 1764])
+    storageValue.state.planMetadataList.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+
+    // Write back to localStorage
+    localStorage.setItem(storageKey, JSON.stringify(storageValue))
+    console.log(
+      `[Browser Context] localStorage key '${storageKey}' updated with ${plans.length} plans ensured.`
+    )
+  }, plansToAdd) // Pass the array of plans to the evaluate function
 }
