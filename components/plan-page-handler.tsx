@@ -42,8 +42,18 @@ export default function PlanPageHandler({ planId, editIntent }: PlanPageHandlerP
 
     const processPlan = async () => {
       // Call the appropriate store action based on props
+      // For new plans or plan edit page
       if (planId === null && editIntent) {
-        await startNewPlanEdit()
+        // Check if we already have a draft plan in edit mode
+        // This happens when JSON is uploaded via the enhanced modal
+        if (mode === "edit" && draftPlan !== null && originalPlanId === null) {
+          console.log("[PlanPageHandler] Using existing draft plan in edit mode")
+          // We already have the right state, do nothing
+        } else {
+          // Otherwise, start fresh edit with a new plan template
+          console.log("[PlanPageHandler] No existing draft, creating new plan template")
+          await startNewPlanEdit()
+        }
       } else if (planId) {
         await loadPlanAndSetMode(planId, editIntent)
       } else {
