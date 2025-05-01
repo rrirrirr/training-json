@@ -496,10 +496,30 @@ test.describe("Plan Edit Mode with Local Database (using testid)", () => {
     await expectNormalModeUI(page) // Check UI is back to normal mode
   })
 
-  test("Deleting a plan that has unsaved changes and is edit mode should remove unsaved changes and put us out of edit mode", async ({
+  test("Deleting a plan that has unsaved changes and is in edit mode should remove unsaved changes and put us out of edit mode", async ({
     page,
   }) => {
     await planEditHelpers.goToPlanEditPage(page, TEST_PLAN_ID)
+
+    await planEditHelpers.makeUnsavedChange(page, (json) => {
+      json.metadata.planName = "Some Unsaved Changes"
+      return json
+    })
+
+    await expectEditModeUI(page, "Some Unsaved Changes")
+
     await planEditHelpers.goToHomePage(page)
+
+    await planEditHelpers.deletePlan(page, TEST_PLAN_ID)
+
+    await page.getByRole("button", { name: "Delete" }).click()
+
+    await expect(page).toHaveURL(`${baseURL}/`)
+
+    await page.getByTestId(`plan-link-${OTHER_PLAN_ID}`).click()
+
+    await expect(page).toHaveURL(`${baseURL}/plan/${OTHER_PLAN_ID}`)
+
+    await expectNormalModeUI(page)
   })
-}) // End describe block
+})
