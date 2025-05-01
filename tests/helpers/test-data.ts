@@ -101,7 +101,13 @@ async function createTestData(): Promise<void> {
     weekTypes: [{ id: 1, name: "Regular", colorName: "blue" }],
     exerciseDefinitions: [{ id: "ex1", name: "Squat", category: "Legs" }],
     weeks: [{ weekNumber: 1, weekType: "Regular", weekTypeIds: [1], sessions: [] }],
-    monthBlocks: [{ id: 1, name: "First Block", weekNumbers: [1] }],
+    monthBlocks: [{ 
+      id: 1, 
+      name: "First Block", 
+      weekNumbers: [1],
+      // Add the weeks array that's required by the BlockView component
+      weeks: [1]  
+    }],
   }
 
   // Create the other test plan
@@ -146,6 +152,7 @@ async function createTestData(): Promise<void> {
     throw error
   }
 }
+
 
 /**
  * Updates a test plan with new data
