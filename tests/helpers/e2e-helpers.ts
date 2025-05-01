@@ -139,7 +139,7 @@ export async function deletePlan(page: Page, planId: string) {
     await actionsTrigger.click()
   }
   // Click the menu item using its specific testid
-  const deleteJsonMenuItem = page.getByTestId(`delete-menu-item-${planId}`)
+  const deleteJsonMenuItem = page.getByTestId(`delete-plan-menu-item-${planId}`)
   await deleteJsonMenuItem.click()
 }
 
