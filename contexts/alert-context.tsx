@@ -19,6 +19,8 @@ export interface GlobalAlertState {
   severity: GlobalAlertSeverity;
   isVisible: boolean;
   autoCloseDelay: number | null; // Delay in ms, null means no auto-close
+  collapsible: boolean; // Whether the alert can be collapsed to just an icon
+  collapseDelay: number | null; // Delay before collapsing, null means no auto-collapse
 }
 
 interface AlertContextType {
@@ -26,7 +28,11 @@ interface AlertContextType {
   showAlert: (
     message: string,
     severity: GlobalAlertSeverity,
-    options?: { autoCloseDelay?: number | null } // Optional config
+    options?: { 
+      autoCloseDelay?: number | null;  // Delay before auto-closing, null for no auto-close
+      collapsible?: boolean;           // Whether alert can be collapsed to just an icon
+      collapseDelay?: number | null;   // Delay before collapsing, null for no auto-collapse
+    } 
   ) => void;
   hideAlert: () => void;
 }
@@ -42,6 +48,8 @@ export function AlertProvider({ children }: { children: ReactNode }) {
     severity: null,
     isVisible: false,
     autoCloseDelay: null,
+    collapsible: false,
+    collapseDelay: null,
   });
 
   // Ref to store the auto-close timer
@@ -52,7 +60,11 @@ export function AlertProvider({ children }: { children: ReactNode }) {
     (
       message: string,
       severity: GlobalAlertSeverity,
-      options?: { autoCloseDelay?: number | null }
+      options?: { 
+        autoCloseDelay?: number | null;
+        collapsible?: boolean;
+        collapseDelay?: number | null;
+      }
     ) => {
       // Clear any existing timer before showing a new alert
       if (autoCloseTimerRef.current) {
@@ -62,14 +74,18 @@ export function AlertProvider({ children }: { children: ReactNode }) {
 
       const newId = Date.now(); // Use timestamp for a simple unique ID
       const autoCloseDelay = options?.autoCloseDelay ?? null; // Default to no auto-close
+      const collapsible = options?.collapsible ?? false; // Default to not collapsible
+      const collapseDelay = options?.collapseDelay ?? 3000; // Default to 3 seconds if collapsible is true
 
-      console.log(`[AlertContext] Showing alert #${newId}: ${severity} - ${message} (Auto-close: ${autoCloseDelay ?? 'none'})`);
+      console.log(`[AlertContext] Showing alert #${newId}: ${severity} - ${message} (Auto-close: ${autoCloseDelay ?? 'none'}, Collapsible: ${collapsible})`);
       setAlertState({
         id: newId,
         message,
         severity,
         isVisible: true,
         autoCloseDelay,
+        collapsible,
+        collapseDelay: collapsible ? collapseDelay : null,
       });
 
       // Set auto-close timer if delay is provided

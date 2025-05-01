@@ -1,72 +1,105 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { X, AlertTriangle, Info, Edit, Ban } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAlert, GlobalAlertSeverity } from "@/contexts/alert-context"; // Import the alert hook and type
+import { useAlert, GlobalAlertSeverity } from "@/contexts/alert-context";
 
-// Define the props - These are now mainly for configuration, state comes from context
 interface GlobalAlertProps {
-  canCollapse?: boolean;
-  collapseDelay?: number; // Note: Auto-close delay is handled by context now
   icon?: React.ReactNode; // Optional custom icon override
 }
 
-// Default props for configuration
-const defaultProps: Partial<GlobalAlertProps> = {
-  canCollapse: false,
-  collapseDelay: 3000, // This delay is now for the visual collapse, not auto-hiding
-};
-
 export function GlobalAlert(props: GlobalAlertProps) {
-  const {
-      canCollapse = defaultProps.canCollapse,
-      collapseDelay = defaultProps.collapseDelay,
-      icon: customIcon,
-  } = props;
+  const { icon: customIcon } = props;
 
   // Get state and actions from the context
   const { alertState, hideAlert } = useAlert();
-  const { id: alertId, message, severity, isVisible } = alertState; // Use alertId from state
+  const { 
+    id: alertId, 
+    message, 
+    severity, 
+    isVisible, 
+    collapsible, 
+    collapseDelay 
+  } = alertState;
 
   // Local state for visual collapse/hover effect
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const collapseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const currentAlertIdRef = useRef<number>(0); // Ref to track the ID for collapse logic
+  const currentAlertIdRef = useRef<number>(0);
+  const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Visual auto-collapse logic (separate from auto-hiding in context)
+  // Visual auto-collapse logic
   useEffect(() => {
     if (collapseTimeoutRef.current) clearTimeout(collapseTimeoutRef.current);
 
     // If a new alert appears, reset collapse state immediately
     if (isVisible && alertId !== currentAlertIdRef.current) {
-        setIsCollapsed(false);
-        currentAlertIdRef.current = alertId; // Track the new alert ID
+      setIsCollapsed(false);
+      currentAlertIdRef.current = alertId;
     }
 
-    // Set timer only if the alert is visible, collapse is enabled, and it's not already collapsed
-    if (isVisible && canCollapse && !isCollapsed) {
+    // Set timer for collapse
+    if (isVisible && collapsible && !isCollapsed && collapseDelay) {
       collapseTimeoutRef.current = setTimeout(() => {
-        // Only collapse if the alert hasn't changed since the timer started
-         if (alertId === currentAlertIdRef.current) {
-            setIsCollapsed(true);
-         }
+        if (alertId === currentAlertIdRef.current) {
+          setIsTransitioning(true); // Start transition
+          setIsCollapsed(true);
+          
+          // Clear transition flag after animation completes
+          transitionTimerRef.current = setTimeout(() => {
+            setIsTransitioning(false);
+          }, 300); // Match transition duration
+        }
       }, collapseDelay);
     }
 
     // Reset collapse state if alert becomes hidden
     if (!isVisible) {
       setIsCollapsed(false);
-      currentAlertIdRef.current = 0; // Reset tracked ID
+      currentAlertIdRef.current = 0;
     }
 
-    return () => { if (collapseTimeoutRef.current) clearTimeout(collapseTimeoutRef.current); };
-  }, [isVisible, canCollapse, collapseDelay, isCollapsed, alertId]); // Add alertId dependency
+    return () => { 
+      if (collapseTimeoutRef.current) clearTimeout(collapseTimeoutRef.current);
+      if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+    };
+  }, [isVisible, collapsible, collapseDelay, isCollapsed, alertId]);
 
-  useEffect(() => { if (!canCollapse) setIsCollapsed(false); }, [canCollapse]);
+  // Handle hover state changes
+  const handleMouseEnter = () => {
+    if (!collapsible) return;
+    
+    setIsHovering(true);
+    setIsTransitioning(true); // Start transition
+    
+    // Clear transition flag after animation
+    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+    transitionTimerRef.current = setTimeout(() => {
+      setIsTransitioning(false);
+    }, 300);
+  };
+  
+  const handleMouseLeave = () => {
+    if (!collapsible) return;
+    
+    setIsHovering(false);
+    setIsTransitioning(true); // Start transition
+    
+    // Clear transition flag after animation
+    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+    transitionTimerRef.current = setTimeout(() => {
+      setIsTransitioning(false);
+    }, 300);
+  };
+
+  useEffect(() => { 
+    if (!collapsible) setIsCollapsed(false); 
+  }, [collapsible]);
 
   // Determine Icon
   const Icon = useMemo(() => {
@@ -90,48 +123,71 @@ export function GlobalAlert(props: GlobalAlertProps) {
       default: return "bg-background border-border text-foreground";
     }
   };
+  
   const severityClasses = getSeverityClasses();
   const showFullContent = !isCollapsed || isHovering;
 
-  // Use `isVisible` from context to control animation state
-  // Render container even when !isVisible briefly to allow fade-out animation
   return (
     <div
       className={cn(
-        "z-40 max-w-md", // Set max width or other sizing constraints
-        "transition-opacity duration-300 ease-in-out", // Use opacity transition
-        isVisible ? "opacity-100" : "opacity-0 pointer-events-none" // Control visibility via opacity
+        "z-40 max-w-md",
+        "transition-opacity duration-300 ease-in-out",
+        isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
       )}
-      onMouseEnter={() => canCollapse && setIsHovering(true)}
-      onMouseLeave={() => canCollapse && setIsHovering(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       role="alert"
       aria-live="polite"
-      aria-hidden={!isVisible} // Hide from accessibility tree when not visible
+      aria-hidden={!isVisible}
     >
-      {/* Inner div with styling and content */}
-      <div
-        className={cn(
-          "relative w-full rounded-md border p-3 shadow-md",
-          severityClasses,
-          "flex items-center gap-3",
-          "transition-all duration-300 ease-in-out", // Visual collapse transition
-          isCollapsed && !isHovering ? "w-auto px-3 py-2" : "" // Styles for visual collapse
-        )}
-      >
-        <div className="flex-shrink-0">{Icon}</div>
-        {showFullContent && message && (
-          <div className="flex-grow text-sm">
-            <AlertDescription>{message}</AlertDescription>
+      {/* Main container with fixed-position icon */}
+      <div className="relative">
+        {/* Alert container that grows from the icon */}
+        <div 
+          className={cn(
+            "border shadow-md overflow-hidden",
+            severityClasses,
+            "flex items-center",
+            "transition-all duration-300 ease-in-out origin-left",
+            // When collapsed, it's a perfect circle at the left edge
+            isCollapsed && !isHovering 
+              ? "w-10 h-10 rounded-full" 
+              : "rounded-md min-h-[40px] pl-10 pr-3 py-3", // Fixed left padding for icon
+          )}
+        >
+          {/* Icon - always at the same position */}
+          <div className={cn(
+            "absolute left-0 top-0 w-10 h-10 flex items-center justify-center",
+            "transition-none" // No transition on the icon to keep it stable
+          )}>
+            {Icon}
           </div>
-        )}
-        {showFullContent && (
+          
+          {/* Content container - Only shown when expanded */}
+          <div className={cn(
+            "flex-grow ml-0", // No left margin as icon is absolutely positioned
+            "transition-opacity duration-200 ease-in-out",
+            showFullContent ? "opacity-100" : "opacity-0",
+            isCollapsed && !isHovering ? "invisible" : "visible"
+          )}>
+            {message && (
+              <div className="text-sm">
+                <AlertDescription>{message}</AlertDescription>
+              </div>
+            )}
+          </div>
+          
+          {/* Close button */}
           <Button
             variant="ghost"
             size="icon"
-            onClick={hideAlert} // Use hideAlert from context
+            onClick={hideAlert}
             className={cn(
-              "h-6 w-6 flex-shrink-0 ml-auto",
-              // Adjust text color based on severity for better contrast
+              "h-6 w-6 flex-shrink-0 ml-2",
+              "transition-opacity duration-200 ease-in-out",
+              showFullContent ? "opacity-100" : "opacity-0",
+              !showFullContent ? "hidden" : "",
+              // Severity-based styling
               severity === 'warning' ? "text-yellow-800 hover:bg-yellow-200/50 dark:text-yellow-300 dark:hover:bg-yellow-700/30" :
               severity === 'error' ? "text-red-800 hover:bg-red-200/50 dark:text-red-300 dark:hover:bg-red-700/30" :
               severity === 'info' ? "text-blue-800 hover:bg-blue-200/50 dark:text-blue-300 dark:hover:bg-blue-700/30" :
@@ -142,7 +198,7 @@ export function GlobalAlert(props: GlobalAlertProps) {
           >
             <X className="h-4 w-4" />
           </Button>
-        )}
+        </div>
       </div>
     </div>
   );
