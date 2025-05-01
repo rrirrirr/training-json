@@ -148,7 +148,10 @@ export function GlobalAlert(props: GlobalAlertProps) {
             "border shadow-md overflow-hidden",
             severityClasses,
             "flex items-center",
-            "transition-all duration-300 ease-in-out origin-left",
+            // Only transition the width and height, not the border radius
+            "transition-[width,height] duration-300 ease-in-out origin-left",
+            // No transition for border radius - it changes instantly
+            "transition-[border-radius] duration-0",
             // When collapsed, it's a perfect circle at the left edge
             isCollapsed && !isHovering 
               ? "w-10 h-10 rounded-full" 
