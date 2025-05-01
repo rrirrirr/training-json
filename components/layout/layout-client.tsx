@@ -9,13 +9,14 @@ import React, {
 import { usePathname } from "next/navigation"
 import AppSidebar from "@/components/app-sidebar"
 import { AppHeader } from "@/components/layout/app-header"
+import { GlobalAlert } from "@/components/layout/GlobalAlert" // Import GlobalAlert
 import { Sidebar, SidebarProvider, useSidebar } from "@/components/ui/sidebar"
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
 import type { ImperativePanelGroupHandle } from "react-resizable-panels"
 import { getPanelGroupElement } from "react-resizable-panels"
 import { cn } from "@/lib/utils"
 import { useUIState } from "@/contexts/ui-context"
-
+import { useAlert } from "@/contexts/alert-context" // Import the alert hook
 // --- Configuration Constants (from your original code) ---
 const PANEL_GROUP_ID = "desktop-layout-group"
 const SIDEBAR_COLLAPSED_WIDTH_PX = 48
@@ -67,6 +68,7 @@ function LayoutWithSidebar({ children, defaultLayout }: LayoutWithSidebarProps) 
   const { state: sidebarState, isMobile, setOpen } = useSidebar() // Renamed 'state' for clarity
   // console.log("--- LayoutWithSidebar RENDER --- Context State:", sidebarState);
   const { isSidebarOpen, openSidebar, closeSidebar } = useUIState()
+  const { alertState } = useAlert() // Get alert state
   const panelGroupHandleRef = useRef<ImperativePanelGroupHandle>(null)
   const pathname = usePathname()
   const isRootRoute = pathname === "/"
@@ -268,7 +270,18 @@ function LayoutWithSidebar({ children, defaultLayout }: LayoutWithSidebarProps) 
         </Sidebar>
         <div className="flex flex-1 flex-col">
           <AppHeader />
-          <main className="flex-1 overflow-y-auto overflow-x-hidden">{children}</main>
+          <main className="flex-1 overflow-y-auto overflow-x-hidden relative p-4">
+            {/* Global Alert Area for Mobile */}
+            <div className="absolute top-2 left-2 z-40 pointer-events-none">
+              <div className="pointer-events-auto">
+                <GlobalAlert canCollapse={alertState.severity === 'edit'} />
+              </div>
+            </div>
+            {/* Add dynamic padding if alert is visible */}
+            <div className={cn(alertState.isVisible && "pt-16")}>
+              {children}
+            </div>
+          </main>
         </div>
       </div>
     )
@@ -340,10 +353,26 @@ function LayoutWithSidebar({ children, defaultLayout }: LayoutWithSidebarProps) 
           order={2}
           defaultSize={mainCalculatedDefault}
           minSize={100 - SIDEBAR_MAX_SIZE_PERCENT}
-          className="h-screen flex flex-col overflow-hidden"
+          className="h-screen flex flex-col overflow-hidden relative" // Added relative positioning
         >
           <div className="flex h-full flex-col">
-            <main className="flex-1 overflow-auto">{children}</main>
+            <main className="flex-1 overflow-auto relative"> {/* Added relative positioning */}
+              {/* Global Alert Area */}
+              <div className="absolute top-4 left-4 z-40 pointer-events-none">
+                <div className="pointer-events-auto">
+                  <GlobalAlert canCollapse={alertState.severity === 'edit'} />
+                </div>
+              </div>
+              
+              {/* Page Content - Add padding dynamically */}
+              <div className={cn(
+                "p-4 md:p-6",
+                // Apply padding if alert is visible
+                alertState.isVisible && "pt-16 md:pt-20"
+              )}>
+                {children}
+              </div>
+            </main>
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>

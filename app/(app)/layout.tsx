@@ -4,6 +4,7 @@ import { LayoutClient } from "@/components/layout/layout-client" // Your existin
 import { ModalProvider } from "@/components/modals/modal-provider"
 import { DialogProvider } from "@/components/dialogs/dialog-provider"
 import { UIProvider } from "@/contexts/ui-context"
+import { AlertProvider } from "@/contexts/alert-context" // Import the alert provider
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { PlanDebugBar } from "@/components/plan-debug-bar"
 import { AppLoadedMarker } from "@/components/app-loaded-marker"
@@ -50,19 +51,22 @@ export default async function AppLayout({
   }
 
   return (
-    // UIProvider might still be needed for dialogs
-    <UIProvider>
-      <TooltipProvider delayDuration={100}>
-        {/* Pass defaultLayout to LayoutClient */}
-        {/* Note: SidebarProvider is now inside LayoutClient */}
-        <LayoutClient defaultLayout={defaultLayout}>
-          {children}
-          <ModalProvider />
-          <DialogProvider />
-          {/*          <PlanDebugBar /> */}
-          <AppLoadedMarker />
-        </LayoutClient>
-      </TooltipProvider>
-    </UIProvider>
+    // Wrap everything with AlertProvider
+    <AlertProvider>
+      {/* UIProvider might still be needed for dialogs */}
+      <UIProvider>
+        <TooltipProvider delayDuration={100}>
+          {/* Pass defaultLayout to LayoutClient */}
+          {/* Note: SidebarProvider is now inside LayoutClient */}
+          <LayoutClient defaultLayout={defaultLayout}>
+            {children}
+            <ModalProvider />
+            <DialogProvider />
+            {/*          <PlanDebugBar /> */}
+            <AppLoadedMarker />
+          </LayoutClient>
+        </TooltipProvider>
+      </UIProvider>
+    </AlertProvider>
   )
 }
