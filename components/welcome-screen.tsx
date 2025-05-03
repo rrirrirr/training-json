@@ -24,7 +24,7 @@ export default function WelcomeScreen({ onLoadExample, onImportData }: WelcomeSc
     <div className="flex flex-col h-full">
       {/* This inner div uses flex-1 to grow within the h-full parent
           allowing items-center to vertically center the content block */}
-      <div className="bg-primary/5 py-6 sm:py-12 px-4 sm:px-6 lg:px-8 flex-1 flex items-center justify-center">
+      <div className="py-6 sm:py-12 px-4 sm:px-6 lg:px-8 flex-1 flex items-center justify-center">
         {/* Max-width container remains the same */}
         <div className="max-w-4xl mx-auto w-full">
           {/* Content structure remains the same... */}
