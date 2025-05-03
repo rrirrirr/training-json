@@ -2,10 +2,10 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { FileText, Trash2, MoreHorizontal, Plus, ChevronRight, Loader2 } from "lucide-react"
+import { FileText, Trash2, MoreHorizontal, Plus, ChevronRight, Loader2, Edit } from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
-import { useRouter } from "next/navigation"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,9 +17,7 @@ import { usePlanStore, type PlanMetadata } from "@/store/plan-store"
 import React from "react"
 import { useNewPlanModal } from "@/components/modals/new-plan-modal"
 import { useUIState } from "@/contexts/ui-context"
-import { TrainingPlanData } from "@/types/training-plan" // Import TrainingPlanData
 
-// --- PlanSwitcherItem Component ---
 interface PlanSwitcherItemProps {
   plan: PlanMetadata
   isActive: boolean
@@ -35,8 +33,11 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
 }) => {
   const { openJsonEditor, openDeleteDialog } = useUIState()
   const router = useRouter()
-  // Fetch function now returns { planData, planName, createdAt } | null
+  const pathname = usePathname()
   const fetchPlanById = usePlanStore((state) => state.fetchPlanById)
+  const mode = usePlanStore((state) => state.mode)
+  const originalPlanId = usePlanStore((state) => state.originalPlanId)
+  const hasUnsavedChanges = usePlanStore((state) => state.hasUnsavedChanges)
   const [isFetchingData, setIsFetchingData] = useState<boolean>(false)
   const { toast } = useToast()
 
@@ -44,30 +45,26 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
     return null
   }
 
+  const isBeingEdited = mode === "edit" && originalPlanId === plan.id
+  const hasEditPendingChanges = isBeingEdited && hasUnsavedChanges
+  const isOnEditPage = pathname === `/plan/${plan.id}/edit`
+  const showEditIcon = hasEditPendingChanges && !isOnEditPage
+
   const handleEditClick = async (e: React.MouseEvent) => {
     e.stopPropagation()
     setIsFetchingData(true)
     try {
-      // Fetch the plan data using the store action
       const fetchResult = await fetchPlanById(plan.id)
-
-      // *** FIX: Check fetchResult and extract planData ***
-      if (fetchResult && fetchResult.planData) {
-        const planDataToEdit = fetchResult.planData // Extract the actual plan data
-
-        // Construct the object for the editor using the extracted data
+      if (fetchResult?.planData) {
         const fullPlanObjectForEditor = {
           id: plan.id,
-          name: plan.name, // Use metadata name from the list item
-          data: planDataToEdit, // Pass the extracted plan data
-          createdAt: plan.createdAt, // Use metadata createdAt
-          updatedAt: plan.updatedAt, // Use metadata updatedAt
+          name: plan.name,
+          data: fetchResult.planData,
+          createdAt: plan.createdAt,
+          updatedAt: plan.updatedAt,
         }
-        
-        // Open the JSON editor with the fetched data
         openJsonEditor(fullPlanObjectForEditor)
       } else {
-        // Handle case where plan data couldn't be fetched
         console.error(`PlanSwitcherItem: Failed to load data for ${plan.id}`)
         toast({
           title: "Error",
@@ -94,7 +91,7 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
 
   const wrapperClassName = cn(
     "flex w-full items-center p-2 group/item relative overflow-hidden min-h-[48px] rounded-md",
-    "hover:bg-accent",
+    "hover:bg-accent focus-within:bg-accent",
     isActive && "bg-accent",
     className
   )
@@ -105,13 +102,22 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
         <Link
           href={`/plan/${plan.id}`}
           onClick={(e) => onLinkClick(e, plan.id)}
-          className="block rounded-sm outline-none"
+          className="block rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           aria-current={isActive ? "page" : undefined}
           draggable="false"
           onPointerDown={(e) => e.stopPropagation()}
           data-testid={`plan-link-${plan.id}`}
         >
-          <div className="flex flex-col pl-2 py-1">
+          <div className="flex items-center pl-2 py-1">
+            {showEditIcon && (
+              <div
+                className="flex-shrink-0 mr-2 flex items-center justify-center"
+                data-testid={`edit-indicator-${plan.id}`}
+                aria-label="Unsaved changes"
+              >
+                <Edit className="h-4 w-4 text-edit-mode-text" />
+              </div>
+            )}
             <span
               className={cn(
                 "text-sm font-medium truncate pointer-events-none",
@@ -130,7 +136,7 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:bg-secondary data-[state=open]:bg-accent outline-none"
+              className="h-8 w-8 text-muted-foreground hover:bg-secondary data-[state=open]:bg-accent outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
               aria-label={`Actions for ${plan.name}`}
               data-testid={`plan-actions-trigger-${plan.id}`}
             >
@@ -138,16 +144,9 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
               <span className="sr-only">Plan Actions</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent
-            side={"right"}
-            align="center"
-            className="w-auto p-1"
-            onFocusOutside={(e) => {
-              /* Keep existing logic if needed */
-            }}
-          >
+          <DropdownMenuContent side={"right"} align="center" className="w-auto p-1">
             <DropdownMenuItem
-              className="h-8 px-2 hover:bg-muted flex items-center gap-2 cursor-pointer outline-none"
+              className="h-8 px-2 hover:bg-muted flex items-center gap-2 cursor-pointer outline-none focus:bg-muted"
               onSelect={(e) => e.preventDefault()}
               onClick={handleEditClick}
               disabled={isFetchingData}
@@ -176,9 +175,8 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
   )
 }
 
-// --- PlanSwitcher Component ---
 interface PlanSwitcherProps {
-  plans: PlanMetadata[]
+  plans: PlanMetadata[] | null | undefined
   activePlanId: string | null
   mode: "normal" | "edit" | "view"
   limit?: number
@@ -197,7 +195,9 @@ export const PlanSwitcher: React.FC<PlanSwitcherProps> = ({
   onViewAllClick,
 }) => {
   const { open: openNewPlanModal } = useNewPlanModal()
-  const displayPlans = plans.slice(0, limit)
+  const safePlans = plans || []
+  const displayPlans = safePlans.slice(0, limit)
+  const hasMorePlans = safePlans.length > limit
 
   const handleCreateClick = () => {
     openNewPlanModal()
@@ -205,7 +205,6 @@ export const PlanSwitcher: React.FC<PlanSwitcherProps> = ({
 
   return (
     <div className="flex flex-col w-full">
-      {/* List of plan items */}
       <div className="flex flex-col gap-y-0.5">
         {displayPlans.length > 0 ? (
           displayPlans.map((plan) => (
@@ -221,46 +220,43 @@ export const PlanSwitcher: React.FC<PlanSwitcherProps> = ({
         )}
       </div>
 
-      {/* --- Footer Section --- */}
-      {(plans.length > limit || showCreateButton) && (
+      {(hasMorePlans || showCreateButton) && (
         <div className="mt-1 pt-1 flex flex-col gap-y-1.5 px-1">
-          {plans.length > limit && (
+          {hasMorePlans && (
             <DropdownMenuItem
               asChild
               className="p-0 cursor-default outline-none focus:bg-transparent data-[highlighted]:bg-transparent"
             >
-              <div>
-                <Link
-                  href="/plans"
-                  passHref
-                  className={cn(
-                    "flex w-full items-center text-sm text-muted-foreground rounded-sm outline-none",
-                    "px-2 py-2",
-                    "hover:bg-accent"
-                  )}
-                  onClick={onViewAllClick}
-                  draggable="false"
-                  data-testid="view-all-plans-link"
-                >
-                  <span className="mr-auto">View All Plans</span>
-                  <ChevronRight className="size-4 ml-2" />
-                </Link>
-              </div>
+              <Link
+                href="/plans"
+                passHref
+                className={cn(
+                  "flex w-full items-center text-sm text-muted-foreground rounded-sm outline-none",
+                  "px-2 py-2",
+                  "hover:bg-accent focus-visible:bg-accent focus-visible:text-accent-foreground"
+                )}
+                onClick={onViewAllClick}
+                draggable="false"
+                data-testid="view-all-plans-link"
+              >
+                <span className="mr-auto">View All Plans</span>
+                <ChevronRight className="size-4 ml-2 flex-shrink-0" />
+              </Link>
             </DropdownMenuItem>
           )}
           {showCreateButton && (
             <DropdownMenuItem
               className={cn(
-                "relative flex cursor-pointer select-none items-center justify-start gap-x-2 rounded-md px-3 py-2 text-sm font-medium outline-none transition-colors",
+                "relative flex cursor-pointer select-none items-center justify-center gap-x-2 rounded-md px-3 py-2 text-sm font-medium outline-none transition-colors",
                 "bg-primary text-primary-foreground",
-                "hover:bg-primary/90",
+                "hover:bg-primary/90 focus-visible:bg-primary/90",
                 "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-                "m-2" // Adjusted margin
+                "m-1"
               )}
               onSelect={handleCreateClick}
               data-testid="create-new-plan-button"
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4" />
               <span>New Plan</span>
             </DropdownMenuItem>
           )}
