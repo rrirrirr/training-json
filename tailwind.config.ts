@@ -1,3 +1,4 @@
+// tailwind.config.ts
 import type { Config } from "tailwindcss"
 import colors from "tailwindcss/colors"
 
@@ -146,6 +147,20 @@ const config: Config = {
           border: "hsl(var(--sidebar-border) / <alpha-value>)",
           ring: "hsl(var(--sidebar-ring) / <alpha-value>)",
         },
+        "edit-mode": {
+          bg: "hsl(var(--edit-mode-bg) / <alpha-value>)",
+          border: "hsl(var(--edit-mode-border) / <alpha-value>)",
+          text: "hsl(var(--edit-mode-text) / <alpha-value>)",
+          "hover-bg": "hsl(var(--edit-mode-hover-bg) / <alpha-value>)",
+          "hover-text": "hsl(var(--edit-mode-hover-text) / <alpha-value>)",
+        },
+        "view-mode": {
+          bg: "hsl(var(--view-mode-bg) / <alpha-value>)",
+          border: "hsl(var(--view-mode-border) / <alpha-value>)",
+          text: "hsl(var(--view-mode-text) / <alpha-value>)",
+          "hover-bg": "hsl(var(--view-mode-hover-bg) / <alpha-value>)",
+          "hover-text": "hsl(var(--view-mode-hover-text) / <alpha-value>)",
+        },
         slate: { 950: "#090e1a" },
         gray: { 950: "#0a0a0a" },
         zinc: { 950: "#0a0a0c" },
@@ -183,6 +198,20 @@ const config: Config = {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         "archivo-black": ["var(--font-archivo-black)", "sans-serif"],
         oswald: ["var(--font-oswald)", "sans-serif"],
+      },
+      keyframes: {
+        // Added keyframes here if not already present
+        "blink-icon-colors": {
+          // Renamed animation to match utility class
+          "0%": { color: "#ff4500" },
+          "33%": { color: "#ff8c00" },
+          "66%": { color: "#ff4500" },
+          "100%": { color: "hsl(var(--muted-foreground))" }, // Use variable
+        },
+      },
+      animation: {
+        // Added animation here if not already present
+        "blink-icon-once": "blink-icon-colors 2s ease-in-out 1",
       },
     },
   },

@@ -6,31 +6,31 @@
   .dialog-content-base {
     @apply max-h-[90vh] overflow-y-auto;
   }
-  
+
   .dialog-footer-base {
     @apply mt-4 pt-4 border-t flex items-center;
   }
-  
+
   .dialog-footer-between {
     @apply dialog-footer-base justify-between;
   }
-  
+
   .dialog-footer-end {
     @apply dialog-footer-base justify-end;
   }
-  
+
   .dialog-footer-center {
     @apply dialog-footer-base justify-center;
   }
-  
+
   .dialog-button-icon {
     @apply flex items-center gap-2;
   }
 }
 @layer base {
   :root {
- --radius: 0.5rem;
---background: 220 44% 100%;
+    --radius: 0.5rem;
+    --background: 220 44% 100%;
     --foreground: 220 67% 0%;
     --muted: 220 39% 92%;
     --muted-foreground: 220 13% 27%;
@@ -48,16 +48,13 @@
     --accent-foreground: 220 13% 22%;
     --destructive: 0 86% 45%;
     --destructive-foreground: 0 0% 100%;
-    --ring: 207.5 40.45% 34.9%; /* Same as primary */
+    --ring: 207.5 40.45% 34.9%;
 
-    /* Chart Colors (Using HSL values from above or provided) */
     --chart-1: var(--primary);
     --chart-2: var(--secondary);
     --chart-3: var(--accent);
     --chart-4: 220 7% 94%;
-    /* --chart-5: 301 75% 54.4%; */ /* Removed as not in user snippet, add back if needed */
 
-    /* --- Plan mode colors (HSL component values - Kept from previous version) --- */
     --edit-mode-bg: 120 40% 97%;
     --edit-mode-border: 120 30% 80%;
     --edit-mode-text: 120 50% 40%;
@@ -69,19 +66,16 @@
     --view-mode-hover-bg: 250 35% 94%;
     --view-mode-hover-text: 250 45% 50%;
 
-    /* --- Sidebar (HSL component values - Kept from previous version) --- */
-    /* Using user's new --background for sidebar base */
     --sidebar: 220 44% 100%;
-    --sidebar-foreground: 286 10% 14%; /* Kept from previous */
-    --sidebar-background: 0 0% 100%; /* Kept from previous */
-    --sidebar-primary: 293 60% 61%; /* Kept from previous */
-    --sidebar-primary-foreground: 294 20% 97%; /* Kept from previous */
-    --sidebar-accent: 286 20% 97%; /* Kept from previous */
-    --sidebar-accent-foreground: 286 10% 21%; /* Kept from previous */
-    --sidebar-border: 286 10% 92%; /* Kept from previous */
-    --sidebar-ring: 293 60% 61%; /* Kept from previous */
+    --sidebar-foreground: 286 10% 14%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-primary: 293 60% 61%;
+    --sidebar-primary-foreground: 294 20% 97%;
+    --sidebar-accent: 286 20% 97%;
+    --sidebar-accent-foreground: 286 10% 21%;
+    --sidebar-border: 286 10% 92%;
+    --sidebar-ring: 293 60% 61%;
 
-    /* --- Session (HSL component values - Kept from previous version) --- */
     --session-gym-bg: 247 50% 98%;
     --session-gym-border: 250 40% 91%;
     --session-barmark-bg: 150 30% 98%;
@@ -89,63 +83,64 @@
     --session-egen-vila-bg: 260 10% 97%;
     --session-egen-vila-border: 260 5% 91%;
 
-    /* Default session values reference card/border components */
     --session-default-bg-values: var(--card);
     --session-default-border-values: var(--border);
   }
 
   .dark {
- --background: 240 13.73% 10%;
-      --foreground: 229.76 31.78% 74.71%;
-      --muted: 232.5 15.44% 18.32%;
-      --muted-foreground: 233.79 11.37% 50%;
-      --popover: 234.55 17.46% 12.35%;
-      --popover-foreground: 234 12.4% 52.55%;
-      --card: 234.55 17.46% 12.35%;
-      --card-foreground: 229.76 31.78% 74.71%;
-      --border: 232.5 15.38% 30.59%;
-      --input: 232 20% 14.71%;
-      --primary: 0 0% 82.75%;
-      --primary-foreground: 0 0% 20%;
-      --secondary: 225.45 71.22% 72.75%;
-      --secondary-foreground: 234.55 17.46% 12.35%;
-      --accent: 234.55 17.83% 9.47%;
-      --accent-foreground: 0 0% 82.75%;
-      --destructive: 1.58 47.5% 52.94%;
-      --destructive-foreground: 210 40% 98.04%;
-      --ring: 225.45 71.22% 72.75%;
-      --chart-1: 0 0% 82.75%;
-      --chart-2: 225.45 71.22% 72.75%;
-      --chart-3: 234.55 17.83% 9.47%;
-      --chart-4: 225.45 71.22% 75.75%;
-      --chart-5: 0 3% 82.75%;  
+    --background: 240 13.73% 10%;
+    --foreground: 229.76 31.78% 74.71%;
+    --muted: 232.5 15.44% 18.32%;
+    --muted-foreground: 233.79 11.37% 50%;
+    --popover: 234.55 17.46% 12.35%;
+    --popover-foreground: 234 12.4% 52.55%;
+    --card: 234.55 17.46% 12.35%;
+    --card-foreground: 229.76 31.78% 74.71%;
+    --border: 232.5 15.38% 30.59%;
+    --input: 232 20% 14.71%;
+    --primary: 0 0% 82.75%;
+    --primary-foreground: 0 0% 20%;
+    --secondary: 225.45 71.22% 72.75%;
+    --secondary-foreground: 234.55 17.46% 12.35%;
+    --accent: 234.55 17.83% 9.47%;
+    --accent-foreground: 0 0% 82.75%;
+    --destructive: 1.58 47.5% 52.94%;
+    --destructive-foreground: 210 40% 98.04%;
+    --ring: 225.45 71.22% 72.75%;
+    --chart-1: 0 0% 82.75%;
+    --chart-2: 225.45 71.22% 72.75%;
+    --chart-3: 234.55 17.83% 9.47%;
+    --chart-4: 225.45 71.22% 75.75%;
+    --chart-5: 0 3% 82.75%;
 
-    /* Plan mode colors for dark mode */
-    --edit-mode-bg: oklch(0.22 0.06 120);  /* Dark green-tinted background */
-    --edit-mode-border: oklch(0.4 0.15 120); /* Green-tinted border */
-    --edit-mode-text: oklch(0.7 0.2 120);    /* Green-tinted text */
-    --view-mode-bg: oklch(0.22 0.06 250);   /* Dark blue-tinted background */
-    --view-mode-border: oklch(0.4 0.15 250); /* Blue-tinted border */
-    --view-mode-text: oklch(0.7 0.2 250);    /* Blue-tinted text */
+    --edit-mode-bg: 120 40% 17%;
+    --edit-mode-border: 120 30% 30%;
+    --edit-mode-text: 120 50% 70%;
+    --edit-mode-hover-bg: 120 35% 24%;
+    --edit-mode-hover-text: 120 45% 80%;
+    --view-mode-bg: 250 40% 17%;
+    --view-mode-border: 250 30% 30%;
+    --view-mode-text: 250 50% 70%;
+    --view-mode-hover-bg: 250 35% 24%;
+    --view-mode-hover-text: 250 45% 80%;
 
-    /* Sidebar variables for dark mode */
     --sidebar: 240 13.73% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-   --sidebar-accent: oklch(0.967 0.001 286.375);
+    --sidebar-accent: oklch(0.967 0.001 286.375); /* Note: Oklch value kept as is */
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    --session-gym-bg: 0.24 0.08 250;     /* Dark Blueish */
-    --session-gym-border: 0.35 0.11 250;
-    --session-barmark-bg: 0.26 0.05 150;  /* Dark Greenish */
-    --session-barmark-border: 0.37 0.08 150;
-    --session-egen-vila-bg: 0.25 0.005 260; /* Dark Grayish */
-    --session-egen-vila-border: 0.36 0.008 260;
-    --session-default-bg-values: var(--card); /* Store card values */
-    --session-default-border-values: var(--border); /* Store border values */
+    --session-gym-bg: 247 50% 18%;
+    --session-gym-border: 250 40% 21%;
+    --session-barmark-bg: 150 30% 18%;
+    --session-barmark-border: 150 25% 22%;
+    --session-egen-vila-bg: 260 10% 17%;
+    --session-egen-vila-border: 260 5% 21%;
+    --session-default-bg-values: var(--card);
+    --session-default-border-values: var(--border);
   }
 }
 
@@ -166,45 +161,38 @@
 
 @keyframes blink-icon-colors {
   0% {
-    color: #ff4500; /* Start: OrangeRed */
+    color: #ff4500;
   }
   33% {
-    color: #ff8c00; /* Mid1: DarkOrange */
+    color: #ff8c00;
   }
   66% {
-    color: #ff4500; /* Mid2: OrangeRed */
+    color: #ff4500;
   }
   100% {
-    color: #374151;
+    color: #374151; /* Needs adjustment for dark mode potentially */
   }
 }
 
-/* Custom scrollbar for better UX */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: hsl(var(--muted) / 0.5);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: hsl(var(--muted-foreground) / 0.5);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
+  background: hsl(var(--muted-foreground) / 0.7);
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
-  /* .grid { */
-    /* grid-template-columns: 1fr; */
-  /* } */
-
-  /* Make tables more mobile-friendly */
   table {
     font-size: 0.875rem;
   }
@@ -214,12 +202,10 @@
     padding: 0.5rem 0.25rem !important;
   }
 
-  /* Adjust spacing for mobile */
   .p-4 {
     padding: 0.75rem;
   }
 
-  /* Make sure content doesn't overflow on small screens */
   .overflow-x-auto {
     -webkit-overflow-scrolling: touch;
   }
