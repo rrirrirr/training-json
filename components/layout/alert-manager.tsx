@@ -20,7 +20,7 @@ function UnsavedChangesAlertHandler() {
 
   const planName = draftPlan?.metadata?.planName || "Unnamed Plan"
   const unsavedAlertBaseMessage = `You have unsaved changes on "${planName}". `
-  const unsavedAlertSeverity = "warning"
+  const unsavedAlertSeverity = "edit"
 
   const alertMessageNode = (
     <span>
