@@ -17,6 +17,7 @@ import { getPanelGroupElement } from "react-resizable-panels"
 import { cn } from "@/lib/utils"
 import { useUIState } from "@/contexts/ui-context"
 import { useAlert } from "@/contexts/alert-context" // Import the alert hook
+import { AlertManager } from "./alert-manager"
 // --- Configuration Constants (from your original code) ---
 const PANEL_GROUP_ID = "desktop-layout-group"
 const SIDEBAR_COLLAPSED_WIDTH_PX = 48
@@ -257,6 +258,7 @@ function LayoutWithSidebar({ children, defaultLayout }: LayoutWithSidebarProps) 
     // ... same mobile JSX ...
     return (
       <div className="flex min-h-screen w-full bg-background">
+        <AlertManager />
         {isRootRoute && (
           <div
             className={cn(
@@ -274,13 +276,11 @@ function LayoutWithSidebar({ children, defaultLayout }: LayoutWithSidebarProps) 
             {/* Global Alert Area for Mobile */}
             <div className="absolute top-2 left-2 z-40 pointer-events-none">
               <div className="pointer-events-auto">
-                <GlobalAlert canCollapse={alertState.severity === 'edit'} />
+                <GlobalAlert canCollapse={alertState.severity === "edit"} />
               </div>
             </div>
             {/* Add dynamic padding if alert is visible */}
-            <div className={cn(alertState.isVisible && "pt-16")}>
-              {children}
-            </div>
+            <div className={cn(alertState.isVisible && "pt-16")}>{children}</div>
           </main>
         </div>
       </div>
@@ -290,6 +290,7 @@ function LayoutWithSidebar({ children, defaultLayout }: LayoutWithSidebarProps) 
   // --- Desktop Rendering ---
   return (
     <div className="flex min-h-screen w-full bg-transparent relative">
+      <AlertManager />
       {/* Background Image Div */}
       {isRootRoute && (
         <div
@@ -356,22 +357,16 @@ function LayoutWithSidebar({ children, defaultLayout }: LayoutWithSidebarProps) 
           className="h-screen flex flex-col overflow-hidden relative" // Added relative positioning
         >
           <div className="flex h-full flex-col">
-            <main className="flex-1 overflow-auto relative"> {/* Added relative positioning */}
+            <main className="flex-1 overflow-auto relative">
+              {/* Added relative positioning */}
               {/* Global Alert Area */}
               <div className="absolute top-4 left-4 z-40 pointer-events-none">
                 <div className="pointer-events-auto">
-                  <GlobalAlert canCollapse={alertState.severity === 'edit'} />
+                  <GlobalAlert canCollapse={alertState.severity === "edit"} />
                 </div>
               </div>
-              
               {/* Page Content - Add padding dynamically */}
-              <div className={cn(
-                "p-4 md:p-6",
-                // Apply padding if alert is visible
-                alertState.isVisible && "pt-16 md:pt-20"
-              )}>
-                {children}
-              </div>
+              <div className={cn("w-full h-full")}>{children}</div>
             </main>
           </div>
         </ResizablePanel>
