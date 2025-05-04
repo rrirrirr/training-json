@@ -46,16 +46,13 @@ const DocumentationPage = () => {
               <code>weeks</code>: (Required) An array detailing the schedule for each week.
             </li>
             <li>
-              <code>monthBlocks</code>: (Required) Groups weeks into larger blocks for navigation.
-            </li>
-            <li>
               <code>weekTypes</code>: (Required) Defines special week types like 'Deload' or 'Test'.
             </li>
             <li>
               <code>sessionTypes</code>: (Optional) Defines session categories like 'Gym' or 'Rest'.
             </li>
             <li>
-              <code>blocks</code>: (Optional) Defines training phases or blocks with specific focus.
+              <code>blocks</code>: (required) Defines training phases or blocks with specific focus.
             </li>
           </ul>
           <p className="mt-4 text-sm">
@@ -65,7 +62,7 @@ const DocumentationPage = () => {
         </CardContent>
       </Card>
 
-      {/* Metadata Section */}
+      {/* Metadata Section - CORRECTED */}
       <Card className="mb-8">
         <CardHeader>
           <CardTitle>
@@ -75,6 +72,7 @@ const DocumentationPage = () => {
         </CardHeader>
         <CardContent>
           <p className="text-sm mb-2">Key fields include:</p>
+          {/* Corrected the list structure below */}
           <ul className="list-disc pl-6 space-y-1 text-sm">
             <li>
               <code>planName</code>: (Required within metadata if metadata is present) The name of
@@ -94,12 +92,8 @@ const DocumentationPage = () => {
               <code>version</code>: (Optional) A version number for the plan.
             </li>
             <li>
-              <code>creator</code>: (Optional) Reserved for future community updates. This field exists but has no functionality yet.
-            </li>
-          </ul>
-            </li>
-            <li>
-              <code>version</code>: (Optional) A version number for the plan.
+              <code>creator</code>: (Optional) Reserved for future community updates. This field
+              exists but has no functionality yet.
             </li>
           </ul>
           <h4 className="font-semibold mt-4 mb-1 text-sm">Example:</h4>
@@ -109,6 +103,7 @@ const DocumentationPage = () => {
     "creationDate": "2025-04-16T14:30:00Z",
     "description": "4-week introductory strength program focusing on compound lifts.",
     "author": "Coach AI",
+    "version": "1.0",
     "creator": "user123"
   }
   // ... other top-level properties
@@ -347,26 +342,26 @@ const DocumentationPage = () => {
         </CardContent>
       </Card>
 
-      {/* Month Blocks Section */}
+      {/* Blocks Section */}
       <Card className="mb-8">
         <CardHeader>
           <CardTitle>
-            <code>monthBlocks</code> (Required)
+            <code>blocks</code> (Required)
           </CardTitle>
           <CardDescription>
-            Defines how weeks are grouped into larger blocks or months, primarily used for the tab
-            navigation and block view organization. Every week defined in the <code>weeks</code>{" "}
-            array must belong to exactly one <code>monthBlock</code>.
+            Defines how weeks are grouped into larger blocks, primarily used for the tab navigation
+            and block view organization. Every week defined in the <code>weeks</code> array must
+            belong to exactly one <code>block</code>.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm mb-2">Each month block object requires:</p>
+          <p className="text-sm mb-2">Each block object requires:</p>
           <ul className="list-disc pl-6 space-y-1 text-sm">
             <li>
               <code>id</code>: A unique numeric ID for the block (e.g., 1, 2...).
             </li>
             <li>
-              <code>name</code>: The display name for the tab/selector (e.g., "Month 1 (Wks 1-4)").
+              <code>name</code>: The display name for the tab/selector (e.g., "Block 1 (Wks 1-4)").
             </li>
             <li>
               <code>weeks</code>: An array of the <code>weekNumber</code> values included in this
@@ -384,7 +379,7 @@ const DocumentationPage = () => {
             </li>
           </ul>
           <h4 className="font-semibold mt-4 mb-1 text-sm">Example:</h4>
-          <CodeBlock>{`"monthBlocks": [
+          <CodeBlock>{`"blocks": [
   {
     "id": 1,
     "name": "Månad 1 (Vecka 1-4)",
@@ -499,7 +494,7 @@ const DocumentationPage = () => {
           <CardDescription>
             Customize the appearance using Tailwind CSS color names within style objects (
             <code>weekStyle</code>, <code>sessionStyle</code>, <code>loadStyle</code>,{" "}
-            <code>commentStyle</code>, <code>blocks.style</code>, <code>monthBlocks.style</code>).
+            <code>commentStyle</code>, <code>blocks.style</code>, <code>blocks.style</code>).
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -571,22 +566,23 @@ const DocumentationPage = () => {
     }
     // ... more weeks
   ],
-  "monthBlocks": [
+  "blocks": [
     {
       "id": 1,
-      "name": "Month 1",
+      "name": "Block 1",
       "weeks": [1] // List all weekNumbers for this block
     }
-    // ... more month blocks covering all weeks
+    // ... more blocks covering all weeks
   ]
 }`}</CodeBlock>
+          {/* Corrected the text below */}
           <p className="mt-4 text-sm">
             For more detailed instructions to give to an AI, including an interview process, use the
             prompts available in the "Create AI-Powered Plan" section of the application. Check the{" "}
             <Link href="#ai-tips" className="text-primary hover:underline">
               Tips for Better AI Results
             </Link>{" "}
-            section above for guidance.
+            section for guidance.
           </p>
         </CardContent>
       </Card>

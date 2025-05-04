@@ -1,6 +1,5 @@
 "use client"
-
-import type { MonthBlock, TrainingPlanData, BlockDefinition, Week } from "@/types/training-plan" // Added Week
+import type { Block, TrainingPlanData, BlockDefinition, Week } from "@/types/training-plan" // Added Week
 import { useRef } from "react"
 import WeeklyView from "./weekly-view"
 import { cn } from "@/lib/utils"
@@ -8,22 +7,22 @@ import { useTheme } from "next-themes"
 import { getThemeAwareColorClasses } from "@/utils/color-utils"
 
 interface BlockViewProps {
-  monthBlock: MonthBlock | undefined | null // Allow potentially missing monthBlock too
+  block: Block | undefined | null // Allow potentially missing block too
   trainingPlan: TrainingPlanData | undefined | null // Allow potentially missing trainingPlan
 }
 
-export default function BlockView({ monthBlock, trainingPlan }: BlockViewProps) {
+export default function BlockView({ block, trainingPlan }: BlockViewProps) {
   const weekRefs = useRef<{ [key: number]: HTMLDivElement | null }>({})
   const { theme } = useTheme()
 
   // --- GUARD CLAUSES ---
   // Check if essential props are missing before trying to use them
-  if (!trainingPlan || !trainingPlan.weeks || !monthBlock || !monthBlock.weeks) {
-    console.error("BlockView: Missing required props", { monthBlock, trainingPlan })
+  if (!trainingPlan || !trainingPlan.weeks || !block || !block.weeks) {
+    console.error("BlockView: Missing required props", { block, trainingPlan })
     // Return null, a loading indicator, or an error message
     return (
       <div className="text-center p-8 text-red-500">
-        Error: Training plan data or month block data is missing or incomplete.
+        Error: Training plan data or block data is missing or incomplete.
       </div>
     )
   }
@@ -31,7 +30,7 @@ export default function BlockView({ monthBlock, trainingPlan }: BlockViewProps) 
 
   // Get all weeks for this block - now safe to access .weeks
   const weeksInBlock: Week[] = trainingPlan.weeks // Ensure weeksInBlock has a type
-    .filter((week) => monthBlock.weeks.includes(week.weekNumber)) // monthBlock.weeks is checked above
+    .filter((week) => block.weeks.includes(week.weekNumber)) // block.weeks is checked above
     .sort((a, b) => a.weekNumber - b.weekNumber)
 
   // Get block definition if it exists
@@ -43,27 +42,38 @@ export default function BlockView({ monthBlock, trainingPlan }: BlockViewProps) 
     if (weeksInBlock.length > 0) {
       const firstWeek = weeksInBlock[0]
       if (firstWeek.blockId) {
-        return trainingPlan.blocks.find((block) => block.id === firstWeek.blockId)
+        // Use blockDef to avoid shadowing the block prop
+        return trainingPlan.blocks.find((blockDef) => blockDef.id === firstWeek.blockId)
       }
     }
 
     // Fallback: try to match by name (if blockId isn't found)
+    // Simplified fallback logic - adjust if the description check was intended differently
     return trainingPlan.blocks.find(
-      (block) =>
-        block.name === monthBlock.name || // monthBlock.name is safe due to guard clause
-        (block.description && monthBlock.name.includes(block.description))
+      // Use blockDef to avoid shadowing the block prop
+      (blockDef) => blockDef.name === block.name
+      // Original fallback logic commented out for reference:
+      // (blockDef) =>
+      //   blockDef.name === block.name ||
+      //   (blockDef.description && block.name.includes(blockDef.description)) // This logic might need review if description matching is required
     )
   }
 
   const blockDefinition = findBlockDefinition()
 
   // Get theme-aware styling information
-  const colorName = monthBlock.style?.colorName || blockDefinition?.style?.colorName
+  const colorName = block.style?.colorName || blockDefinition?.style?.colorName
   const colorClasses = getThemeAwareColorClasses(colorName, theme)
 
   // Function to scroll to a specific week
   const scrollToWeek = (weekNumber: number) => {
-    // ... (rest of the function)
+    const element = weekRefs.current[weekNumber]
+    if (element) {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "start", // Or "center", "end", "nearest"
+      })
+    }
   }
 
   // This check might become redundant if you handle missing data above,
@@ -72,7 +82,8 @@ export default function BlockView({ monthBlock, trainingPlan }: BlockViewProps) 
   if (weeksInBlock.length === 0) {
     return (
       <div className="text-center p-8">
-        <p className="text-gray-500">Inga veckor hittades för detta block</p>
+        {/* Message in Swedish */}
+        <p className="text-gray-500">Inga veckor hittades för detta block.</p>
       </div>
     )
   }
@@ -84,17 +95,22 @@ export default function BlockView({ monthBlock, trainingPlan }: BlockViewProps) 
       <div
         className={cn(
           "py-3 px-4 rounded-lg border-2 mb-8 max-w-4xl mx-auto shadow-sm",
-          colorClasses?.bg || "bg-card",
-          colorClasses?.border || "border-primary/20",
-          colorClasses?.text
+          colorClasses?.bg || "bg-card", // Use calculated theme-aware background
+          colorClasses?.border || "border-primary/20", // Use calculated theme-aware border
+          colorClasses?.text // Use calculated theme-aware text color (optional)
         )}
       >
-        {/* ... header content ... */}
+        {/* Block title */}
         <h2 className="mb-1 font-oswald font-light uppercase tracking-wide text-3xl underline">
-          {/* Use optional chaining just in case blockDefinition is also undefined */}
-          {blockDefinition?.name || monthBlock.name}
+          {blockDefinition?.name || block.name}
         </h2>
-        {/* ... rest of header ... */}
+
+        {/* Block Description (Optional - Add if needed) */}
+        {(blockDefinition?.description || block.description) && (
+          <p className="mt-1 text-sm opacity-90">
+            {blockDefinition?.description || block.description}
+          </p>
+        )}
 
         {/* Clickable week links */}
         <div className="mt-3 flex flex-wrap gap-2">
@@ -102,7 +118,14 @@ export default function BlockView({ monthBlock, trainingPlan }: BlockViewProps) 
             <button
               key={week.weekNumber}
               onClick={() => scrollToWeek(week.weekNumber)}
-              // ... button classes ...
+              className={cn(
+                "px-3 py-1 text-xs font-medium rounded border transition-colors",
+                "hover:bg-primary hover:text-primary-foreground", // Example hover effect
+                colorClasses?.border || "border-primary/30", // Use block's border color
+                colorClasses?.text // Use block's text color (optional)
+                // Add a class for the background if needed, maybe slightly lighter than the header bg
+                // e.g., colorClasses?.bg ? `${colorClasses.bg} opacity-80` : 'bg-background'
+              )}
             >
               Week {week.weekNumber}
               {week.weekType && week.weekType !== "-" && ` (${week.weekType})`}
@@ -116,7 +139,8 @@ export default function BlockView({ monthBlock, trainingPlan }: BlockViewProps) 
         <div
           key={week.weekNumber}
           ref={(el) => (weekRefs.current[week.weekNumber] = el)}
-          id={`week-${week.weekNumber}`}
+          id={`week-${week.weekNumber}`} // Add ID for scrolling
+          className="scroll-mt-20" // Add scroll margin top if you have a fixed header
         >
           <WeeklyView week={week} trainingPlan={trainingPlan} compact={true} />
         </div>

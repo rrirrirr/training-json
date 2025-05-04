@@ -163,16 +163,16 @@ const usePromptController = () => {
   ],
 
   // REQUIRED: Define groupings of weeks for navigation/overview
-  "monthBlocks": [
+  "blocks": [
     {
-      "id": "number (Unique ID for the block/month)", // REQUIRED
-      "name": "string (Display name, e.g., 'Month 1 (Weeks 1-4)')", // REQUIRED
+      "id": "number (Unique ID for the block)", // REQUIRED
+      "name": "string (Display name, e.g., 'Block 1 (Weeks 1-4)')", // REQUIRED
       "weeks": ["number", "... (Array of week numbers in this block)"], // REQUIRED
       "style": { // Optional styling for the tab/selector
         "colorName": "ColorName (Optional, e.g., 'blue')"
       }
     }
-    // ... more month blocks (MUST cover all weeks defined in the 'weeks' array)
+    // ... more blocks (MUST cover all weeks defined in the 'weeks' array)
   ]
 }
 \`\`\`
@@ -180,7 +180,7 @@ const usePromptController = () => {
 Key requirements:
 - **All Required Fields:** Ensure all fields marked as REQUIRED are present.
 - **Valid References:** 'blockId', 'sessionTypeId', 'exerciseId', and 'weekTypeIds' must correctly reference IDs defined in their respective definition arrays ('blocks', 'sessionTypes', 'exerciseDefinitions', 'weekTypes').
-- **Complete Week Coverage:** Every 'weekNumber' in the 'weeks' array must be included in exactly one entry within the 'monthBlocks' array.
+- **Complete Week Coverage:** Every 'weekNumber' in the 'weeks' array must be included in exactly one entry within the 'blocks' array.
 - **Valid JSON:** The final output must be syntactically correct JSON.
 - **Color Names:** Use standard Tailwind CSS color names (e.g., 'red', 'blue', 'green', 'yellow', 'indigo', 'pink', 'gray', etc.) when specifying 'colorName'.
 

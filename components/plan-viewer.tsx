@@ -25,14 +25,13 @@ export default function PlanViewer({
 
   // Get data and actions from Zustand store
   const selectedWeek = usePlanStore((state) => state.selectedWeek)
-  const selectedMonth = usePlanStore((state) => state.selectedMonth)
+  const selectedBlock = usePlanStore((state) => state.selectedBlock)
   const viewMode = usePlanStore((state) => state.viewMode)
   const isStoreLoading = usePlanStore((state) => state.isLoading)
   const error = usePlanStore((state) => state.error)
   const selectWeek = usePlanStore((state) => state.selectWeek)
-  const selectMonth = usePlanStore((state) => state.selectMonth)
+  const selectBlock = usePlanStore((state) => state.selectBlock)
   const mode = usePlanStore((state) => state.mode)
-
   // The plan is now passed directly as prop, no need to determine from mode
 
   const previousPlanIdRef = useRef<string | undefined>(undefined)
@@ -44,16 +43,16 @@ export default function PlanViewer({
         if (selectedWeek !== firstWeek) {
           selectWeek(firstWeek)
         }
-      } else if (plan.monthBlocks && plan.monthBlocks.length > 0) {
-        const firstMonthId = plan.monthBlocks.sort((a, b) => a.id - b.id)[0].id
-        if (selectedMonth !== firstMonthId) {
-          selectMonth(firstMonthId)
+      } else if (plan.blocks && plan.blocks.length > 0) {
+        const firstBlockId = plan.blocks.sort((a, b) => a.id - b.id)[0].id
+        if (selectedBlock !== firstBlockId) {
+          selectBlock(firstBlockId)
         }
       }
     }
 
     previousPlanIdRef.current = planId
-  }, [plan, planId, selectWeek, selectMonth]) // Keep select actions if needed by ESLint, but planId is key
+  }, [plan, planId, selectWeek, selectBlock]) // Keep select actions if needed by ESLint, but planId is key
 
   // Effect to handle redirection logic for missing plans
   useEffect(() => {
@@ -136,29 +135,28 @@ export default function PlanViewer({
     )
   }
 
-  // Find the relevant data for the selected week or month
+  // Find the relevant data for the selected week or block
   const weekData =
     selectedWeek && plan ? plan.weeks.find((week) => week.weekNumber === selectedWeek) : null
 
-  const monthData = plan && plan.monthBlocks.find((block) => block.id === selectedMonth)
-
+  const blockData = plan && plan?.blocks?.find((block) => block.id === selectedBlock)
   // Debug information
   console.log("[PlanViewer] Rendering with:", {
     planId,
     mode,
     viewMode,
     selectedWeek,
-    selectedMonth,
+    selectedBlock,
     hasWeekData: !!weekData,
-    hasMonthData: !!monthData,
+    hasBlockData: !!blockData,
   })
 
   return (
     <div className="p-4 pb-20 md:p-6 md:pb-6">
       {viewMode === "week" && weekData ? (
         <WeeklyView week={weekData} trainingPlan={plan} />
-      ) : viewMode === "month" && monthData ? (
-        <BlockView monthBlock={monthData} trainingPlan={plan} />
+      ) : viewMode === "block" && blockData ? (
+        <BlockView block={blockData} trainingPlan={plan} />
       ) : (
         // Fallback content
         <div className="text-center p-8 text-muted-foreground">
@@ -166,7 +164,7 @@ export default function PlanViewer({
           <p className="text-sm mt-2">
             {viewMode === "week"
               ? `Week ${selectedWeek} is not defined in the plan.`
-              : `Month block ${selectedMonth} is not defined in the plan.`}
+              : `Block ${selectedBlock} is not defined in the plan.`}
           </p>
         </div>
       )}

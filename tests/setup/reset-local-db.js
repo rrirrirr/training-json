@@ -81,7 +81,7 @@ try {
     weekTypes: [{ id: 1, name: 'Regular', colorName: 'blue' }],
     exerciseDefinitions: [{ id: 'ex1', name: 'Squat', category: 'Legs' }],
     weeks: [{ weekNumber: 1, weekType: 'Regular', weekTypeIds: [1], sessions: [] }],
-    monthBlocks: [{ id: 1, name: 'First Block', weekNumbers: [1] }],
+    blocks: [{ id: 1, name: 'First Block', weekNumbers: [1] }],
   };
 
   // Create the other test plan
@@ -94,7 +94,7 @@ try {
     weekTypes: [],
     exerciseDefinitions: [],
     weeks: [],
-    monthBlocks: [],
+    blocks: [],
   };
 
   // Insert the plans

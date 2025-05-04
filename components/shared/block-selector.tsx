@@ -1,13 +1,13 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import type { MonthBlock } from "@/types/training-plan"
+import type { Block } from "@/types/training-plan"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "next-themes"
 import { getThemeAwareColorClasses } from "@/utils/color-utils"
 
 interface BlockSelectorProps {
-  blocks: MonthBlock[]
+  blocks: Block[]
   selectedBlockId: number
   onSelectBlock: (blockId: number) => void
   variant?: "sidebar" | "mobile"
@@ -22,7 +22,7 @@ export default function BlockSelector({
   const { theme } = useTheme()
 
   return (
-    <div className="py-4" data-testid="month-view-container">
+    <div className="py-4" data-testid="block-view-container">
       <h2 className="justify-self-start text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
         Block
       </h2>

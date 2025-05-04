@@ -45,7 +45,7 @@ import Editor from "react-simple-code-editor"
 // --- Types (Keep these) ---
 interface PlanData {
   weeks?: any[]
-  monthBlocks?: any[]
+  blocks?: any[]
   exerciseDefinitions?: any[] // Added based on validation logic
   weekTypes?: any[] // Added based on validation logic
   metadata?: {
@@ -162,8 +162,8 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave }: JsonEditor
       if (!parsedData.weeks || !Array.isArray(parsedData.weeks)) {
         throw new Error("JSON validation failed: must contain a 'weeks' array.")
       }
-      if (!parsedData.monthBlocks || !Array.isArray(parsedData.monthBlocks)) {
-        throw new Error("JSON validation failed: must contain a 'monthBlocks' array.")
+      if (!parsedData.blocks || !Array.isArray(parsedData.blocks)) {
+        throw new Error("JSON validation failed: must contain a 'blocks' array.")
       }
       if (!parsedData.exerciseDefinitions || !Array.isArray(parsedData.exerciseDefinitions)) {
         throw new Error("JSON validation failed: must contain an 'exerciseDefinitions' array")

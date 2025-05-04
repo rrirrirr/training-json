@@ -17,20 +17,20 @@ export const exampleTrainingPlan: TrainingPlanData = {
       id: "deload",
       name: "DELOAD",
       colorName: "yellow",
-      description: "Lower intensity recovery week"
+      description: "Lower intensity recovery week",
     },
     {
       id: "test",
       name: "TEST",
       colorName: "green",
-      description: "Testing maximum strength"
+      description: "Testing maximum strength",
     },
     {
       id: "competition",
       name: "COMP",
       colorName: "red",
-      description: "Competition preparation week"
-    }
+      description: "Competition preparation week",
+    },
   ],
 
   sessionTypes: [
@@ -851,49 +851,6 @@ export const exampleTrainingPlan: TrainingPlanData = {
           ],
         },
       ],
-    },
-  ],
-
-  monthBlocks: [
-    {
-      id: 1,
-      name: "Månad 1 (Vecka 1-4)",
-      weeks: [1, 2, 3, 4],
-      style: {
-        colorName: "violet",
-      },
-    },
-    {
-      id: 2,
-      name: "Månad 2 (Vecka 5-8)",
-      weeks: [5, 6, 7, 8],
-      style: {
-        colorName: "blue",
-      },
-    },
-    {
-      id: 3,
-      name: "Månad 3 (Vecka 9-12)",
-      weeks: [9, 10, 11, 12],
-      style: {
-        colorName: "indigo",
-      },
-    },
-    {
-      id: 4,
-      name: "Månad 4 (Vecka 13-16)",
-      weeks: [13, 14, 15, 16],
-      style: {
-        colorName: "yellow",
-      },
-    },
-    {
-      id: 5,
-      name: "Månad 5 (Vecka 17-20)",
-      weeks: [17, 18, 19, 20],
-      style: {
-        colorName: "green",
-      },
     },
   ],
 }

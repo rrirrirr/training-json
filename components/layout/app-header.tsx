@@ -53,10 +53,10 @@ export function AppHeader({}: HeaderProps) {
   }
 
   // Data for non-root mobile button
-  const selectedMonth = usePlanStore((state) => state.selectedMonth)
+  const selectedBlock = usePlanStore((state) => state.selectedBlock)
   const selectedWeek = usePlanStore((state) => state.selectedWeek)
   const viewMode = usePlanStore((state) => state.viewMode)
-  const mainButtonText = selectedWeek !== null ? `Vecka ${selectedWeek}` : `Block ${selectedMonth}`
+  const mainButtonText = selectedWeek !== null ? `Vecka ${selectedWeek}` : `Block ${selectedBlock}`
   const navButtonColor =
     viewMode === "week"
       ? "bg-blue-50 text-blue-700 border-blue-200"

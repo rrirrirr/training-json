@@ -93,8 +93,8 @@ export default function EnhancedJsonUploadModal({
           throw new Error("JSON must contain a 'weeks' array")
         }
 
-        if (!data.monthBlocks || !Array.isArray(data.monthBlocks)) {
-          throw new Error("JSON must contain a 'monthBlocks' array")
+        if (!data.blocks || !Array.isArray(data.blocks)) {
+          throw new Error("JSON must contain a 'blocks' array")
         }
 
         if (!data.exerciseDefinitions || !Array.isArray(data.exerciseDefinitions)) {
@@ -122,7 +122,7 @@ export default function EnhancedJsonUploadModal({
         console.log("[validateAndImport] Validated plan data:", {
           name: planName,
           weeksCount: data.weeks.length,
-          monthsCount: data.monthBlocks.length,
+          blocksCount: data.blocks.length,
         })
 
         // If there's an onImport callback, call it with the data and let the parent handle plan creation
@@ -238,7 +238,7 @@ export default function EnhancedJsonUploadModal({
           jsonData = {
             metadata: { planName: "New Plan" },
             weeks: [],
-            monthBlocks: [],
+            blocks: [],
             exerciseDefinitions: [],
           }
         }
@@ -256,7 +256,7 @@ export default function EnhancedJsonUploadModal({
         jsonData = {
           metadata: { planName: "New Plan" },
           weeks: [],
-          monthBlocks: [],
+          blocks: [],
           exerciseDefinitions: [],
         }
       }

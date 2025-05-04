@@ -65,10 +65,10 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
   const activePlanId = usePlanStore((state) => state.activePlanId)
   const planMetadataList = usePlanStore((state) => state.planMetadataList as PlanMetadata[])
   const selectedWeek = usePlanStore((state) => state.selectedWeek)
-  const selectedMonth = usePlanStore((state) => state.selectedMonth)
+  const selectedBlock = usePlanStore((state) => state.selectedBlock)
   const viewMode = usePlanStore((state) => state.viewMode)
   const selectWeek = usePlanStore((state) => state.selectWeek)
-  const selectMonth = usePlanStore((state) => state.selectMonth)
+  const selectBlock = usePlanStore((state) => state.selectBlock)
   const setViewMode = usePlanStore((state) => state.setViewMode)
   const mode = usePlanStore((state) => state.mode)
   const draftPlan = usePlanStore((state) => state.draftPlan)
@@ -161,7 +161,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
       : { type: "", weekTypeIds: [], colorName: undefined }
   }
 
-  const handleChangeViewMode = (newMode: "week" | "month") => {
+  const handleChangeViewMode = (newMode: "week" | "block") => {
     if (typeof setViewMode === "function") setViewMode(newMode)
   }
 
@@ -508,7 +508,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
           )}
         </SidebarGroup>
 
-        {/* Active Plan Navigation (Week/Month selectors etc.) */}
+        {/* Active Plan Navigation (Week/Block selectors etc.) */}
         {shouldShowActivePlanNav && (
           <SidebarGroup
             className={cn(
@@ -527,8 +527,8 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant={viewMode === "month" ? "default" : "outline"}
-                    onClick={() => handleChangeViewMode("month")}
+                    variant={viewMode === "block" ? "default" : "outline"}
+                    onClick={() => handleChangeViewMode("block")}
                     size={isOpen ? "default" : "icon"}
                     className={cn(isOpen ? "flex-grow basis-1/3 justify-center" : "w-9 h-9")}
                     aria-label="Block View"
@@ -569,11 +569,11 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
             {/* Week/Block Selectors (only when open) */}
             {isOpen && (
               <div className="mt-2 w-full flex-1 min-h-0 overflow-y-auto pr-2">
-                {viewMode === "month" ? (
+                {viewMode === "block" ? (
                   <BlockSelector
-                    blocks={planToDisplay?.monthBlocks || []}
-                    selectedBlockId={selectedMonth}
-                    onSelectBlock={selectMonth}
+                    blocks={planToDisplay?.blocks || []}
+                    selectedBlockId={selectedBlock}
+                    onSelectBlock={selectBlock}
                     variant="sidebar"
                   />
                 ) : (

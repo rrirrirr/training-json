@@ -48,7 +48,7 @@ export async function setupTestPlans(page: Page) {
         weekTypes: [],
         exerciseDefinitions: [],
         weeks: [],
-        monthBlocks: [],
+        blocks: [],
       })
     )
 
@@ -64,7 +64,7 @@ export async function setupTestPlans(page: Page) {
         weekTypes: [],
         exerciseDefinitions: [],
         weeks: [],
-        monthBlocks: [],
+        blocks: [],
       })
     )
   })

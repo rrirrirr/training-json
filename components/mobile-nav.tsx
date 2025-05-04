@@ -2,13 +2,7 @@
 
 import { useUIState } from "@/contexts/ui-context"
 import { usePlanStore } from "@/store/plan-store"
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import BlockSelector from "@/components/shared/block-selector"
 import WeekSelector from "@/components/shared/week-selector"
@@ -18,23 +12,23 @@ import type { WeekType } from "@/types/training-plan"
 
 export function MobileNav() {
   const { isMobileNavOpen, closeMobileNav } = useUIState()
-  
+
   // Get data from Zustand store
   const activePlan = usePlanStore((state) => state.activePlan)
-  const selectedMonth = usePlanStore((state) => state.selectedMonth)
+  const selectedBlock = usePlanStore((state) => state.selectedBlock)
   const selectedWeek = usePlanStore((state) => state.selectedWeek)
   const viewMode = usePlanStore((state) => state.viewMode)
   const selectWeek = usePlanStore((state) => state.selectWeek)
-  const selectMonth = usePlanStore((state) => state.selectMonth)
-  
-  // Derive monthsForSidebar and weeksForSidebar from activePlan
-  const monthsForSidebar = activePlan?.monthBlocks || []
-  const weeksForSidebar = activePlan?.weeks.map(w => w.weekNumber).sort((a, b) => a - b) || []
+  const selectBlock = usePlanStore((state) => state.selectBlock)
+
+  // Derive blocksForSidebar and weeksForSidebar from activePlan
+  const blocksForSidebar = activePlan?.blocks || []
+  const weeksForSidebar = activePlan?.weeks.map((w) => w.weekNumber).sort((a, b) => a - b) || []
   const trainingData = activePlan?.weeks || []
-  
+
   // State for week types
   const [weekTypes, setWeekTypes] = useState<WeekType[]>([])
-  
+
   // Get week types from current plan
   useEffect(() => {
     if (activePlan?.weekTypes && Array.isArray(activePlan.weekTypes)) {
@@ -50,7 +44,7 @@ export function MobileNav() {
     return {
       type: weekData?.weekType || "",
       weekTypeIds: weekData?.weekTypeIds || [],
-      colorName: weekData?.weekStyle?.colorName
+      colorName: weekData?.weekStyle?.colorName,
     }
   }
 
@@ -59,11 +53,11 @@ export function MobileNav() {
     if (weekId !== null) {
       selectWeek(weekId)
     } else {
-      selectMonth(blockId)
+      selectBlock(blockId)
     }
     closeMobileNav()
   }
-  
+
   // Set the default tab based on the current view mode
   const defaultTab = viewMode === "week" ? "weeks" : "blocks"
 
@@ -75,7 +69,7 @@ export function MobileNav() {
             {viewMode === "week" ? "Browse Weeks" : "Browse Blocks"}
           </SheetTitle>
         </SheetHeader>
-        
+
         <Tabs defaultValue={defaultTab} className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="mx-6 my-3 w-auto">
             <TabsTrigger className="flex-grow" value="blocks">
@@ -89,8 +83,8 @@ export function MobileNav() {
           {/* Block Selection Tab */}
           <TabsContent value="blocks" className="flex-1 overflow-y-auto px-4 pt-2">
             <BlockSelector
-              blocks={monthsForSidebar}
-              selectedBlockId={selectedMonth}
+              blocks={blocksForSidebar}
+              selectedBlockId={selectedBlock}
               onSelectBlock={(blockId) => handleSheetSelection(blockId, null)}
               variant="mobile"
             />
@@ -101,7 +95,7 @@ export function MobileNav() {
             <WeekSelector
               weeks={weeksForSidebar}
               selectedWeek={selectedWeek}
-              onSelectWeek={(weekId) => handleSheetSelection(selectedMonth, weekId)}
+              onSelectWeek={(weekId) => handleSheetSelection(selectedBlock, weekId)}
               variant="mobile"
               getWeekInfo={getWeekInfo}
             />
@@ -111,7 +105,7 @@ export function MobileNav() {
         {/* Dynamic Week Type Legend */}
         <SheetFooter className="p-4 border-t">
           <WeekTypeLegend weekTypes={weekTypes} />
-          
+
           {/* If no week types are defined, show the original static legend */}
           {(!weekTypes || weekTypes.length === 0) && (
             <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">

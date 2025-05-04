@@ -14,9 +14,8 @@ const createNewPlanTemplate = (name = "New Training Plan"): TrainingPlanData => 
   weekTypes: [],
   exerciseDefinitions: [],
   weeks: [],
-  monthBlocks: [],
-  sessionTypes: [],
   blocks: [],
+  sessionTypes: [],
 })
 
 // --- LocalStorage Keys ---
@@ -42,8 +41,8 @@ interface PlanState {
   isLoading: boolean
   error: string | null
   selectedWeek: number | null
-  selectedMonth: number
-  viewMode: "week" | "month"
+  selectedBlock: number
+  viewMode: "week" | "block"
 
   // --- Actions ---
 
@@ -82,8 +81,7 @@ interface PlanState {
 
   // View Selection
   selectWeek: (weekNumber: number | null) => void
-  selectMonth: (monthId: number) => void
-  setViewMode: (mode: "week" | "month") => void
+  selectBlock: (blockId: number) => void
 
   // Initialization
   _initializeState: () => void
@@ -107,9 +105,8 @@ export const usePlanStore = create<PlanState>()(
       isLoading: true, // Start as loading until initialized
       error: null,
       selectedWeek: null,
-      selectedMonth: 1,
-      viewMode: "month",
-
+      selectedBlock: 1,
+      viewMode: "block",
       createNewPlanTemplate: createNewPlanTemplate,
 
       // --- Initialization Action ---
@@ -493,9 +490,8 @@ export const usePlanStore = create<PlanState>()(
         console.log("[Store Action] startNewPlanEdit called.")
         const newPlanTemplate = get().createNewPlanTemplate()
         get()._setModeState("edit", newPlanTemplate, null, true)
-        set({ selectedWeek: null, selectedMonth: 1, viewMode: "month", isLoading: false })
+        set({ selectedWeek: null, selectedBlock: 1, viewMode: "block", isLoading: false })
       },
-      // Centralized function to trigger edit mode for a specific plan
       startEditingPlan: async (planId) => {
         console.log(`[Store Action] startEditingPlan called for planId: ${planId}`)
         if (!planId) {
@@ -505,7 +501,7 @@ export const usePlanStore = create<PlanState>()(
         }
 
         const currentState = get()
-        
+
         // Check for edit conflicts with other plans
         if (
           currentState.mode === "edit" &&
@@ -519,33 +515,30 @@ export const usePlanStore = create<PlanState>()(
           set({ error: `EDIT_CONFLICT:${planId}` })
           return false
         }
-        
+
         try {
           // If we're already editing the requested plan, just return success
-          if (
-            currentState.mode === "edit" && 
-            currentState.originalPlanId === planId
-          ) {
+          if (currentState.mode === "edit" && currentState.originalPlanId === planId) {
             console.log(`[Store Action] Already editing plan ${planId}, skipping reload`)
             return true
           }
-          
+
           // Use the existing loadPlanAndSetMode with editIntent=true
           await get().loadPlanAndSetMode(planId, true)
-          
+
           // Check if the operation was successful
           const updatedState = get()
-          const success = 
-            updatedState.mode === "edit" && 
+          const success =
+            updatedState.mode === "edit" &&
             updatedState.originalPlanId === planId &&
             !updatedState.error
-            
+
           return success
         } catch (err) {
           console.error(`[Store Action] Error in startEditingPlan for ${planId}:`, err)
-          set({ 
+          set({
             error: err instanceof Error ? err.message : "Failed to start editing plan",
-            isLoading: false
+            isLoading: false,
           })
           return false
         }
@@ -579,7 +572,7 @@ export const usePlanStore = create<PlanState>()(
         nextMetadataList.sort(
           (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         )
-        const firstMonthId = plan?.monthBlocks?.[0]?.id ?? 1
+        const firstBlockId = plan?.blocks?.[0]?.id ?? 1
         const firstWeekInPlan =
           plan?.weeks?.sort((a, b) => a.weekNumber - b.weekNumber)[0]?.weekNumber ?? null
 
@@ -592,9 +585,9 @@ export const usePlanStore = create<PlanState>()(
           originalPlanId: null,
           hasUnsavedChanges: false,
           error: null,
-          selectedMonth: firstMonthId,
+          selectedBlock: firstBlockId,
           selectedWeek: firstWeekInPlan,
-          viewMode: firstWeekInPlan !== null ? "week" : "month",
+          viewMode: firstWeekInPlan !== null ? "week" : "block",
           isLoading: false,
         })
 
@@ -622,9 +615,9 @@ export const usePlanStore = create<PlanState>()(
         set({
           activePlan: null,
           activePlanId: null,
-          selectedMonth: 1,
+          selectedBlock: 1,
           selectedWeek: null,
-          viewMode: "month",
+          viewMode: "block",
         })
       },
 
@@ -644,14 +637,14 @@ export const usePlanStore = create<PlanState>()(
           currentState._setModeState("normal", null, null, false)
         }
         const activePlanForViewReset = get().activePlan
-        const firstMonthId = activePlanForViewReset?.monthBlocks?.[0]?.id ?? 1
+        const firstBlockId = activePlanForViewReset?.blocks?.[0]?.id ?? 1
         const firstWeek =
           activePlanForViewReset?.weeks?.sort((a, b) => a.weekNumber - b.weekNumber)[0]
             ?.weekNumber ?? null
         set({
-          selectedMonth: firstMonthId,
+          selectedBlock: firstBlockId,
           selectedWeek: firstWeek,
-          viewMode: firstWeek !== null ? "week" : "month",
+          viewMode: firstWeek !== null ? "week" : "block",
           isLoading: false,
           error: null,
         })
@@ -712,7 +705,7 @@ export const usePlanStore = create<PlanState>()(
             // Save edited plan to DB
             // Plans are immutable, so we always create a new plan
             console.log(`[Store Action] Creating new plan in DB (immutable design).`)
-            
+
             // Always create a new plan with the same name (immutable design)
             savedPlanId = await _createPlanInternal(planToSave)
             success = savedPlanId !== null
@@ -865,39 +858,37 @@ export const usePlanStore = create<PlanState>()(
           if (weekNumber !== null) {
             set({ viewMode: "week" })
             const plan = get().mode === "normal" ? get().activePlan : get().draftPlan
-            if (plan?.monthBlocks) {
-              const month = plan.monthBlocks.find((m) => m.weeks?.includes(weekNumber))
-              if (month && get().selectedMonth !== month.id) set({ selectedMonth: month.id })
+            if (plan?.blocks) {
+              const block = plan.blocks.find((b) => b.weeks?.includes(weekNumber))
+              if (block && get().selectedBlock !== block.id) set({ selectedBlock: block.id })
             }
           }
         }
       },
-      selectMonth: (monthId) => {
-        if (get().selectedMonth !== monthId) {
-          set({ selectedMonth: monthId, selectedWeek: null, viewMode: "month" })
+      selectBlock: (blockId) => {
+        if (get().selectedBlock !== blockId) {
+          set({ selectedBlock: blockId, selectedWeek: null, viewMode: "block" })
         }
       },
       setViewMode: (mode) => {
         if (get().viewMode !== mode) {
           set({ viewMode: mode })
-          if (mode === "month") {
+          if (mode === "block") {
             set({ selectedWeek: null })
           } else if (mode === "week" && get().selectedWeek === null) {
             const plan = get().mode === "normal" ? get().activePlan : get().draftPlan
-            const currentMonthId = get().selectedMonth
-            const month = plan?.monthBlocks?.find((m) => m.id === currentMonthId)
-            const firstWeekInMonth = month?.weeks?.[0]
-            if (firstWeekInMonth !== undefined && firstWeekInMonth !== null) {
-              set({ selectedWeek: firstWeekInMonth })
+            const currentBlockId = get().selectedBlock
+            const block = plan?.blocks?.find((b) => b.id === currentBlockId)
+            const firstWeekInBlock = block?.weeks?.[0]
+            if (firstWeekInBlock !== undefined && firstWeekInBlock !== null) {
+              set({ selectedWeek: firstWeekInBlock })
             } else {
               const firstPlanWeek = plan?.weeks?.sort((a, b) => a.weekNumber - b.weekNumber)[0]
                 ?.weekNumber
               if (firstPlanWeek !== undefined && firstPlanWeek !== null) {
                 set({ selectedWeek: firstPlanWeek })
-                const firstPlanMonth = plan?.monthBlocks?.find((m) =>
-                  m.weeks?.includes(firstPlanWeek)
-                )
-                if (firstPlanMonth) set({ selectedMonth: firstPlanMonth.id })
+                const firstPlanBlock = plan?.blocks?.find((b) => b.weeks?.includes(firstPlanWeek))
+                if (firstPlanBlock) set({ selectedBlock: firstPlanBlock.id })
               }
             }
           }
@@ -910,7 +901,7 @@ export const usePlanStore = create<PlanState>()(
         activePlanId: state.activePlanId,
         planMetadataList: state.planMetadataList,
         selectedWeek: state.selectedWeek,
-        selectedMonth: state.selectedMonth,
+        selectedBlock: state.selectedBlock,
         viewMode: state.viewMode,
       }),
       onRehydrateStorage: () => (state) => {

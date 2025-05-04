@@ -307,19 +307,19 @@ test.describe("Plan Edit Mode with Local Database (using testid)", () => {
 
     const blockViewButton = page.getByRole("button", { name: "Block View" })
     const weeklyViewButton = page.getByRole("button", { name: "Weekly View" })
-    const monthViewContainer = page.getByTestId("month-view-container")
+    const blockViewContainer = page.getByTestId("block-view-container")
     const weekViewContainer = page.getByTestId("week-view-container")
 
     console.log("Verifying initial state (Weekly View Active)...")
 
     await expect(weekViewContainer).toBeVisible()
-    await expect(monthViewContainer).not.toBeVisible()
+    await expect(blockViewContainer).not.toBeVisible()
 
     console.log("Clicking Block View button...")
     await blockViewButton.click()
 
     console.log("Verifying state after clicking Block View...")
-    await expect(monthViewContainer).toBeVisible()
+    await expect(blockViewContainer).toBeVisible()
     await expect(weekViewContainer).not.toBeVisible()
 
     console.log("Clicking Weekly View button...")
@@ -327,7 +327,7 @@ test.describe("Plan Edit Mode with Local Database (using testid)", () => {
 
     console.log("Verifying state after clicking Weekly View again...")
     await expect(weekViewContainer).toBeVisible()
-    await expect(monthViewContainer).not.toBeVisible()
+    await expect(blockViewContainer).not.toBeVisible()
   })
 
   test("We should see all weeks in edit mode", async ({ page }) => {
@@ -362,9 +362,8 @@ test.describe("Plan Edit Mode with Local Database (using testid)", () => {
     await planEditHelpers.goToPlanEditPage(page, TEST_PLAN_ID)
     const newBlockName = "Updated Block Name In Test"
     await planEditHelpers.makeUnsavedChange(page, (json) => {
-      if (!json.monthBlocks || json.monthBlocks.length === 0)
-        test.skip(true, "Test plan has no blocks.")
-      json.monthBlocks[0].name = newBlockName
+      if (!json.blocks || json.blocks.length === 0) test.skip(true, "Test plan has no blocks.")
+      json.blocks[0].name = newBlockName
       return json
     })
     await page.getByRole("button", { name: "Block View" }).click()
@@ -384,11 +383,11 @@ test.describe("Plan Edit Mode with Local Database (using testid)", () => {
         description: newWeekDescription,
       }
       json.weeks = [...(json.weeks || []), newWeek]
-      if (json.monthBlocks && json.monthBlocks.length > 0) {
-        if (!json.monthBlocks[0].weekNumbers) json.monthBlocks[0].weekNumbers = []
-        json.monthBlocks[0].weekNumbers.push(newWeekNumber)
-        if (!json.monthBlocks[0].weeks) json.monthBlocks[0].weeks = []
-        json.monthBlocks[0].weeks.push(newWeekNumber)
+      if (json.blocks && json.blocks.length > 0) {
+        if (!json.blocks[0].weekNumbers) json.blocks[0].weekNumbers = []
+        json.blocks[0].weekNumbers.push(newWeekNumber)
+        if (!json.blocks[0].weeks) json.blocks[0].weeks = []
+        json.blocks[0].weeks.push(newWeekNumber)
       } else {
         test.skip(true, "Test plan has no blocks to add week to.")
       }
@@ -404,9 +403,9 @@ test.describe("Plan Edit Mode with Local Database (using testid)", () => {
     await planEditHelpers.goToPlanEditPage(page, TEST_PLAN_ID)
     const newBlockName = "New Test Block Added"
     await planEditHelpers.makeUnsavedChange(page, (json) => {
-      const nextBlockId = (json.monthBlocks?.length || 0) + 1
+      const nextBlockId = (json.blocks?.length || 0) + 1
       const newBlock = { id: nextBlockId, name: newBlockName, weeks: [] }
-      json.monthBlocks = [...(json.monthBlocks || []), newBlock]
+      json.blocks = [...(json.blocks || []), newBlock]
       return json
     })
     await page.getByRole("button", { name: "Block View" }).click()
@@ -466,7 +465,7 @@ test.describe("Plan Edit Mode with Local Database (using testid)", () => {
       weekTypes: [{ id: 1, name: "Regular", colorName: "blue" }],
       exerciseDefinitions: [{ id: "ex1", name: "Squat", category: "Legs" }],
       weeks: [{ weekNumber: 1, weekType: "Regular", weekTypeIds: [1], sessions: [] }],
-      monthBlocks: [{ id: 1, name: "First Block", weekNumbers: [1] }],
+      blocks: [{ id: 1, name: "First Block", weekNumbers: [1] }],
     }
 
     const jsonDataString = JSON.stringify(data)

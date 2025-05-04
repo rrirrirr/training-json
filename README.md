@@ -6,7 +6,7 @@ A comprehensive web application for managing and tracking personalized training 
 
 ## Features
 
-- **Monthly & Weekly Views**: Switch between full month overviews and detailed weekly schedules
+- **Block & Weekly Views**: Switch between full block overviews and detailed weekly schedules
 - **Multiple Training Plans**: Create, edit, and manage multiple training plans
 - **Detailed Exercise Tracking**: View complete exercise details including sets, reps, load, and comments
 - **Session Management**: Group exercises into logical training sessions
@@ -80,7 +80,6 @@ The application uses a normalized JSON structure to represent training plans. Th
 - `blocks`: Defines training blocks with focus, duration, and styling
 - `exerciseDefinitions`: Defines exercises with IDs and details
 - `weeks`: Contains weekly training plans with references to blocks
-- `monthBlocks`: Defines month groupings for navigation
 
 ### References Between Sections:
 

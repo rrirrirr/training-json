@@ -81,26 +81,26 @@ test.describe("Loading plans with Local Database (using testid)", () => {
     const weekViewContainer = page.getByTestId("week-view-container")
     await expect(weekViewContainer).toBeVisible()
 
-    // Monthly view should not be visible
-    const monthViewContainer = page.getByTestId("month-view-container")
-    await expect(monthViewContainer).not.toBeVisible()
+    // Block view should not be visible
+    const blockViewContainer = page.getByTestId("block-view-container")
+    await expect(blockViewContainer).not.toBeVisible()
   })
 
   test("A plan with saved last viewed block should show that block on load", async ({ page }) => {
     // Setup local storage with plans
     await planEditHelpers.setupLocalStorageWithPlans(page, TEST_PLAN_ID, OTHER_PLAN_ID)
-    
+
     // Set the last viewed state to block view using both the per-plan key and update the Zustand store
     await page.evaluate((planId) => {
       // Set the plan-specific view state
       const key = `plan-view-state-${planId}`
       const viewState = {
-        viewMode: "month",
+        viewMode: "block",
         selectedWeek: null,
-        selectedBlock: 1
+        selectedBlock: 1,
       }
       localStorage.setItem(key, JSON.stringify(viewState))
-      
+
       // Also update the Zustand store state directly for immediate effect
       const storageKey = "training-plan-storage-v2"
       try {
@@ -108,33 +108,33 @@ test.describe("Loading plans with Local Database (using testid)", () => {
         if (existingState) {
           const parsed = JSON.parse(existingState)
           if (!parsed.state) parsed.state = {}
-          
+
           // Set the view state in the Zustand store
-          parsed.state.viewMode = "month"
+          parsed.state.viewMode = "block"
           parsed.state.selectedWeek = null
-          parsed.state.selectedMonth = 1
+          parsed.state.selectedBlock = 1
           parsed.state.activePlanId = planId
-          
+
           localStorage.setItem(storageKey, JSON.stringify(parsed))
         }
       } catch (e) {
         console.error("[Test] Error updating Zustand state:", e)
       }
     }, TEST_PLAN_ID)
-    
+
     await page.reload()
     await planEditHelpers.waitForAppLoaded(page)
-    
+
     // Navigate to the plan
     await planEditHelpers.goToPlanPage(page, TEST_PLAN_ID)
-    
+
     // Add a short delay to ensure the UI has fully rendered
     await page.waitForTimeout(500)
-    
-    // Check for the month view container
-    const monthViewContainer = page.getByTestId("month-view-container")
-    await expect(monthViewContainer).toBeVisible()
-    
+
+    // Check for the block view container
+    const blockViewContainer = page.getByTestId("block-view-container")
+    await expect(blockViewContainer).toBeVisible()
+
     // First block should be visible (this is the core test assertion)
     await expect(page.getByText("First Block")).toBeVisible()
   })

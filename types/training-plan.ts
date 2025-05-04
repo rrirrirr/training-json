@@ -1,47 +1,64 @@
 // Metadata type
 export type Metadata = {
-  planName: string;
-  creationDate: string;
-  description?: string;
-  author?: string;
-  version?: string;
-  creator?: string; // For future community updates
+  planName: string
+  creationDate: string
+  description?: string
+  author?: string
+  version?: string
+  creator?: string // For future community updates
 }
 
 // Available color names for styling
-export type ColorName = 
-  | "slate" | "gray" | "zinc" | "neutral" | "stone" 
-  | "red" | "orange" | "amber" | "yellow" | "lime" 
-  | "green" | "emerald" | "teal" | "cyan" | "sky" 
-  | "blue" | "indigo" | "violet" | "purple" | "fuchsia" 
-  | "pink" | "rose";
+export type ColorName =
+  | "slate"
+  | "gray"
+  | "zinc"
+  | "neutral"
+  | "stone"
+  | "red"
+  | "orange"
+  | "amber"
+  | "yellow"
+  | "lime"
+  | "green"
+  | "emerald"
+  | "teal"
+  | "cyan"
+  | "sky"
+  | "blue"
+  | "indigo"
+  | "violet"
+  | "purple"
+  | "fuchsia"
+  | "pink"
+  | "rose"
 
 // WeekType definition - NEW
 export type WeekType = {
-  id: string;
-  name: string;
-  colorName: ColorName;
-  description?: string;
+  id: string
+  name: string
+  colorName: ColorName
+  description?: string
 }
 
 // SessionTypeDefinition type with colorName only
 export type SessionTypeDefinition = {
-  id: string;
-  name: string;
+  id: string
+  name: string
   defaultStyle: {
-    colorName?: ColorName;
+    colorName?: ColorName
   }
 }
 
 // BlockDefinition type with colorName only
 export type BlockDefinition = {
-  id: string | number;
-  name: string;
-  focus: string;
-  durationWeeks: number;
-  description?: string;
+  id: string | number
+  name: string
+  focus: string
+  durationWeeks: number
+  description?: string
   style?: {
-    colorName?: ColorName;
+    colorName?: ColorName
   }
 }
 
@@ -80,7 +97,7 @@ export type SessionStyle = {
   styleClass?: string
   icon?: string
   note?: string
-  colorName?: ColorName;
+  colorName?: ColorName
 }
 
 // Session with sessionTypeId only
@@ -95,13 +112,13 @@ export type Session = {
 export type WeekStyle = {
   styleClass?: string
   note?: string
-  colorName?: ColorName;
+  colorName?: ColorName
 }
 
 // Week with blockId only
 export type Week = {
   weekNumber: number
-  weekType?: "A" | "B" | "-" 
+  weekType?: "A" | "B" | "-"
   blockId: string | number
   gymDays?: number
   barmarkDays?: number
@@ -112,13 +129,13 @@ export type Week = {
   sessions: Session[]
 }
 
-// MonthBlock with colorName only
-export type MonthBlock = {
+// Block definition for organizing weeks
+export type Block = {
   id: number
   name: string
   weeks: number[]
   style?: {
-    colorName?: ColorName;
+    colorName?: ColorName
   }
 }
 
@@ -126,10 +143,9 @@ export type MonthBlock = {
 export type TrainingPlanData = {
   metadata?: Metadata
   sessionTypes?: SessionTypeDefinition[]
-  blocks?: BlockDefinition[]
   // New field for week types
   weekTypes: WeekType[]
   exerciseDefinitions: ExerciseDefinition[]
   weeks: Week[]
-  monthBlocks: MonthBlock[]
+  blocks: Block[]
 }

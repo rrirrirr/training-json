@@ -254,8 +254,8 @@ interface PersistedState {
     // Include other persisted state properties if necessary
     activePlanId?: string | null
     selectedWeek?: number | null
-    selectedMonth?: number
-    viewMode?: "week" | "month"
+    selectedBlock?: number
+    viewMode?: "week" | "block"
   }
   version: number
 }

@@ -21,7 +21,7 @@ The T-JSON app requires a specific JSON structure with these key sections:
    - \`metadata\`: Contains plan-wide information (must include planName)
    - \`exerciseDefinitions\`: Array defining all exercises
    - \`weeks\`: Array of all training weeks
-   - \`monthBlocks\`: Information about how weeks are grouped
+   - \`blocks\`: Information about how weeks are grouped
 
 2. Required references between sections:
    - weeks reference blocks via \`blockId\`
@@ -62,16 +62,16 @@ Example minimal structure:
       ]
     }
   ],
-  "monthBlocks": [
+  "blocks": [
     {
       "id": 1,
-      "name": "Month 1",
+      "name": "Block 1",
       "weeks": [1]
     }
   ]
 }
 \`\`\`
-    `;
+    `
 
     // Assemble the content for the AI
     const content = `
@@ -88,13 +88,13 @@ ${jsonText}
 ${jsonStructureDoc}
 
 Can you please help me fix my JSON to match the required structure?
-`;
+`
 
     // Copy to clipboard
-    await navigator.clipboard.writeText(content);
-    showCopyNotification(true);
+    await navigator.clipboard.writeText(content)
+    showCopyNotification(true)
   } catch (err) {
-    console.error("Failed to copy to clipboard:", err);
-    showCopyNotification(false);
+    console.error("Failed to copy to clipboard:", err)
+    showCopyNotification(false)
   }
-};
+}

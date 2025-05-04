@@ -34,7 +34,7 @@ VALUES
           "sessions": []
         }
       ],
-      "monthBlocks": [
+      "blocks": [
         {
           "id": 1,
           "name": "First Block",
@@ -55,7 +55,7 @@ VALUES
       "weekTypes": [],
       "exerciseDefinitions": [],
       "weeks": [],
-      "monthBlocks": []
+      "blocks": []
     }'::jsonb,
     '2023-01-02T00:00:00.000Z'
   );

@@ -1,21 +1,21 @@
 "use client"
 
-import type { MonthBlock } from "@/types/training-plan"
+import type { Block } from "@/types/training-plan"
 import { Button } from "@/components/ui/button"
 import { Calendar, List } from "lucide-react"
 
 interface TabNavigationProps {
-  months: MonthBlock[] // Using MonthBlock for backward compatibility
-  selectedMonth: number
-  onSelectMonth: (blockId: number) => void
-  viewMode: "week" | "month"
-  onViewModeChange: (mode: "week" | "month") => void
+  blocks: Block[]
+  selectedBlock: number
+  onSelectBlock: (blockId: number) => void
+  viewMode: "week" | "block"
+  onViewModeChange: (mode: "week" | "block") => void
 }
 
 export default function TabNavigation({
-  months,
-  selectedMonth,
-  onSelectMonth,
+  blocks,
+  selectedBlock,
+  onSelectBlock,
   viewMode,
   onViewModeChange,
 }: TabNavigationProps) {
@@ -23,14 +23,14 @@ export default function TabNavigation({
     <div className="bg-white border-b border-gray-200 shadow-sm">
       <div className="px-4 flex justify-between items-center">
         <nav className="flex space-x-4 overflow-x-auto" aria-label="Tabs">
-          {months.map((block) => (
+          {blocks.map((block) => (
             <button
               key={block.id}
-              onClick={() => onSelectMonth(block.id)}
+              onClick={() => onSelectBlock(block.id)}
               className={`
                 px-3 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                 ${
-                  selectedMonth === block.id
+                  selectedBlock === block.id
                     ? "border-blue-500 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }
@@ -43,9 +43,9 @@ export default function TabNavigation({
 
         <div className="flex space-x-2">
           <Button
-            variant={viewMode === "month" ? "default" : "outline"}
+            variant={viewMode === "block" ? "default" : "outline"}
             size="sm"
-            onClick={() => onViewModeChange("month")}
+            onClick={() => onViewModeChange("block")}
             title="Blockvy"
           >
             <Calendar className="h-4 w-4" />

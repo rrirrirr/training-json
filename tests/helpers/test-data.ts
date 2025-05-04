@@ -23,7 +23,9 @@ if (fs.existsSync(testLocalPath)) {
 // Create a dedicated local test client
 // Apply defaults for local dev/test if not defined in env
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "http://127.0.0.1:54321"
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0"
+const supabaseKey =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0"
 
 console.log("Using Supabase URL:", supabaseUrl)
 
@@ -101,13 +103,14 @@ async function createTestData(): Promise<void> {
     weekTypes: [{ id: 1, name: "Regular", colorName: "blue" }],
     exerciseDefinitions: [{ id: "ex1", name: "Squat", category: "Legs" }],
     weeks: [{ weekNumber: 1, weekType: "Regular", weekTypeIds: [1], sessions: [] }],
-    monthBlocks: [{ 
-      id: 1, 
-      name: "First Block", 
-      weekNumbers: [1],
-      // Add the weeks array that's required by the BlockView component
-      weeks: [1]  
-    }],
+    blocks: [
+      {
+        id: 1,
+        name: "First Block",
+        // Add the weeks array that's required by the BlockView component
+        weeks: [1],
+      },
+    ],
   }
 
   // Create the other test plan
@@ -120,7 +123,7 @@ async function createTestData(): Promise<void> {
     weekTypes: [],
     exerciseDefinitions: [],
     weeks: [],
-    monthBlocks: [],
+    blocks: [],
   }
 
   // First try to delete any existing test data to avoid conflicts
@@ -152,7 +155,6 @@ async function createTestData(): Promise<void> {
     throw error
   }
 }
-
 
 /**
  * Updates a test plan with new data

@@ -29,8 +29,8 @@ const aiPromptTemplate = `Please create a JSON file for my training plan with th
   "weeks": [
     // Array of week objects
   ],
-  "monthBlocks": [
-    // Array of month/block objects
+  "blocks": [
+    // Array of block/block objects
   ]
 }
 
@@ -42,7 +42,7 @@ Before creating the JSON, please interview me with the following questions to un
 4. What equipment do you have access to?
 5. Do you have any injuries or limitations I should consider?
 6. What are your current strength levels for main lifts? (if applicable)
-7. How long should the training program be? (weeks/months)
+7. How long should the training program be? (weeks/blocks)
 8. Any specific exercises you want to include or avoid?
 
 After I answer these questions, please create a complete training plan JSON with the following structure:
@@ -81,11 +81,11 @@ After I answer these questions, please create a complete training plan JSON with
    - comment: Additional notes
    - commentStyle: Styling options for the comment (color, fontStyle)
 
-5. monthBlocks: An array of objects grouping weeks into months/blocks:
-   - id: Month/block ID
+5. blocks: An array of objects grouping weeks into /blocks:
+   - id: block ID
    - name: Display name (e.g., "Månad 1 (Vecka 1-4)")
    - weeks: Array of week numbers in this block
-   - style: Optional styling for the month block
+   - style: Optional styling for the block
 
 Please ensure the JSON is valid, properly formatted, and follows a logical progression based on my training goals. Feel free to use any Tailwind color names (like blue-500, red-200) or hex/RGB values for styling elements.`
 
@@ -131,8 +131,8 @@ export default function JsonInfoModal({
                     training weeks
                   </li>
                   <li>
-                    <code className="bg-gray-100 px-1 rounded">monthBlocks</code> - Information
-                    about how weeks are grouped into months/blocks
+                    <code className="bg-gray-100 px-1 rounded">blocks</code> - Information about how
+                    weeks are grouped into blocks
                   </li>
                 </ul>
               </div>
@@ -168,7 +168,7 @@ export default function JsonInfoModal({
                   {`{
   "weekNumber": 1,                // Week number
   "weekType": "A",                // Week type (A, B, or -)
-  "blockInfo": "Månad 1...",      // Description of the month/block
+  "blockInfo": "Månad 1...",      // Description of the block
   "gymDays": 3,                   // Number of gym days this week
   "barmarkDays": 2,               // Optional: Number of barmark days
   "isDeload": false,              // Optional: Whether this is a deload week
@@ -244,16 +244,16 @@ export default function JsonInfoModal({
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold">Month Blocks</h3>
+                <h3 className="text-lg font-semibold">Blocks</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  The month blocks define how weeks are grouped for the tab navigation:
+                  The blocks define how weeks are grouped for the tab navigation:
                 </p>
                 <pre className="bg-gray-100 p-3 rounded-md text-xs overflow-auto mt-2">
                   {`{
-  "id": 1,                        // Month/block ID
+  "id": 1,                        // block ID
   "name": "Månad 1 (Vecka 1-4)",  // Display name
   "weeks": [1, 2, 3, 4],          // Week numbers included in this block
-  "style": {                      // Optional: Styling for the month block
+  "style": {                      // Optional: Styling for the block
     "backgroundColor": "blue-50", // Background color
     "textColor": "blue-800",      // Text color
     "borderColor": "blue-200"     // Border color
@@ -354,7 +354,7 @@ export default function JsonInfoModal({
       ]
     }
   ],
-  "monthBlocks": [
+  "blocks": [
     { 
       "id": 1, 
       "name": "Månad 1 (Vecka 1-4)", 
@@ -401,9 +401,9 @@ export default function JsonInfoModal({
                     </p>
                   </li>
                   <li>
-                    <strong>Month Blocks</strong>
+                    <strong>Blocks</strong>
                     <p className="text-gray-600 mt-1">
-                      Ensure that every week number is included in exactly one month block.
+                      Ensure that every week number is included in exactly one block.
                     </p>
                   </li>
                   <li>
