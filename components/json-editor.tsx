@@ -1,3 +1,4 @@
+// /components/json-editor.tsx
 "use client"
 
 // Import necessary React hooks and components
@@ -11,27 +12,30 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+// DropdownMenu imports seem unused in this specific file's logic, can be removed if not needed elsewhere in this component
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuItem,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  AlertCircle,
+  // AlertCircle, // Seems unused
   AlertTriangle,
   Save,
   Copy,
   Bot,
   Code,
-  MoreVertical,
+  // MoreVertical, // Seems unused
   Loader2,
   Check,
 } from "lucide-react"
-import CopyNotification from "./copy-notification"
-import CopyForAINotification from "./copy-for-ai-notification"
-import { copyJsonErrorForAI } from "@/utils/copy-for-ai"
+// Remove imports for local notifications
+// import CopyNotification from "./copy-notification"
+// import CopyForAINotification from "./copy-for-ai-notification"
+import { copyJsonErrorForAI } from "@/utils/copy-for-ai" // Keep this utility
 import Editor from "react-simple-code-editor"
+import { toast } from "sonner" // IMPORT SONNER'S TOAST FUNCTION
 
 // --- Types ---
 interface PlanData {
@@ -63,21 +67,26 @@ interface JsonEditorProps {
 }
 
 // --- JsonEditor Component ---
-export default function JsonEditor({ isOpen, onClose, plan, onSave, onUnsavedChange }: JsonEditorProps) {
+export default function JsonEditor({
+  isOpen,
+  onClose,
+  plan,
+  onSave,
+  onUnsavedChange,
+}: JsonEditorProps) {
   // --- State ---
   const [editorValue, setEditorValue] = useState("")
   const [initialEditorValue, setInitialEditorValue] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isSaved, setIsSaved] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showCopyNotification, setShowCopyNotification] = useState(false)
-  const [showAICopyNotification, setShowAICopyNotification] = useState(false)
-  const [copySuccess, setCopySuccess] = useState<boolean>(true)
-  // New state for format button animation
+  // Remove local notification states
+  // const [showCopyNotification, setShowCopyNotification] = useState(false)
+  // const [showAICopyNotification, setShowAICopyNotification] = useState(false)
+  // const [copySuccess, setCopySuccess] = useState<boolean>(true)
   const [formatStatus, setFormatStatus] = useState<"idle" | "formatting" | "formatted">("idle")
-  
+
   // --- Effects ---
-  // Initialize editor when plan changes or dialog opens
   useEffect(() => {
     if (isOpen && plan?.data) {
       try {
@@ -102,10 +111,9 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave, onUnsavedCha
       if (onUnsavedChange) onUnsavedChange(false)
     }
     setIsSaved(false)
-    setFormatStatus("idle") // Reset format status
+    setFormatStatus("idle")
   }, [plan, isOpen, onUnsavedChange])
 
-  // Reset state when dialog closes
   useEffect(() => {
     if (!isOpen) {
       setError(null)
@@ -115,88 +123,62 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave, onUnsavedCha
     }
   }, [isOpen])
 
-  // --- Event Handlers ---
   const handleEditorChange = (code: string) => {
     setEditorValue(code)
     setError(null)
     setIsSaved(false)
-    // Reset format status when user edits
     setFormatStatus("idle")
     if (onUnsavedChange) {
       onUnsavedChange(code !== initialEditorValue)
     }
   }
 
-  // Format JSON handler with animation and status changes
   const formatJson = () => {
-    // Set to formatting state immediately
     setFormatStatus("formatting")
-    
-    // Use setTimeout to give the UI time to update with the spinner
     setTimeout(() => {
       try {
         const parsed = JSON.parse(editorValue)
         const formatted = JSON.stringify(parsed, null, 2)
-        
-        // Check if the formatted JSON is different from current value
         const isDifferent = formatted !== editorValue
-        
-        // Only update if there's a difference
         if (isDifferent) {
           setEditorValue(formatted)
-          setError(null) // Clear all errors
+          setError(null)
           setIsSaved(false)
-          
-          // Notify about changes if the formatted content differs from initial
           if (onUnsavedChange) {
             onUnsavedChange(formatted !== initialEditorValue)
           }
         }
-        
-        // Set to formatted state
         setFormatStatus("formatted")
-        
-        // We no longer automatically reset to idle - it will stay as "Formatted!"
-        // until the user makes an edit
       } catch (err) {
-        // Handle format errors
         if (!error || error.startsWith("Invalid JSON")) {
           setError("Cannot format invalid JSON. Please fix the errors first.")
         }
-        setFormatStatus("idle") // Reset format status on error
+        setFormatStatus("idle")
       }
-    }, 300) // Short delay for visual effect
+    }, 300)
   }
 
-  // Save handler
   const handleSave = async () => {
     const textToParse = editorValue
-
     if (isSubmitting || !plan) {
       setError("Cannot save: Plan information is missing or submission in progress.")
       return
     }
-
     let parsedData: PlanData
     try {
       parsedData = JSON.parse(textToParse)
-      // Clear all errors after successful parse
       setError(null)
     } catch (err) {
       setError(err instanceof Error ? `Invalid JSON: ${err.message}` : "Invalid JSON format")
       setIsSubmitting(false)
       return
     }
-
     setIsSubmitting(true)
     setIsSaved(false)
-
     try {
-      // --- Basic JSON Structure Validation ---
       if (typeof parsedData !== "object" || parsedData === null) {
         throw new Error("JSON must be an object.")
       }
-      // Check for mandatory top-level arrays
       if (!parsedData.weeks || !Array.isArray(parsedData.weeks)) {
         throw new Error("JSON validation failed: must contain a 'weeks' array.")
       }
@@ -209,119 +191,109 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave, onUnsavedCha
       if (!parsedData.weekTypes || !Array.isArray(parsedData.weekTypes)) {
         throw new Error("JSON validation failed: must contain a 'weekTypes' array")
       }
-
-      // --- Ensure Metadata Exists and is Valid ---
       if (!parsedData.metadata) {
         parsedData.metadata = {}
       } else if (typeof parsedData.metadata !== "object" || parsedData.metadata === null) {
         throw new Error("JSON validation failed: 'metadata' must be an object.")
       }
-      // Ensure planName exists and is a non-empty string
       if (
         !parsedData.metadata.planName ||
         typeof parsedData.metadata.planName !== "string" ||
         parsedData.metadata.planName.trim() === ""
       ) {
-        // Use original plan name or a default if missing/invalid
         parsedData.metadata.planName = plan.name || "Draft Plan"
       }
-      // Ensure creationDate exists and is a string
       if (
         !parsedData.metadata.creationDate ||
         typeof parsedData.metadata.creationDate !== "string"
       ) {
-        // Use original creation date or current date if missing/invalid
         parsedData.metadata.creationDate =
           plan.data?.metadata?.creationDate || new Date().toISOString()
       }
-
-      // Update editor value if metadata was modified
       const finalJsonToSave = JSON.stringify(parsedData, null, 2)
       if (finalJsonToSave !== editorValue) {
         setEditorValue(finalJsonToSave)
       }
-
-      // Call onSave callback if provided
       if (typeof onSave === "function") {
         console.log("Calling provided onSave handler...")
         const saveResult = await onSave(parsedData)
-
         const success = saveResult !== false
         setIsSaved(success)
-
         if (success) {
           setInitialEditorValue(editorValue)
           if (onUnsavedChange) onUnsavedChange(false)
+          toast.success(`${parsedData.metadata.planName || "Plan"} saved successfully!`) // Sonner toast on success
           setTimeout(() => {
             if (isOpen) {
               onClose()
             }
           }, 1000)
         } else {
+          toast.error("Save operation failed.") // Sonner toast on failure
           throw new Error("Save operation failed (returned false from onSave).")
         }
       } else {
         console.warn("JsonEditor: No onSave handler provided, changes cannot be saved.")
         setIsSaved(false)
         setError("No save handler configured for this editor.")
+        toast.warning("Save handler not configured.") // Sonner toast
       }
-
       setError(null)
     } catch (err) {
       console.error("Save error:", err)
-      setError(
+      const errorMessage =
         err instanceof Error
           ? `Validation/Save Error: ${err.message}`
           : "An unexpected error occurred during save."
-      )
+      setError(errorMessage)
+      toast.error(errorMessage) // Sonner toast on error
       setIsSaved(false)
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  // Copy handler
   const handleCopy = () => {
     if (!editorValue) return
     navigator.clipboard.writeText(editorValue).then(
       () => {
-        setShowCopyNotification(true)
-        setCopySuccess(true)
+        toast.success("JSON copied to clipboard!") // USE SONNER TOAST
       },
       (err) => {
         console.error("Failed to copy: ", err)
-        setError("Failed to copy text to clipboard. Browser permissions might be denied.")
-        setCopySuccess(false)
-        setShowCopyNotification(true) // Still show notification, but indicate failure
+        toast.error("Failed to copy JSON. Browser permissions might be denied.") // USE SONNER TOAST
+        // setError("Failed to copy text to clipboard. Browser permissions might be denied.") // Optional: keep inline error if desired
       }
     )
   }
 
-  // Copy for AI handler
   const handleCopyForAI = () => {
-    if (!editorValue && !error) return // Nothing to copy
+    if (!editorValue && !error) return
     copyJsonErrorForAI(editorValue, error, (success) => {
-      setShowAICopyNotification(true)
-      setCopySuccess(success)
-      if (!success) {
+      // copyJsonErrorForAI itself handles clipboard
+      if (success) {
+        toast.success("Copied JSON & documentation for AI help!", {
+          // USE SONNER TOAST
+          description:
+            "Paste this to an AI assistant (e.g., ChatGPT, Claude) for help fixing your JSON.",
+          // Sonner allows JSX in description or you can use its `action` prop for more complex buttons
+        })
+      } else {
+        toast.error("Failed to copy for AI.") // USE SONNER TOAST
         console.error("Failed to copy for AI")
-        // Optionally set an error state specific to AI copy failure
       }
     })
   }
 
-  // --- Dialog Labels and Button Text ---
   const dialogTitle = plan?.id ? `Edit JSON: ${plan.name || plan.id}` : "Edit JSON"
   const dialogDescription = "Directly edit the underlying JSON data for this plan."
-  const saveButtonText = "View Draft"
+  const saveButtonText = "View Draft" // Or "Save Changes" if onSave is more direct
 
-  // --- Disable States ---
   const disableSaveButton = isSubmitting || !editorValue || !!error
   const disableFormatButton = isSubmitting || !editorValue
   const disableCopyButton = !editorValue || isSubmitting
   const disableCopyAIButton = isSubmitting || (!editorValue && !error)
 
-  // --- Render ---
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -344,7 +316,7 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave, onUnsavedCha
             <Editor
               value={editorValue}
               onValueChange={handleEditorChange}
-              highlight={(code) => code}
+              highlight={(code) => code} // Basic highlight, consider a library for syntax highlighting
               padding={15}
               style={{
                 fontFamily: '"Fira code", "Fira Mono", monospace',
@@ -367,7 +339,7 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave, onUnsavedCha
                 variant="link"
                 size="sm"
                 className="h-auto p-0 text-destructive underline flex-shrink-0"
-                onClick={handleCopyForAI}
+                onClick={handleCopyForAI} // This will now use Sonner via copyJsonErrorForAI
                 disabled={disableCopyAIButton}
               >
                 <Copy className="h-3 w-3 mr-1" /> Copy for AI Support
@@ -379,7 +351,7 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave, onUnsavedCha
             <div className="flex flex-row gap-2">
               <Button
                 type="button"
-                variant={formatStatus === "formatted" ? "success" : "outline"}
+                variant={formatStatus === "formatted" ? "default" : "outline"} // Changed "success" to "default" as success variant might not exist for Button
                 size="sm"
                 onClick={formatJson}
                 disabled={disableFormatButton || formatStatus === "formatting"}
@@ -406,7 +378,7 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave, onUnsavedCha
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={handleCopy}
+                onClick={handleCopy} // This will now use Sonner
                 disabled={disableCopyButton}
               >
                 <Copy className="h-4 w-4 mr-1" />
@@ -439,19 +411,8 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave, onUnsavedCha
         </DialogContent>
       </Dialog>
 
-      {/* Render notifications in a portal so they appear on top */}
-      <div className="relative z-[100]">
-        <CopyNotification
-          show={showCopyNotification}
-          onHide={() => setShowCopyNotification(false)}
-          success={copySuccess}
-        />
-        <CopyForAINotification
-          show={showAICopyNotification}
-          onHide={() => setShowAICopyNotification(false)}
-          success={copySuccess}
-        />
-      </div>
+      {/* Local CopyNotification and CopyForAINotification components are removed from here.
+          Their functionality is now handled by global Sonner toasts. */}
     </>
   )
 }

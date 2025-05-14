@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { Inter, Archivo_Black, Oswald } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "next-themes"
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/sonner"
 import { cn } from "@/lib/utils"
 
 // Font definitions
