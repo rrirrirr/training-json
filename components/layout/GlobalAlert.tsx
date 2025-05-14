@@ -1,96 +1,28 @@
 "use client"
 
-import React, { useState, useEffect, useRef, useMemo } from "react"
-import { AlertDescription } from "@/components/ui/alert"
+import React, { useMemo } from "react"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle, // Import AlertTitle
+} from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { X, AlertTriangle, Info, Edit, Ban } from "lucide-react"
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
+import { AlertTriangle, Info, Edit, Ban } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useAlert, GlobalAlertSeverity } from "@/contexts/alert-context"
+import { useAlert } from "@/contexts/alert-context"
 
 interface GlobalAlertProps {
   icon?: React.ReactNode
 }
 
 export function GlobalAlert(props: GlobalAlertProps) {
-  const { icon: customIcon } = props
-  const { alertState, hideAlert } = useAlert()
-  const {
-    id: alertId,
-    message,
-    severity,
-    isVisible,
-    collapsible,
-    collapseDelay,
-    action,
-  } = alertState
+  const { icon: customIconFromProps } = props
+  const { alertState } = useAlert()
+  const { message, severity, isVisible } = alertState
 
-  const [isCollapsed, setIsCollapsed] = useState(false)
-  const [hasCompletedFirstCollapse, setHasCompletedFirstCollapse] = useState(false)
-  const collapseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const currentAlertIdRef = useRef<number>(0)
-
-  const clearCollapseTimer = () => {
-    if (collapseTimeoutRef.current) {
-      clearTimeout(collapseTimeoutRef.current)
-      collapseTimeoutRef.current = null
-    }
-  }
-
-  const startInitialCollapseTimer = () => {
-    clearCollapseTimer()
-    if (
-      isVisible &&
-      collapsible &&
-      collapseDelay &&
-      collapseDelay > 0 &&
-      !hasCompletedFirstCollapse
-    ) {
-      collapseTimeoutRef.current = setTimeout(() => {
-        if (alertId === currentAlertIdRef.current && isVisible && collapsible) {
-          setIsCollapsed(true)
-          setHasCompletedFirstCollapse(true)
-        }
-        collapseTimeoutRef.current = null
-      }, collapseDelay)
-    }
-  }
-
-  useEffect(() => {
-    clearCollapseTimer()
-    if (isVisible && alertId !== currentAlertIdRef.current) {
-      setIsCollapsed(false)
-      setHasCompletedFirstCollapse(false)
-      currentAlertIdRef.current = alertId
-    }
-    if (!collapsible || !isVisible) {
-      setIsCollapsed(false)
-      clearCollapseTimer()
-    }
-    return () => {
-      clearCollapseTimer()
-    }
-  }, [isVisible, collapsible, alertId])
-
-  const handleMouseEnter = () => {
-    if (!collapsible) return
-    clearCollapseTimer()
-    if (isCollapsed) {
-      setIsCollapsed(false)
-    }
-  }
-
-  const handleMouseLeave = () => {
-    if (!collapsible || !isVisible) return
-    if (hasCompletedFirstCollapse) {
-      clearCollapseTimer()
-      setIsCollapsed(true)
-    } else {
-      startInitialCollapseTimer()
-    }
-  }
-
-  const Icon = useMemo(() => {
-    if (customIcon) return customIcon
+  const TriggerIcon = useMemo(() => {
+    if (customIconFromProps) return customIconFromProps
     switch (severity) {
       case "warning":
         return <AlertTriangle className="h-5 w-5" />
@@ -103,110 +35,84 @@ export function GlobalAlert(props: GlobalAlertProps) {
       default:
         return <Info className="h-5 w-5" />
     }
-  }, [severity, customIcon])
+  }, [severity, customIconFromProps])
 
-  const getSeverityClasses = () => {
+  const alertContentSeverityClasses = useMemo(() => {
     switch (severity) {
       case "warning":
-        return "bg-warning border-warning-border text-warning-foreground" // Assumes theme colors are defined
+        return "bg-warning border-warning-border text-warning-foreground"
       case "error":
-        return "bg-destructive border-destructive/50 text-destructive-foreground" // Adjusted for typical destructive setup
+        return "bg-destructive border-destructive/50 text-destructive-foreground"
       case "info":
-        return "bg-info border-info-border text-info-foreground" // Assumes theme colors are defined
+        return "bg-info border-info-border text-info-foreground"
       case "edit":
-        return "bg-edit-mode-bg border-edit-mode-border text-edit-mode-text" // Uses classes defined in previous steps
+        return "bg-edit-mode-bg border-edit-mode-border text-edit-mode-text"
       default:
         return "bg-background border-border text-foreground"
     }
+  }, [severity])
+
+  const alertVariant = useMemo(() => {
+    if (severity === "error") return "destructive"
+    return "default"
+  }, [severity])
+
+  // Determine the title text based on severity
+  const alertTitleText = useMemo(() => {
+    switch (severity) {
+      case "warning":
+        return "Warning"
+      case "error":
+        return "Error"
+      case "info":
+        return "Information"
+      case "edit":
+        return "Editing Mode"
+      default:
+        return "Notification" // A sensible default
+    }
+  }, [severity])
+
+  if (!isVisible) {
+    return null
   }
 
-  const severityClasses = getSeverityClasses()
-  const showFullContent = !isCollapsed
-
   return (
-    <div
-      className={cn(
-        "z-40 max-w-md",
-        "transition-opacity duration-150 ease-in-out",
-        isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
-      )}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      role="alert"
-      aria-live="polite"
-      aria-hidden={!isVisible}
-    >
-      <div className="relative">
-        <div
-          className={cn(
-            "border shadow-md overflow-hidden",
-            severityClasses,
-            "flex items-center",
-            "transition-[width,height,padding] duration-150 ease-in-out origin-left",
-            isCollapsed ? "rounded-full" : "rounded-md",
-            isCollapsed ? "w-10 h-10 p-0" : "min-h-[40px] pl-10 pr-8 py-2"
-          )}
-        >
-          <div
-            className={cn(
-              "absolute left-0 top-0 w-10 h-10 flex items-center justify-center",
-              "transition-none"
-            )}
-          >
-            {Icon}
-          </div>
-
-          <div
-            className={cn(
-              "flex-grow flex items-center min-w-0 mr-2",
-              "transition-opacity duration-75 ease-in-out",
-              showFullContent ? "opacity-100 delay-75" : "opacity-0",
-              !showFullContent && "pointer-events-none"
-            )}
-          >
-            {message && (
-              <div
-                className={cn(
-                  "text-sm flex-shrink min-w-0",
-                  !showFullContent && "overflow-hidden whitespace-nowrap"
-                )}
-              >
-                <AlertDescription>
-                  {typeof message === "string" ? message : <>{message}</>}
-                </AlertDescription>
-              </div>
-            )}
-          </div>
-
+    <div className="pointer-events-auto">
+      <HoverCard openDelay={150} closeDelay={100}>
+        <HoverCardTrigger asChild>
           <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation()
-              hideAlert()
-            }}
+            variant="outline"
             className={cn(
-              "absolute right-1 top-1/2 -translate-y-1/2 z-10",
-              "h-6 w-6 flex-shrink-0",
-              "transition-opacity duration-150 ease-in-out",
-              showFullContent ? "opacity-100 delay-75" : "opacity-0 pointer-events-none",
-              severity === "warning"
-                ? "text-warning-foreground hover:bg-warning/20"
-                : severity === "error"
-                  ? "text-destructive-foreground hover:bg-destructive/20"
-                  : severity === "info"
-                    ? "text-info-foreground hover:bg-info/20"
-                    : severity === "edit"
-                      ? "text-edit-mode-text hover:bg-edit-mode-hover-bg" // Assumes hover bg is defined
-                      : "text-foreground hover:bg-secondary"
+              "rounded-full w-10 h-10 p-0 flex items-center justify-center shadow-md",
+              alertContentSeverityClasses
             )}
-            aria-label="Dismiss alert"
-            tabIndex={showFullContent ? 0 : -1}
+            aria-label={
+              typeof message === "string"
+                ? `${alertTitleText}: ${message}`
+                : `${alertTitleText}: View alert details`
+            }
           >
-            <X className="h-4 w-4" />
+            {TriggerIcon}
           </Button>
-        </div>
-      </div>
+        </HoverCardTrigger>
+        <HoverCardContent
+          className={cn("w-auto max-w-xs sm:max-w-sm md:max-w-md p-0 border-none shadow-xl")}
+          side="right"
+          align="start"
+        >
+          <Alert
+            variant={alertVariant}
+            className={cn(alertContentSeverityClasses, "px-4 py-3 rounded-md")}
+          >
+            {/* Add the AlertTitle here */}
+            <AlertTitle>{alertTitleText}</AlertTitle>
+            <AlertDescription className="text-sm">
+              {typeof message === "string" ? message : <>{message}</>}
+            </AlertDescription>
+          </Alert>
+        </HoverCardContent>
+      </HoverCard>
     </div>
   )
 }
