@@ -3,7 +3,7 @@
 
 -- Insert test plans
 INSERT INTO public.training_plans (id, plan_data, created_at)
-VALUES 
+VALUES
   (
     '123e4567-e89b-12d3-a456-426614174000', -- TEST_PLAN_ID
     '{
@@ -14,7 +14,7 @@ VALUES
       },
       "weekTypes": [
         {
-          "id": 1,
+          "id": "regular",
           "name": "Regular",
           "colorName": "blue"
         }
@@ -22,23 +22,39 @@ VALUES
       "exerciseDefinitions": [
         {
           "id": "ex1",
-          "name": "Squat",
-          "category": "Legs"
+          "name": "Squat"
         }
       ],
       "weeks": [
         {
           "weekNumber": 1,
-          "weekType": "Regular",
-          "weekTypeIds": [1],
-          "sessions": []
+          "blockId": 1,
+          "weekTypeIds": [
+            "regular"
+          ],
+          "sessions": [
+            {
+              "sessionName": "Day 1: Full Body Workout",
+              "sessionTypeId": "gym",
+              "exercises": [
+                {
+                  "exerciseId": "ex1",
+                  "sets": 3,
+                  "reps": "8-12",
+                  "load": "70% 1RM"
+                }
+              ]
+            }
+          ]
         }
       ],
       "blocks": [
         {
           "id": 1,
           "name": "First Block",
-          "weekNumbers": [1]
+          "weeks": [
+            1
+          ]
         }
       ]
     }'::jsonb,
