@@ -410,9 +410,6 @@ export default function JsonEditor({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Local CopyNotification and CopyForAINotification components are removed from here.
-          Their functionality is now handled by global Sonner toasts. */}
     </>
   )
 }
