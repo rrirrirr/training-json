@@ -106,7 +106,7 @@ export function PlanModeMenu() {
     return null
   }
   const backButtonText =
-    mode === "edit" ? (hasUnsavedChanges ? "Cancel Edits" : "Back to View") : "Back"
+    mode === "edit" ? (hasUnsavedChanges ? "Cancel Edits" : "Exit Edit Mode") : "Back"
 
   return (
     <>
@@ -122,8 +122,8 @@ export function PlanModeMenu() {
             className={cn(
               "-ml-2 p-1",
               mode === "edit"
-                ? "text-[var(--edit-mode-text)] hover:text-[var(--edit-mode-hover-text)]"
-                : "text-[var(--view-mode-text)] hover:text-[var(--view-mode-hover-text)]"
+                ? "text-edit-mode-text hover:text--edit-mode-hover-text"
+                : "text-view-mode-text hover:text--view-mode-hover-text"
             )}
           >
             <ArrowLeft className="h-4 w-4 mr-1.5" />
