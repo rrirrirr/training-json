@@ -57,7 +57,7 @@ export default function WeekSelector({
 
   // Responsive Grid Layout - items will be at least 5rem wide
   const containerClassName =
-    "grid gap-2 grid-cols-[repeat(auto-fit,minmax(5rem,1fr))] overflow-y-auto"
+    "grid gap-2 grid-cols-[repeat(auto-fit,minmax(5rem,6rem))] overflow-y-auto"
 
   // Get button styles - includes aspect-square and flex for uniform size
   const getWeekButtonStyles = (weekNumber: number) => {
