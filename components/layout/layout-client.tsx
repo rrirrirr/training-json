@@ -4,30 +4,31 @@ import React, {
   useEffect,
   useRef,
   useCallback,
-  useState, // Keep if used elsewhere
+  // useState, // Keep if used elsewhere
 } from "react"
 import { usePathname } from "next/navigation"
-import AppSidebar from "@/components/app-sidebar"
-import { AppHeader } from "@/components/layout/app-header"
-import { GlobalAlert } from "@/components/layout/GlobalAlert" // Import GlobalAlert
-import { Sidebar, SidebarProvider, useSidebar } from "@/components/ui/sidebar"
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
+import AppSidebar from "@/components/app-sidebar" // Assuming path
+import { AppHeader } from "@/components/layout/app-header" // Assuming path
+import { GlobalAlert } from "@/components/layout/GlobalAlert" // Ensure correct path
+import { Sidebar, SidebarProvider, useSidebar } from "@/components/ui/sidebar" // Assuming path
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable" // Assuming path
 import type { ImperativePanelGroupHandle } from "react-resizable-panels"
 import { getPanelGroupElement } from "react-resizable-panels"
-import { cn } from "@/lib/utils"
-import { useUIState } from "@/contexts/ui-context"
-import { useAlert } from "@/contexts/alert-context" // Import the alert hook
-import { AlertManager } from "./alert-manager"
-// --- Configuration Constants (from your original code) ---
+import { cn } from "@/lib/utils" // Assuming path
+import { useUIState } from "@/contexts/ui-context" // Assuming path
+import { useAlert } from "@/contexts/alert-context" // Assuming path
+import { AlertManager } from "./alert-manager" // Ensure correct path
+
+// --- Configuration Constants ---
 const PANEL_GROUP_ID = "desktop-layout-group"
 const SIDEBAR_COLLAPSED_WIDTH_PX = 48
 const SIDEBAR_COLLAPSE_THRESHOLD_PX = 190 // Used by handleLayout
 const SIDEBAR_MAX_WIDTH_PX = 450
 const SIDEBAR_DEFAULT_SIZE_PERCENT = 18
 const SIDEBAR_MAX_SIZE_PERCENT = 30
-// Use a very small value for the panel's internal collapsedSize prop
-const SIDEBAR_INTERNAL_COLLAPSED_PERCENT = 3 // Adjust if needed (e.g., 4% might be safer)
+const SIDEBAR_INTERNAL_COLLAPSED_PERCENT = 3
 const LAYOUT_COOKIE_NAME = "app-sidebar-layout"
+const INITIAL_STATE_THRESHOLD_PERCENT = 10
 
 // --- Type for props ---
 interface LayoutClientProps {
@@ -35,20 +36,12 @@ interface LayoutClientProps {
   defaultLayout?: number[]
 }
 
-// --- LayoutClient (Initial State Logic) ---
+// --- LayoutClient (Initial State Logic - Unchanged) ---
 export function LayoutClient({ children, defaultLayout }: LayoutClientProps) {
   let initialOpenState = true
-  // Use a threshold based on pixels or a percentage consistent with handleLayout's threshold logic
-  // Let's use a percentage slightly below the equivalent of SIDEBAR_COLLAPSE_THRESHOLD_PX for safety
-  // (Assuming ~1500px width, 190px is ~13%. Let's use 10% as the initial threshold)
-  const INITIAL_STATE_THRESHOLD_PERCENT = 10
-
   if (defaultLayout && defaultLayout.length === 2) {
     if (defaultLayout[0] < INITIAL_STATE_THRESHOLD_PERCENT) {
       initialOpenState = false
-      // console.log(
-      //   `[LayoutClient Init] Cookie layout ${defaultLayout[0]}% < ${INITIAL_STATE_THRESHOLD_PERCENT}%. Initial state: collapsed.`
-      // );
     }
   }
   return (
@@ -64,21 +57,19 @@ interface LayoutWithSidebarProps {
   defaultLayout?: number[]
 }
 
-// --- LayoutWithSidebar (Main Logic - Based on your original) ---
+// --- LayoutWithSidebar (Main Logic - Includes Alert Rendering Fix) ---
 function LayoutWithSidebar({ children, defaultLayout }: LayoutWithSidebarProps) {
-  const { state: sidebarState, isMobile, setOpen } = useSidebar() // Renamed 'state' for clarity
-  // console.log("--- LayoutWithSidebar RENDER --- Context State:", sidebarState);
+  const { state: sidebarState, isMobile, setOpen } = useSidebar()
   const { isSidebarOpen, openSidebar, closeSidebar } = useUIState()
   const { alertState } = useAlert() // Get alert state
   const panelGroupHandleRef = useRef<ImperativePanelGroupHandle>(null)
   const pathname = usePathname()
   const isRootRoute = pathname === "/"
   const latestLayoutRef = useRef<number[] | null>(null)
-  const stateRef = useRef<string>(sidebarState) // Ref to track state for callbacks
-  const isInitialMountRef = useRef(true) // Guard for initial mount
+  const stateRef = useRef<string>(sidebarState)
+  const isInitialMountRef = useRef(true)
 
-  // Calculate initial/fallback sizes
-  // ** Clamp initial size based on internal collapsed percent **
+  // --- Size calculations and Effects (Unchanged) ---
   const cookieSize = defaultLayout?.[0]
   let sidebarInitialSize = cookieSize ?? SIDEBAR_DEFAULT_SIZE_PERCENT
   if (cookieSize !== undefined && cookieSize < SIDEBAR_INTERNAL_COLLAPSED_PERCENT) {
@@ -90,146 +81,96 @@ function LayoutWithSidebar({ children, defaultLayout }: LayoutWithSidebarProps) 
   const sidebarCalculatedDefault = sidebarInitialSize
   const mainCalculatedDefault = 100 - sidebarCalculatedDefault
 
-  // Update stateRef whenever sidebarState changes
   useEffect(() => {
     stateRef.current = sidebarState
   }, [sidebarState])
 
-  // Effect to disable guard after mount
   useEffect(() => {
     const timer = setTimeout(() => {
       isInitialMountRef.current = false
-    }, 150) // Slightly longer delay might be safer
+    }, 150)
     return () => clearTimeout(timer)
   }, [])
 
-  // Sync with UI context (optional)
   useEffect(() => {
     if (sidebarState === "collapsed" && isSidebarOpen) closeSidebar()
     else if (sidebarState === "expanded" && !isSidebarOpen) openSidebar()
   }, [sidebarState, isSidebarOpen, openSidebar, closeSidebar])
 
-  // --- Collapse/Expand Handlers (Mainly for Toggle Button & Snapping) ---
+  // --- Collapse/Expand/Toggle/Layout/Dragging Handlers (Unchanged) ---
   const collapseSidebar = useCallback(() => {
-    // console.log("[collapseSidebar] Triggered.");
-    // Update state if needed
     if (sidebarState !== "collapsed") {
       setOpen(false)
     }
-    // Snap resize
     const groupHandle = panelGroupHandleRef.current
     const groupElement = getPanelGroupElement(PANEL_GROUP_ID)
     if (groupHandle && groupElement) {
       const containerWidth = groupElement.offsetWidth
       if (containerWidth > 0) {
-        // Calculate the percentage for the absolute pixel width
         const minPixelPct = (SIDEBAR_COLLAPSED_WIDTH_PX / containerWidth) * 100
-        // Use the larger of the pixel minimum or the panel's internal minimum
         const targetPct = Math.max(minPixelPct, SIDEBAR_INTERNAL_COLLAPSED_PERCENT)
-        console.log(`[collapseSidebar] Snapping resize to ${targetPct.toFixed(2)}%`)
+        // console.log(`[collapseSidebar] Snapping resize to ${targetPct.toFixed(2)}%`)
         requestAnimationFrame(() => {
           groupHandle.setLayout([targetPct, 100 - targetPct])
         })
       }
     }
-  }, [sidebarState, setOpen]) // Depend on state and setter
+  }, [sidebarState, setOpen])
 
   const expandToDefault = useCallback(() => {
-    // console.log("[expandToDefault] Triggered.");
-    // Update state if needed
     if (sidebarState !== "expanded") {
       setOpen(true)
     }
-    // Resize to default expanded size
     const groupHandle = panelGroupHandleRef.current
-    console.log(`[expandToDefault] Resizing to default ${SIDEBAR_DEFAULT_SIZE_PERCENT}%`)
+    // console.log(`[expandToDefault] Resizing to default ${SIDEBAR_DEFAULT_SIZE_PERCENT}%`)
     requestAnimationFrame(() => {
       if (groupHandle) {
         groupHandle.setLayout([SIDEBAR_DEFAULT_SIZE_PERCENT, 100 - SIDEBAR_DEFAULT_SIZE_PERCENT])
       }
     })
-  }, [sidebarState, setOpen]) // Depend on state and setter
+  }, [sidebarState, setOpen])
 
-  // --- Toggle Handler ---
   const handleToggleResize = useCallback(() => {
     if (sidebarState === "expanded") {
-      // Use direct state here
       collapseSidebar()
     } else {
       expandToDefault()
     }
-  }, [sidebarState, collapseSidebar, expandToDefault]) // Depend on direct state
+  }, [sidebarState, collapseSidebar, expandToDefault])
 
-  // --- handleLayout (Original Logic + Guard) ---
   const handleLayout = useCallback(
     (sizes: number[]) => {
-      // Basic checks
       if (isMobile || !sizes || sizes.length !== 2) return
-
-      // console.log(`[handleLayout] Sizes: [${sizes.join(", ")}] | StateRef: ${stateRef.current} | InitialMount: ${isInitialMountRef.current}`);
-
-      latestLayoutRef.current = sizes // Store latest size
-
-      // --- Save to Cookie (Always, except maybe initial mount if unstable) ---
-      // Let's allow saving even on initial mount for now
+      latestLayoutRef.current = sizes
       try {
         const maxAge = 31536000
         document.cookie = `${LAYOUT_COOKIE_NAME}=${JSON.stringify(sizes)}; path=/; max-age=${maxAge}; SameSite=Lax${window.location.protocol === "https:" ? "; Secure" : ""}`
       } catch (error) {
         console.error("[handleLayout] Error saving layout to cookie:", error)
       }
-
-      // --- GUARD: Skip state sync logic during initial mount ---
       if (isInitialMountRef.current) {
-        // console.log("[handleLayout] Skipping state sync during initial mount.");
         return
       }
-      // --- END GUARD ---
-
-      // --- Original State Synchronization Logic (based on 190px threshold) ---
       const groupElement = getPanelGroupElement(PANEL_GROUP_ID)
       const containerWidth = groupElement?.offsetWidth ?? 0
-      // Use the pixel threshold constant
       const thresholdPct =
-        containerWidth > 0 ? (SIDEBAR_COLLAPSE_THRESHOLD_PX / containerWidth) * 100 : 15 // Fallback %
+        containerWidth > 0 ? (SIDEBAR_COLLAPSE_THRESHOLD_PX / containerWidth) * 100 : 15
       const currentSidebarSize = sizes[0]
       const shouldBeOpen = currentSidebarSize >= thresholdPct
-
-      // Use stateRef.current for comparison, as 'sidebarState' might be slightly delayed in callback closure
       if (stateRef.current === "collapsed" && shouldBeOpen) {
-        console.log(
-          `[handleLayout] Sync: Size ${currentSidebarSize.toFixed(2)}% >= Threshold ${thresholdPct.toFixed(2)}% (${SIDEBAR_COLLAPSE_THRESHOLD_PX}px). Setting open: true`
-        )
-        setOpen(true) // Expand immediately
+        setOpen(true)
       } else if (stateRef.current === "expanded" && !shouldBeOpen) {
-        console.log(
-          `[handleLayout] Sync: Size ${currentSidebarSize.toFixed(2)}% < Threshold ${thresholdPct.toFixed(2)}% (${SIDEBAR_COLLAPSE_THRESHOLD_PX}px). Setting open: false`
-        )
-        setOpen(false) // Collapse immediately
-        // Optionally trigger snap resize immediately upon crossing threshold downwards
-        // const groupHandle = panelGroupHandleRef.current;
-        // requestAnimationFrame(() => {
-        //     const minPixelPct = (SIDEBAR_COLLAPSED_WIDTH_PX / containerWidth) * 100;
-        //     const targetPct = Math.max(minPixelPct, SIDEBAR_INTERNAL_COLLAPSED_PERCENT);
-        //     groupHandle?.setLayout([targetPct, 100 - targetPct]);
-        // });
+        setOpen(false)
       }
-      // --- End Original State Sync Logic ---
     },
-    // Add setOpen back as dependency because it's used now
     [isMobile, setOpen]
   )
 
-  // --- Dragging Handler (Original Snapping Logic) ---
   const handleDragging = useCallback((isDragging: boolean) => {
     if (!isDragging) {
-      // Drag end
       const finalLayout = latestLayoutRef.current
-      // Use stateRef here for consistency with original code's potential timing assumption
       const currentState = stateRef.current
       const groupHandle = panelGroupHandleRef.current
-
-      // If drag ended while collapsed, check if snapping is needed
       if (currentState === "collapsed" && finalLayout && groupHandle) {
         const groupElement = getPanelGroupElement(PANEL_GROUP_ID)
         if (groupElement) {
@@ -238,11 +179,8 @@ function LayoutWithSidebar({ children, defaultLayout }: LayoutWithSidebarProps) 
             const minPixelPct = (SIDEBAR_COLLAPSED_WIDTH_PX / containerWidth) * 100
             const targetPct = Math.max(minPixelPct, SIDEBAR_INTERNAL_COLLAPSED_PERCENT)
             const currentPct = finalLayout[0]
-            // If not already close to the target, snap it
             if (Math.abs(currentPct - targetPct) > 0.1) {
-              console.log(
-                `[handleDragging] Drag ended collapsed. Snapping size from ${currentPct.toFixed(2)}% to ${targetPct.toFixed(2)}%`
-              )
+              // console.log(`[handleDragging] Drag ended collapsed. Snapping size from ${currentPct.toFixed(2)}% to ${targetPct.toFixed(2)}%`)
               requestAnimationFrame(() => {
                 groupHandle.setLayout([targetPct, 100 - targetPct])
               })
@@ -251,14 +189,21 @@ function LayoutWithSidebar({ children, defaultLayout }: LayoutWithSidebarProps) 
         }
       }
     }
-  }, []) // Original had no dependencies, relying on refs
+  }, [])
 
   // --- Mobile Rendering ---
   if (isMobile) {
-    // ... same mobile JSX ...
     return (
       <div className="flex min-h-screen w-full bg-background">
+        {/* Alert UI Positioning Container (Updated Structure) */}
+        <div className="absolute top-2 left-2 right-2 z-50 pointer-events-none flex justify-center sm:justify-start">
+          {/* Removed intermediate pointer-events-auto div */}
+          <GlobalAlert /> {/* Render the actual alert UI */}
+        </div>
+        {/* Alert Logic Manager */}
         <AlertManager />
+
+        {/* Background */}
         {isRootRoute && (
           <div
             className={cn(
@@ -267,19 +212,15 @@ function LayoutWithSidebar({ children, defaultLayout }: LayoutWithSidebarProps) 
             )}
           />
         )}
+        {/* Sidebar */}
         <Sidebar collapsible="icon">
           <AppSidebar handleToggleResize={undefined} />
         </Sidebar>
+        {/* Main Content */}
         <div className="flex flex-1 flex-col">
           <AppHeader />
           <main className="flex-1 overflow-y-auto overflow-x-hidden relative p-4">
-            {/* Global Alert Area for Mobile */}
-            <div className="absolute top-2 left-2 z-40 pointer-events-none">
-              <div className="pointer-events-auto">
-                <GlobalAlert canCollapse={alertState.severity === "edit"} />
-              </div>
-            </div>
-            {/* Add dynamic padding if alert is visible */}
+            {/* Dynamic padding might still be desired on mobile for visual clarity */}
             <div className={cn(alertState.isVisible && "pt-16")}>{children}</div>
           </main>
         </div>
@@ -290,7 +231,9 @@ function LayoutWithSidebar({ children, defaultLayout }: LayoutWithSidebarProps) 
   // --- Desktop Rendering ---
   return (
     <div className="flex min-h-screen w-full bg-transparent relative">
+      {/* Alert Logic Manager */}
       <AlertManager />
+
       {/* Background Image Div */}
       {isRootRoute && (
         <div
@@ -306,31 +249,24 @@ function LayoutWithSidebar({ children, defaultLayout }: LayoutWithSidebarProps) 
         ref={panelGroupHandleRef}
         id={PANEL_GROUP_ID}
         direction="horizontal"
-        onLayout={handleLayout} // Contains guarded sync logic now
+        onLayout={handleLayout}
         className="h-screen z-10"
       >
+        {/* Sidebar Panel */}
         <ResizablePanel
           id="sidebar-panel"
           order={1}
           collapsible={true}
-          // Do NOT set collapseThreshold here, let handleLayout manage it
           collapsedSize={SIDEBAR_INTERNAL_COLLAPSED_PERCENT}
           defaultSize={sidebarCalculatedDefault}
           minSize={SIDEBAR_INTERNAL_COLLAPSED_PERCENT}
           maxSize={SIDEBAR_MAX_SIZE_PERCENT}
-          // onCollapse/onExpand are less critical now handleLayout manages state,
-          // but onCollapse can still trigger the final snap resize.
-          onCollapse={collapseSidebar} // Primarily for snapping resize
+          onCollapse={collapseSidebar}
           onExpand={() => {
-            /* Optional: Can add logic if needed when expanding past threshold */
+            /* Optional logic */
           }}
-          className={cn(
-            "flex h-full flex-col relative overflow-visible max-h-screen"
-            // Apply sidebar-specific classes based on sidebarState if needed for styling
-            // sidebarState === "collapsed" ? "sidebar-collapsed" : "sidebar-expanded"
-          )}
+          className={cn("flex h-full flex-col relative overflow-visible max-h-screen")}
         >
-          {/* Inner Div for Content */}
           <div
             className={cn(
               "h-full flex flex-col text-sidebar-foreground overflow-hidden border-r",
@@ -354,19 +290,23 @@ function LayoutWithSidebar({ children, defaultLayout }: LayoutWithSidebarProps) 
           order={2}
           defaultSize={mainCalculatedDefault}
           minSize={100 - SIDEBAR_MAX_SIZE_PERCENT}
-          className="h-screen flex flex-col overflow-hidden relative" // Added relative positioning
+          className="h-screen flex flex-col overflow-hidden relative"
         >
           <div className="flex h-full flex-col">
             <main className="flex-1 overflow-auto relative">
-              {/* Added relative positioning */}
-              {/* Global Alert Area */}
-              <div className="absolute top-4 left-4 z-40 pointer-events-none">
-                <div className="pointer-events-auto">
-                  <GlobalAlert canCollapse={alertState.severity === "edit"} />
-                </div>
+              {/* Global Alert Area - CORRECTED STRUCTURE */}
+              {/* Container A: Handles positioning, passes clicks through itself */}
+              <div className="absolute top-4 left-4 z-50 pointer-events-none">
+                {/* Render GlobalAlert directly. It controls its own interaction */}
+                <GlobalAlert />
               </div>
-              {/* Page Content - Add padding dynamically */}
-              <div className={cn("w-full h-full")}>{children}</div>
+              {/* End Alert Area */}
+
+              {/* Page Content - No dynamic top padding based on alert state */}
+              <div className={cn("w-full h-full p-4")}>
+                {/* Base padding only */}
+                {children}
+              </div>
             </main>
           </div>
         </ResizablePanel>
