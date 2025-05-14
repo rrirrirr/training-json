@@ -266,7 +266,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
             variant="ghost"
             size="icon"
             onClick={handleToggleResize}
-            className={cn("h-8 w-8", showAnimation && "animate-blink-icon-once", className)}
+            className={cn("h-4 w-4", showAnimation && "animate-blink-icon-once", className)}
             aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
           >
             {isOpen ? (
@@ -308,7 +308,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
         <div
           className={cn(
             "flex-shrink min-w-0",
-            isOpen || isMobile ? "overflow-hidden md:mr-10" : "text-center pt-3 px-1"
+            isOpen || isMobile ? "overflow-hidden" : "text-center pt-3 px-1"
           )}
         >
           <Link
@@ -607,7 +607,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
         )}
       >
         {/* Collapsed toggle button */}
-        {!isMobile && !isOpen && handleToggleResize && <ToggleButton className="mb-1" />}
+        {!isMobile && !isOpen && handleToggleResize && <ToggleButton className="h-9 w-9" />}
 
         {/* More Options Dropdown (moved from AppHeader) */}
         <DropdownMenu>
