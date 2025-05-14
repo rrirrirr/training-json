@@ -50,6 +50,22 @@ export function SidebarDialogs() {
   const updateDraftPlan = usePlanStore((state) => state.updateDraftPlan)
   const _setModeState = usePlanStore((state) => state._setModeState)
 
+  // New callback for JsonEditor's onUnsavedChange prop
+  const handleJsonEditorUnsavedChange = useCallback((hasChanges: boolean) => {
+    const currentStore = usePlanStore.getState();
+    // Only update if in edit mode and the status actually needs changing
+    if (currentStore.mode === 'edit' && currentStore.hasUnsavedChanges !== hasChanges) {
+      console.log(`[SidebarDialogs] JsonEditor hasChanges: ${hasChanges}. Updating store.`);
+      // Use the existing _setModeState to update the hasUnsavedChanges flag
+      currentStore._setModeState(
+        currentStore.mode,
+        currentStore.draftPlan, // Keep current draftPlan
+        currentStore.originalPlanId,
+        hasChanges // Update the unsaved flag
+      );
+    }
+  }, []);
+
   // New callback for JsonEditor's onSave prop
   const handleEditorSave = useCallback(
     async (updatedData: PlanData): Promise<boolean> => {
@@ -121,10 +137,6 @@ export function SidebarDialogs() {
           console.log(`[SidebarDialogs] Navigating to ${targetUrl} (new edit)`)
           router.push(targetUrl)
         }
-
-        // Close the dialog
-        closeJsonEditor()
-        return true // Indicate success
       } catch (error) {
         console.error("[SidebarDialogs] Error saving from editor:", error)
         return false // Indicate failure
@@ -234,6 +246,7 @@ export function SidebarDialogs() {
         onClose={closeJsonEditor}
         plan={planToViewJson} // Pass the plan data to the editor
         onSave={handleEditorSave} // Pass the save handler
+        onUnsavedChange={handleJsonEditorUnsavedChange} // Add the onUnsavedChange handler
       />
 
       {/* Delete Plan Dialog */}

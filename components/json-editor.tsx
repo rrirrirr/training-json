@@ -17,37 +17,28 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-// Removed unused Alert components for now, re-add if needed for the second error display style
-// import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
-  AlertCircle, // Keep if used in the second error display style
-  AlertTriangle, // *** ADDED AlertTriangle ***
+  AlertCircle,
+  AlertTriangle,
   Save,
   Copy,
-  Bot, // Keep if used in the second error display style
+  Bot,
   Code,
-  MoreVertical, // Keep if used in the second error display style
+  MoreVertical,
   Loader2,
-  Check, // *** ADDED Check ***
+  Check,
 } from "lucide-react"
 import CopyNotification from "./copy-notification"
 import CopyForAINotification from "./copy-for-ai-notification"
 import { copyJsonErrorForAI } from "@/utils/copy-for-ai"
-// Removed unused store import for now
-// import { usePlanStore } from "@/store/plan-store";
-
-// Re-import react-simple-code-editor
 import Editor from "react-simple-code-editor"
-// Removed unused router import for now
-// import { useRouter } from "next/navigation";
-// DO NOT import prism-react-renderer for this step
 
-// --- Types (Keep these) ---
+// --- Types ---
 interface PlanData {
   weeks?: any[]
   blocks?: any[]
-  exerciseDefinitions?: any[] // Added based on validation logic
-  weekTypes?: any[] // Added based on validation logic
+  exerciseDefinitions?: any[]
+  weekTypes?: any[]
   metadata?: {
     planName?: string
     creationDate?: string
@@ -68,20 +59,23 @@ interface JsonEditorProps {
   onClose: () => void
   plan: Plan | null | undefined
   onSave?: (updatedData: PlanData) => Promise<boolean | void>
+  onUnsavedChange?: (hasChanges: boolean) => void
 }
 
-// --- JsonEditor Component (No Highlighting) ---
-export default function JsonEditor({ isOpen, onClose, plan, onSave }: JsonEditorProps) {
-  // const router = useRouter(); // Keep if navigation is needed
+// --- JsonEditor Component ---
+export default function JsonEditor({ isOpen, onClose, plan, onSave, onUnsavedChange }: JsonEditorProps) {
   // --- State ---
   const [editorValue, setEditorValue] = useState("")
+  const [initialEditorValue, setInitialEditorValue] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isSaved, setIsSaved] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showCopyNotification, setShowCopyNotification] = useState(false)
   const [showAICopyNotification, setShowAICopyNotification] = useState(false)
   const [copySuccess, setCopySuccess] = useState<boolean>(true)
-
+  // New state for format button animation
+  const [formatStatus, setFormatStatus] = useState<"idle" | "formatting" | "formatted">("idle")
+  
   // --- Effects ---
   // Initialize editor when plan changes or dialog opens
   useEffect(() => {
@@ -89,18 +83,27 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave }: JsonEditor
       try {
         const formattedJson = JSON.stringify(plan.data, null, 2)
         setEditorValue(formattedJson)
+        setInitialEditorValue(formattedJson)
         setError(null)
+        if (onUnsavedChange) onUnsavedChange(false)
       } catch (err) {
         console.error("Failed to stringify initial plan data:", err)
         setError("Failed to load plan data into editor")
-        setEditorValue('{\n  "error": "Could not load plan data"\n}')
+        const errorJson = '{\n  "error": "Could not load plan data"\n}'
+        setEditorValue(errorJson)
+        setInitialEditorValue(errorJson)
+        if (onUnsavedChange) onUnsavedChange(false)
       }
     } else if (isOpen) {
-      setEditorValue('{\n  "message": "No plan data provided or plan is invalid."\n}')
+      const placeholder = '{\n  "message": "No plan data provided or plan is invalid."\n}'
+      setEditorValue(placeholder)
+      setInitialEditorValue(placeholder)
       setError(null)
+      if (onUnsavedChange) onUnsavedChange(false)
     }
-    setIsSaved(false) // Reset save state when opening or plan changes
-  }, [plan, isOpen])
+    setIsSaved(false)
+    setFormatStatus("idle") // Reset format status
+  }, [plan, isOpen, onUnsavedChange])
 
   // Reset state when dialog closes
   useEffect(() => {
@@ -108,26 +111,68 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave }: JsonEditor
       setError(null)
       setIsSaved(false)
       setIsSubmitting(false)
-      // Optionally clear value on close if desired:
-      // setEditorValue("");
+      setFormatStatus("idle")
     }
   }, [isOpen])
 
   // --- Event Handlers ---
-  // Direct state update on change
   const handleEditorChange = (code: string) => {
     setEditorValue(code)
-    // Clear JSON parse errors immediately when user types
-    setError((prevError) => (prevError?.startsWith("Invalid JSON") ? null : prevError))
-    setIsSaved(false) // Mark as unsaved on any change
+    setError(null)
+    setIsSaved(false)
+    // Reset format status when user edits
+    setFormatStatus("idle")
+    if (onUnsavedChange) {
+      onUnsavedChange(code !== initialEditorValue)
+    }
   }
 
-  // Save handler (now using the onSave callback)
+  // Format JSON handler with animation and status changes
+  const formatJson = () => {
+    // Set to formatting state immediately
+    setFormatStatus("formatting")
+    
+    // Use setTimeout to give the UI time to update with the spinner
+    setTimeout(() => {
+      try {
+        const parsed = JSON.parse(editorValue)
+        const formatted = JSON.stringify(parsed, null, 2)
+        
+        // Check if the formatted JSON is different from current value
+        const isDifferent = formatted !== editorValue
+        
+        // Only update if there's a difference
+        if (isDifferent) {
+          setEditorValue(formatted)
+          setError(null) // Clear all errors
+          setIsSaved(false)
+          
+          // Notify about changes if the formatted content differs from initial
+          if (onUnsavedChange) {
+            onUnsavedChange(formatted !== initialEditorValue)
+          }
+        }
+        
+        // Set to formatted state
+        setFormatStatus("formatted")
+        
+        // We no longer automatically reset to idle - it will stay as "Formatted!"
+        // until the user makes an edit
+      } catch (err) {
+        // Handle format errors
+        if (!error || error.startsWith("Invalid JSON")) {
+          setError("Cannot format invalid JSON. Please fix the errors first.")
+        }
+        setFormatStatus("idle") // Reset format status on error
+      }
+    }, 300) // Short delay for visual effect
+  }
+
+  // Save handler
   const handleSave = async () => {
     const textToParse = editorValue
 
     if (isSubmitting || !plan) {
-      // Prevent save if already submitting or if plan data is missing
       setError("Cannot save: Plan information is missing or submission in progress.")
       return
     }
@@ -135,30 +180,23 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave }: JsonEditor
     let parsedData: PlanData
     try {
       parsedData = JSON.parse(textToParse)
-      // Clear only JSON parsing errors after successful parse
-      setError((prevError) => (prevError?.startsWith("Invalid JSON") ? null : prevError))
+      // Clear all errors after successful parse
+      setError(null)
     } catch (err) {
       setError(err instanceof Error ? `Invalid JSON: ${err.message}` : "Invalid JSON format")
-      setIsSubmitting(false) // Ensure submitting is false on parse error
-      return
-    }
-
-    // Check for pre-existing non-JSON errors before proceeding
-    if (error) {
-      setError(`Cannot save: Please fix the existing error - ${error}`)
       setIsSubmitting(false)
       return
     }
 
     setIsSubmitting(true)
-    setIsSaved(false) // Reset save state before attempting save
+    setIsSaved(false)
 
     try {
       // --- Basic JSON Structure Validation ---
       if (typeof parsedData !== "object" || parsedData === null) {
         throw new Error("JSON must be an object.")
       }
-      // Check for mandatory top-level arrays (adjust as per your schema)
+      // Check for mandatory top-level arrays
       if (!parsedData.weeks || !Array.isArray(parsedData.weeks)) {
         throw new Error("JSON validation failed: must contain a 'weeks' array.")
       }
@@ -174,9 +212,8 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave }: JsonEditor
 
       // --- Ensure Metadata Exists and is Valid ---
       if (!parsedData.metadata) {
-        parsedData.metadata = {} // Initialize if missing
+        parsedData.metadata = {}
       } else if (typeof parsedData.metadata !== "object" || parsedData.metadata === null) {
-        // Ensure metadata is an object if it exists
         throw new Error("JSON validation failed: 'metadata' must be an object.")
       }
       // Ensure planName exists and is a non-empty string
@@ -188,7 +225,7 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave }: JsonEditor
         // Use original plan name or a default if missing/invalid
         parsedData.metadata.planName = plan.name || "Draft Plan"
       }
-      // Ensure creationDate exists and is a string (or set a default)
+      // Ensure creationDate exists and is a string
       if (
         !parsedData.metadata.creationDate ||
         typeof parsedData.metadata.creationDate !== "string"
@@ -198,54 +235,47 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave }: JsonEditor
           plan.data?.metadata?.creationDate || new Date().toISOString()
       }
 
-      // --- Update Editor Value If Metadata Was Modified ---
-      // Re-stringify only if validation modified the parsedData (e.g., added default metadata)
+      // Update editor value if metadata was modified
       const finalJsonToSave = JSON.stringify(parsedData, null, 2)
       if (finalJsonToSave !== editorValue) {
-        setEditorValue(finalJsonToSave) // Update editor to reflect changes
+        setEditorValue(finalJsonToSave)
       }
 
-      // --- Call onSave Callback If Provided ---
+      // Call onSave callback if provided
       if (typeof onSave === "function") {
         console.log("Calling provided onSave handler...")
-        const saveResult = await onSave(parsedData) // Pass the validated & potentially modified data
+        const saveResult = await onSave(parsedData)
 
-        // Handle the result from the callback
-        const success = saveResult !== false // Treat undefined/void/true as success
+        const success = saveResult !== false
         setIsSaved(success)
 
-        if (!success) {
-          // If onSave explicitly returns false, treat it as a failure
+        if (success) {
+          setInitialEditorValue(editorValue)
+          if (onUnsavedChange) onUnsavedChange(false)
+          setTimeout(() => {
+            if (isOpen) {
+              onClose()
+            }
+          }, 1000)
+        } else {
           throw new Error("Save operation failed (returned false from onSave).")
         }
-        // Close dialog on successful save (after a short delay for feedback)
-        setTimeout(() => {
-          if (isOpen) {
-            // Check if still open before closing
-            onClose()
-          }
-        }, 1000) // 1 second delay
       } else {
-        // If no onSave provided, it cannot be saved.
         console.warn("JsonEditor: No onSave handler provided, changes cannot be saved.")
-        setIsSaved(false) // Indicate not saved
-        // Do not close the dialog automatically if no save handler exists
+        setIsSaved(false)
         setError("No save handler configured for this editor.")
       }
 
-      // Clear errors only on full success
       setError(null)
     } catch (err) {
       console.error("Save error:", err)
-      // Display the validation or save error message
       setError(
         err instanceof Error
           ? `Validation/Save Error: ${err.message}`
           : "An unexpected error occurred during save."
       )
-      setIsSaved(false) // Ensure save state is false on error
+      setIsSaved(false)
     } finally {
-      // Always set submitting back to false after the attempt
       setIsSubmitting(false)
     }
   }
@@ -280,90 +310,56 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave }: JsonEditor
     })
   }
 
-  // Format JSON handler
-  const formatJson = () => {
-    try {
-      const parsed = JSON.parse(editorValue)
-      const formatted = JSON.stringify(parsed, null, 2)
-      setEditorValue(formatted)
-      // Clear only JSON parsing errors after successful format
-      setError((prevError) => (prevError?.startsWith("Invalid JSON") ? null : prevError))
-      setIsSaved(false) // Formatting changes unsaved state
-    } catch (err) {
-      // If there's already an error that's *not* a JSON parsing error, keep it.
-      // Otherwise, set the "Cannot format invalid JSON" error.
-      if (!error || error.startsWith("Invalid JSON")) {
-        setError("Cannot format invalid JSON. Please fix the errors first.")
-      }
-      // Do not clear other types of errors (like validation errors) on format failure
-    }
-  }
-
   // --- Dialog Labels and Button Text ---
   const dialogTitle = plan?.id ? `Edit JSON: ${plan.name || plan.id}` : "Edit JSON"
   const dialogDescription = "Directly edit the underlying JSON data for this plan."
   const saveButtonText = "View Draft"
 
   // --- Disable States ---
-  // Disable save if submitting, no text, or if there is *any* error present
   const disableSaveButton = isSubmitting || !editorValue || !!error
-  // Disable format/copy if submitting or no text
   const disableFormatButton = isSubmitting || !editorValue
   const disableCopyButton = !editorValue || isSubmitting
-  // Disable AI copy if submitting or if there's neither text nor an error to copy
   const disableCopyAIButton = isSubmitting || (!editorValue && !error)
 
   // --- Render ---
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        {/* Increased max-width, adjusted height, base styles */}
         <DialogContent className="max-w-dialog-lg max-h-[90vh] dialog-content-base flex flex-col">
-          {/* Header */}
           <DialogHeader className="flex-shrink-0">
-            {/* Flex layout for title/description and potential actions */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
               <div>
-                {" "}
-                {/* Title and Description */}
                 <DialogTitle>{dialogTitle}</DialogTitle>
                 <DialogDescription>{dialogDescription}</DialogDescription>
               </div>
-              {/* Placeholder for potential header actions if needed */}
             </div>
           </DialogHeader>
 
-          {/* Editor Area */}
           <div className="flex-grow mt-4 border rounded-md bg-background overflow-auto relative min-h-[400px]">
-            {/* Loading/Submitting Overlay */}
             {isSubmitting && (
               <div className="absolute inset-0 bg-white/50 dark:bg-black/50 flex items-center justify-center z-10 rounded-md">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             )}
-            {/* react-simple-code-editor Instance */}
             <Editor
               value={editorValue}
               onValueChange={handleEditorChange}
-              highlight={(code) => code} // No highlighting function provided
-              padding={15} // Consistent padding
+              highlight={(code) => code}
+              padding={15}
               style={{
                 fontFamily: '"Fira code", "Fira Mono", monospace',
                 fontSize: 14,
-                minHeight: "400px", // Ensure minimum height
-                outline: "none", // Remove default outline
-                // Removed height: "100%" as minHeight and flex-grow handle sizing
+                minHeight: "400px",
+                outline: "none",
               }}
-              textareaClassName="editor-textarea focus:outline-none caret-black dark:caret-white" // Basic styling and focus behavior
-              className="editor-container w-full h-full" // Ensure container takes full space
-              disabled={isSubmitting} // Disable textarea during submission
+              textareaClassName="editor-textarea focus:outline-none caret-black dark:caret-white"
+              className="editor-container w-full h-full"
+              disabled={isSubmitting}
               aria-label="JSON Editor"
             />
           </div>
 
-          {/* Error Message Area */}
           {error && (
-            // Simplified error display for this version
             <div className="mt-2 text-destructive text-sm flex items-center gap-2 flex-wrap">
               <AlertTriangle className="h-4 w-4 flex-shrink-0" />
               <span className="flex-grow break-words">{error}</span>
@@ -379,20 +375,32 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave }: JsonEditor
             </div>
           )}
 
-          {/* Action Buttons Footer */}
-          {/* Using sm:justify-between to align groups left/right on larger screens */}
           <DialogFooter className="sm:justify-between gap-2 flex-wrap pt-4">
-            {/* Left Side Actions */}
             <div className="flex flex-row gap-2">
               <Button
                 type="button"
-                variant="outline"
+                variant={formatStatus === "formatted" ? "success" : "outline"}
                 size="sm"
                 onClick={formatJson}
-                disabled={disableFormatButton}
+                disabled={disableFormatButton || formatStatus === "formatting"}
+                className="w-[140px] transition-all duration-200 ease-in-out"
               >
-                <Code className="h-4 w-4 mr-1" />
-                Format JSON
+                {formatStatus === "formatting" ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    <span>Formatting...</span>
+                  </>
+                ) : formatStatus === "formatted" ? (
+                  <>
+                    <Check className="h-4 w-4 mr-1 text-green-500" />
+                    <span className="text-green-500">Formatted!</span>
+                  </>
+                ) : (
+                  <>
+                    <Code className="h-4 w-4 mr-1" />
+                    <span>Format JSON</span>
+                  </>
+                )}
               </Button>
               <Button
                 type="button"
@@ -406,7 +414,6 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave }: JsonEditor
               </Button>
             </div>
 
-            {/* Right Side Actions (Cancel/Save) */}
             <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
                 Cancel
@@ -415,10 +422,9 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave }: JsonEditor
                 variant="default"
                 onClick={handleSave}
                 disabled={disableSaveButton}
-                className="min-w-[120px]" // Give save button some minimum width
+                className="min-w-[120px]"
                 data-testid="save-draft"
               >
-                {/* Conditional rendering for button content based on state */}
                 {isSubmitting ? (
                   <Loader2 className="h-4 w-4 mr-1 animate-spin" />
                 ) : isSaved ? (
@@ -426,7 +432,6 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave }: JsonEditor
                 ) : (
                   <Save className="h-4 w-4 mr-1" />
                 )}
-                {/* Conditional rendering for button text */}
                 {isSubmitting ? "Saving..." : isSaved ? "Saved!" : saveButtonText}
               </Button>
             </div>
@@ -434,17 +439,19 @@ export default function JsonEditor({ isOpen, onClose, plan, onSave }: JsonEditor
         </DialogContent>
       </Dialog>
 
-      {/* Copy Toast Notifications */}
-      <CopyNotification
-        show={showCopyNotification}
-        onOpenChange={setShowCopyNotification} // *** Corrected prop name ***
-        success={copySuccess}
-      />
-      <CopyForAINotification
-        show={showAICopyNotification}
-        onOpenChange={setShowAICopyNotification} // *** Corrected prop name ***
-        success={copySuccess}
-      />
+      {/* Render notifications in a portal so they appear on top */}
+      <div className="relative z-[100]">
+        <CopyNotification
+          show={showCopyNotification}
+          onHide={() => setShowCopyNotification(false)}
+          success={copySuccess}
+        />
+        <CopyForAINotification
+          show={showAICopyNotification}
+          onHide={() => setShowAICopyNotification(false)}
+          success={copySuccess}
+        />
+      </div>
     </>
   )
 }
