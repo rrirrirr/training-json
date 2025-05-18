@@ -342,7 +342,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
           )}
         >
           {/* New Plan Button */}
-          {(isOpen || isMobile) && ( // Only show button text when open or mobile
+          {((isOpen && isRootRoute) || isMobile) && ( // Only show button text when open or mobile
             <div className={cn("mb-2", isOpen || isMobile ? "w-full" : "w-auto")}>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -353,13 +353,13 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                     onClick={() => openNewPlanModal()}
                   >
                     <Plus className={cn("h-4 w-4", (isOpen || isMobile) && "mr-2")} />
-                    {(isOpen || isMobile) && "New Plan (AI)"}
-                    {!(isOpen || isMobile) && <span className="sr-only">New Plan (AI)</span>}
+                    {(isOpen || isMobile) && "New Plan"}
+                    {!(isOpen || isMobile) && <span className="sr-only">New Plan</span>}
                   </Button>
                 </TooltipTrigger>
                 {!(isOpen || isMobile) && (
                   <TooltipContent side="right" align="center">
-                    New Plan (AI)
+                    New Plan
                   </TooltipContent>
                 )}
               </Tooltip>
