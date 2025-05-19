@@ -284,7 +284,7 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
 
   // --- Visibility Logic ---
   const shouldShowCreateButton = isMobile || (!isMobile && isRootRoute)
-  const shouldShowInlineList = !isMobile && isRootRoute && isOpen // Changed: only show on desktop root
+  const shouldShowInlineList = (isMobile && isOpen) || (isRootRoute && isOpen)
   const shouldShowPlanRelatedTriggers = !isRootRoute
   const shouldShowDropdownTrigger = !isMobile && !isRootRoute && isOpen
   const shouldShowCollapsedTrigger = !isRootRoute && !isOpen && !isMobile
