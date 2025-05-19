@@ -451,7 +451,9 @@ test.describe("Plan Edit Mode with Local Database (using testid)", () => {
     await planEditHelpers.savePlan(page)
     await expect(page).not.toHaveURL(`${baseURL}/plan/${TEST_PLAN_ID}`)
     await expectNormalModeUI(page)
-    await expect(page.getByText(savedName)).toBeVisible()
+    await expect(
+      page.getByTestId("plan-switcher-trigger").filter({ hasText: savedName })
+    ).toBeVisible({ timeout: 5000 })
   })
 
   test("Creating new plan should put us in edit mode and then create a new ID", async ({
