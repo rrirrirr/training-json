@@ -105,7 +105,7 @@ export async function triggerEditViaJsonMenu(page: Page, planId: string) {
   const saveButton = page.getByTestId("save-draft")
   await expect(async () => {
     await saveButton.click()
-    await expect(saveButton).not.toBeVisible({ timeout: 500 })
+    await expect(saveButton).not.toBeVisible({ timeout: 5000 })
   }).toPass()
   // await saveButton.waitFor({ state: "visible", timeout: 5000 })
   console.log("[Helper] Clicking save-draft button in JSON editor")
