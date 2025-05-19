@@ -1,4 +1,3 @@
-// /components/json-editor.tsx
 "use client"
 
 // Import necessary React hooks and components
@@ -12,30 +11,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-// DropdownMenu imports seem unused in this specific file's logic, can be removed if not needed elsewhere in this component
-// import {
-//   DropdownMenu,
-//   DropdownMenuContent,
-//   DropdownMenuItem,
-//   DropdownMenuTrigger,
-// } from "@/components/ui/dropdown-menu"
-import {
-  // AlertCircle, // Seems unused
-  AlertTriangle,
-  Save,
-  Copy,
-  Bot,
-  Code,
-  // MoreVertical, // Seems unused
-  Loader2,
-  Check,
-} from "lucide-react"
-// Remove imports for local notifications
-// import CopyNotification from "./copy-notification"
-// import CopyForAINotification from "./copy-for-ai-notification"
-import { copyJsonErrorForAI } from "@/utils/copy-for-ai" // Keep this utility
+import { AlertTriangle, Save, Copy, Bot, Code, Loader2, Check } from "lucide-react"
+import { copyJsonErrorForAI } from "@/utils/copy-for-ai"
 import Editor from "react-simple-code-editor"
-import { toast } from "sonner" // IMPORT SONNER'S TOAST FUNCTION
+import { toast } from "sonner"
 
 // --- Types ---
 interface PlanData {
@@ -80,10 +59,6 @@ export default function JsonEditor({
   const [error, setError] = useState<string | null>(null)
   const [isSaved, setIsSaved] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  // Remove local notification states
-  // const [showCopyNotification, setShowCopyNotification] = useState(false)
-  // const [showAICopyNotification, setShowAICopyNotification] = useState(false)
-  // const [copySuccess, setCopySuccess] = useState<boolean>(true)
   const [formatStatus, setFormatStatus] = useState<"idle" | "formatting" | "formatted">("idle")
 
   // --- Effects ---
@@ -92,27 +67,32 @@ export default function JsonEditor({
       try {
         const formattedJson = JSON.stringify(plan.data, null, 2)
         setEditorValue(formattedJson)
-        setInitialEditorValue(formattedJson)
+        setInitialEditorValue(formattedJson) // Baseline for this editor session
         setError(null)
-        if (onUnsavedChange) onUnsavedChange(false)
+        // REMOVED: if (onUnsavedChange) onUnsavedChange(false);
+        // The global state of hasUnsavedChanges should persist from before the editor opened.
+        // The editor itself is "clean" with respect to its initial data at this point,
+        // but the overall plan draft might still be "dirty" globally.
       } catch (err) {
         console.error("Failed to stringify initial plan data:", err)
         setError("Failed to load plan data into editor")
         const errorJson = '{\n  "error": "Could not load plan data"\n}'
         setEditorValue(errorJson)
         setInitialEditorValue(errorJson)
-        if (onUnsavedChange) onUnsavedChange(false)
+        // REMOVED: if (onUnsavedChange) onUnsavedChange(false);
       }
     } else if (isOpen) {
+      // If opened with no plan data (e.g. new plan placeholder)
       const placeholder = '{\n  "message": "No plan data provided or plan is invalid."\n}'
       setEditorValue(placeholder)
       setInitialEditorValue(placeholder)
       setError(null)
-      if (onUnsavedChange) onUnsavedChange(false)
+      // REMOVED: if (onUnsavedChange) onUnsavedChange(false);
     }
+    // Reset internal editor save/format status when it opens/plan changes
     setIsSaved(false)
     setFormatStatus("idle")
-  }, [plan, isOpen, onUnsavedChange])
+  }, [plan, isOpen]) // Removed onUnsavedChange from dependencies here as it's not directly setting based on it.
 
   useEffect(() => {
     if (!isOpen) {
@@ -214,29 +194,35 @@ export default function JsonEditor({
       if (finalJsonToSave !== editorValue) {
         setEditorValue(finalJsonToSave)
       }
+
       if (typeof onSave === "function") {
-        console.log("Calling provided onSave handler...")
         const saveResult = await onSave(parsedData)
         const success = saveResult !== false
         setIsSaved(success)
         if (success) {
           setInitialEditorValue(editorValue)
-          if (onUnsavedChange) onUnsavedChange(false)
-          toast.success(`${parsedData.metadata.planName || "Plan"} saved successfully!`) // Sonner toast on success
+          // The onSave handler (SidebarDialogs.handleEditorSave) is responsible
+          // for setting the global hasUnsavedChanges state (it sets it to true).
+          // JsonEditor should not override this by calling onUnsavedChange(false).
+          toast.success(`${parsedData.metadata.planName || "Plan"} draft updated! Ready to view.`)
           setTimeout(() => {
             if (isOpen) {
               onClose()
             }
           }, 1000)
         } else {
-          toast.error("Save operation failed.") // Sonner toast on failure
+          toast.error("Save operation failed.")
           throw new Error("Save operation failed (returned false from onSave).")
         }
       } else {
-        console.warn("JsonEditor: No onSave handler provided, changes cannot be saved.")
-        setIsSaved(false)
-        setError("No save handler configured for this editor.")
-        toast.warning("Save handler not configured.") // Sonner toast
+        console.warn(
+          "JsonEditor: No onSave handler provided, changes are only local to this editor session if not closed."
+        )
+        setIsSaved(true)
+        setInitialEditorValue(editorValue)
+        // If no external onSave, editor's save makes its content "not dirty" relative to its baseline
+        if (onUnsavedChange) onUnsavedChange(false)
+        toast.warning("JSON structure is valid (no external save handler).")
       }
       setError(null)
     } catch (err) {
@@ -246,7 +232,7 @@ export default function JsonEditor({
           ? `Validation/Save Error: ${err.message}`
           : "An unexpected error occurred during save."
       setError(errorMessage)
-      toast.error(errorMessage) // Sonner toast on error
+      toast.error(errorMessage)
       setIsSaved(false)
     } finally {
       setIsSubmitting(false)
@@ -257,12 +243,11 @@ export default function JsonEditor({
     if (!editorValue) return
     navigator.clipboard.writeText(editorValue).then(
       () => {
-        toast.success("JSON copied to clipboard!") // USE SONNER TOAST
+        toast.success("JSON copied to clipboard!")
       },
       (err) => {
         console.error("Failed to copy: ", err)
-        toast.error("Failed to copy JSON. Browser permissions might be denied.") // USE SONNER TOAST
-        // setError("Failed to copy text to clipboard. Browser permissions might be denied.") // Optional: keep inline error if desired
+        toast.error("Failed to copy JSON. Browser permissions might be denied.")
       }
     )
   }
@@ -270,16 +255,13 @@ export default function JsonEditor({
   const handleCopyForAI = () => {
     if (!editorValue && !error) return
     copyJsonErrorForAI(editorValue, error, (success) => {
-      // copyJsonErrorForAI itself handles clipboard
       if (success) {
         toast.success("Copied JSON & documentation for AI help!", {
-          // USE SONNER TOAST
           description:
             "Paste this to an AI assistant (e.g., ChatGPT, Claude) for help fixing your JSON.",
-          // Sonner allows JSX in description or you can use its `action` prop for more complex buttons
         })
       } else {
-        toast.error("Failed to copy for AI.") // USE SONNER TOAST
+        toast.error("Failed to copy for AI.")
         console.error("Failed to copy for AI")
       }
     })
@@ -287,7 +269,7 @@ export default function JsonEditor({
 
   const dialogTitle = plan?.id ? `Edit JSON: ${plan.name || plan.id}` : "Edit JSON"
   const dialogDescription = "Directly edit the underlying JSON data for this plan."
-  const saveButtonText = "View Draft" // Or "Save Changes" if onSave is more direct
+  const saveButtonText = "View Draft"
 
   const disableSaveButton = isSubmitting || !editorValue || !!error
   const disableFormatButton = isSubmitting || !editorValue
@@ -316,7 +298,7 @@ export default function JsonEditor({
             <Editor
               value={editorValue}
               onValueChange={handleEditorChange}
-              highlight={(code) => code} // Basic highlight, consider a library for syntax highlighting
+              highlight={(code) => code}
               padding={15}
               style={{
                 fontFamily: '"Fira code", "Fira Mono", monospace',
@@ -339,7 +321,7 @@ export default function JsonEditor({
                 variant="link"
                 size="sm"
                 className="h-auto p-0 text-destructive underline flex-shrink-0"
-                onClick={handleCopyForAI} // This will now use Sonner via copyJsonErrorForAI
+                onClick={handleCopyForAI}
                 disabled={disableCopyAIButton}
               >
                 <Copy className="h-3 w-3 mr-1" /> Copy for AI Support
@@ -351,7 +333,7 @@ export default function JsonEditor({
             <div className="flex flex-row gap-2">
               <Button
                 type="button"
-                variant={formatStatus === "formatted" ? "default" : "outline"} // Changed "success" to "default" as success variant might not exist for Button
+                variant={formatStatus === "formatted" ? "default" : "outline"}
                 size="sm"
                 onClick={formatJson}
                 disabled={disableFormatButton || formatStatus === "formatting"}
@@ -378,7 +360,7 @@ export default function JsonEditor({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={handleCopy} // This will now use Sonner
+                onClick={handleCopy}
                 disabled={disableCopyButton}
               >
                 <Copy className="h-4 w-4 mr-1" />
