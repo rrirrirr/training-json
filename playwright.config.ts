@@ -21,7 +21,7 @@ if (fs.existsSync(testLocalPath)) {
 process.env.NODE_ENV = "test"
 
 export default defineConfig({
-  testDir: "./tests",
+  testDir: "./tests/e2e",
   timeout: 120 * 1000,
   expect: {
     timeout: 20000,
