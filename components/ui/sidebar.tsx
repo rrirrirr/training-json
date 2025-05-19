@@ -185,7 +185,7 @@ const Sidebar = React.forwardRef<
         <div
           className={cn(
             "flex h-full w-[--sidebar-width] flex-col",
-            isRootRoute ? "bg-[var(--sidebar-80)]" : "bg-sidebar",
+            "bg-sidebar",
             "text-sidebar-foreground",
             className
           )}
@@ -205,7 +205,7 @@ const Sidebar = React.forwardRef<
             data-mobile="true"
             className={cn(
               "w-[--sidebar-width] p-0 text-sidebar-foreground [&>button]:hidden",
-              isRootRoute ? "bg-[var(--sidebar-80)]" : "bg-sidebar"
+              "bg-sidebar"
             )}
             style={
               {
@@ -258,7 +258,7 @@ const Sidebar = React.forwardRef<
             data-sidebar="sidebar"
             className={cn(
               "flex h-full w-full flex-col",
-              isRootRoute ? "bg-[var(--sidebar-80)]" : "bg-sidebar",
+              "bg-sidebar",
               "group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
             )}
           >
