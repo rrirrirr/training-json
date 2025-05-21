@@ -349,7 +349,10 @@ export default function AppSidebar({ handleToggleResize }: AppSidebarProps) {
                   <Button
                     variant="default"
                     size={isOpen || isMobile ? "sm" : "icon"}
-                    className={cn(isOpen || isMobile ? "w-full justify-start" : "w-9 h-9")}
+                    className={cn(
+                      isOpen || isMobile ? "w-full justify-start" : "w-9 h-9",
+                      "font-oswald uppercase"
+                    )}
                     onClick={() => openNewPlanModal()}
                   >
                     <Plus className={cn("h-4 w-4", (isOpen || isMobile) && "mr-2")} />
