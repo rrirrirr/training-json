@@ -140,6 +140,36 @@ test.describe("Plan Edit Mode with Local Database (using testid)", () => {
     await expectEditModeUI(page, "Test Training Plan")
   })
 
+  test("entering edit mode for plan via edit button from /plans page", async ({ page }) => {
+    // Setup: Navigate to the plans page
+    await page.goto(`${baseURL}/plans`)
+    await planEditHelpers.waitForAppLoaded(page)
+
+    // Verify we're on the plans page and can see our test plan
+    await expect(page).toHaveURL(`${baseURL}/plans`)
+    await expect(page.getByText("Test Training Plan")).toBeVisible()
+
+    // Find the edit button for the test plan and click it
+    // The edit button should be in a card containing the plan name
+    const planCard = page.locator('[class*="Card"]').filter({ hasText: "Test Training Plan" })
+    await expect(planCard).toBeVisible()
+    
+    const editButton = planCard.getByRole("button", { name: /edit/i })
+    await expect(editButton).toBeVisible()
+    await editButton.click()
+
+    // Wait for the JSON editor dialog to open and then click save
+    const saveButton = page.getByTestId("save-draft")
+    await expect(saveButton).toBeVisible()
+    await saveButton.click()
+
+    // Assertions: Should navigate to edit page
+    const expectedEditUrl = `${baseURL}/plan/${TEST_PLAN_ID}/edit`
+    await page.waitForURL(expectedEditUrl)
+    await expect(page).toHaveURL(expectedEditUrl)
+    await expectEditModeUI(page, "Test Training Plan")
+  })
+
   test("Exiting edit mode correctly via discard button with no changes", async ({ page }) => {
     await planEditHelpers.goToPlanEditPage(page, TEST_PLAN_ID)
     await expectEditModeUI(page, "Test Training Plan")
