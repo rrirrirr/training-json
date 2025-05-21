@@ -270,7 +270,7 @@ function LayoutWithSidebar({ children, defaultLayout }: LayoutWithSidebarProps) 
           <div
             className={cn(
               "h-full flex flex-col text-sidebar-foreground overflow-hidden border-r",
-              "bg-sidebar/80 dark:bg-sidebar/60 backdrop-blur-sm", // ** CHECK BACKGROUNDS **
+              "bg-sidebar/40 dark:bg-sidebar/20 backdrop-blur-sm", // ** CHECK BACKGROUNDS **
               sidebarState === "collapsed" &&
                 `max-w-[${SIDEBAR_COLLAPSED_WIDTH_PX}px] w-[${SIDEBAR_COLLAPSED_WIDTH_PX}px] items-center`,
               sidebarState === "expanded" && `max-w-[${SIDEBAR_MAX_WIDTH_PX}px]`,
