@@ -465,12 +465,6 @@ export default function EnhancedJsonUploadModal({
             <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Link href="/documentation" passHref>
-              <Button variant="secondary" className="dialog-button-icon" disabled={isSubmitting}>
-                <FileText className="h-4 w-4" />
-                Documentation <ExternalLink className="ml-1 h-3 w-3" />
-              </Button>
-            </Link>
           </DialogFooter>
         </DialogContent>
       </Dialog>
