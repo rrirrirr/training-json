@@ -55,7 +55,7 @@ export default function WeeklyView({ week, trainingPlan, compact = false }: Week
               {/* Week Type and Badges - Using BadgeWithTooltip */}
               {weekType && weekType !== "-" && (
                 <BadgeWithTooltip
-                  className="text-sm font-normal px-2 py-0.5 bg-muted rounded-full normal-case tracking-normal font-sans text-primary"
+                  className="text-sm font-normal px-2 py-0.5 bg-muted rounded-full normal-case tracking-normal font-sans"
                   tooltipContent={`This is a Type ${weekType} training week`}
                 >
                   Type {weekType}
@@ -84,7 +84,6 @@ export default function WeeklyView({ week, trainingPlan, compact = false }: Week
             )}
             {blockFocus && (
               <div className={cn("text-sm mt-1", blockInfo?.colorClasses?.text)}>
-                {" "}
                 {/* Use optional chaining */}
                 <span className="font-medium">Focus: </span> {/* Consider uppercasing label */}
                 {blockFocus}
@@ -120,7 +119,6 @@ export default function WeeklyView({ week, trainingPlan, compact = false }: Week
             <div className="flex flex-wrap gap-3">
               {Object.entries(week.tm).map(([lift, weight]) => (
                 <div key={lift} className="bg-muted/50 px-3 py-1 rounded-lg text-sm">
-                  {" "}
                   {/* Adjusted size */}
                   <span className="font-medium">{lift}:</span> {weight} kg
                 </div>
