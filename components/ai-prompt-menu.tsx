@@ -1,5 +1,7 @@
 "use client"
 
+import { cn } from "@/lib/utils"
+
 import { useState } from "react"
 import type { LucideProps } from "lucide-react"
 import {
@@ -36,6 +38,20 @@ interface PromptTemplate {
 
 interface AIPromptMenuProps {
   onCopy?: (prompt: string) => void
+}
+
+// Helper function to get gradient styles for different prompt types
+const getPromptGradientStyle = (promptId: string): string => {
+  const gradientMap: Record<string, string> = {
+    "novice-interview": "bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-150 border-green-200 hover:border-green-300",
+    "goal-oriented-request": "bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-150 border-blue-200 hover:border-blue-300", 
+    "experienced-optimizer": "bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-150 border-purple-200 hover:border-purple-300",
+    "constraint-focused": "bg-gradient-to-br from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-150 border-orange-200 hover:border-orange-300",
+    "modify-plan": "bg-gradient-to-br from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-150 border-indigo-200 hover:border-indigo-300",
+    "format-plan": "bg-gradient-to-br from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-150 border-emerald-200 hover:border-emerald-300"
+  }
+  
+  return gradientMap[promptId] || "bg-gradient-to-br from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-150 border-gray-200 hover:border-gray-300"
 }
 
 const usePromptController = () => {
@@ -359,15 +375,25 @@ export function AIPromptMenu({ onCopy }: AIPromptMenuProps) {
             {promptTemplates.map((template) => {
               const IconComponent = template.icon
               return (
-                <Button
+                <div
                   key={template.id}
-                  variant="outline"
-                  className="h-auto w-full p-3 text-left justify-start items-center flex gap-3"
+                  className={cn(
+                    "h-auto w-full p-3 text-left items-center flex gap-3 transition-all duration-200 ease-in-out hover:shadow-md cursor-pointer rounded-md border",
+                    getPromptGradientStyle(template.id)
+                  )}
                   onClick={() => handleItemClick(template.prompt)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault()
+                      handleItemClick(template.prompt)
+                    }
+                  }}
                 >
                   {/* Icon Area */}
                   {IconComponent && (
-                    <div className="flex-shrink-0 p-1 bg-muted rounded-sm self-start mt-0.5">
+                    <div className="flex-shrink-0 p-1 bg-white/60 rounded-sm self-start mt-0.5">
                       <IconComponent className="h-5 w-5 text-muted-foreground" />
                     </div>
                   )}
@@ -380,7 +406,7 @@ export function AIPromptMenu({ onCopy }: AIPromptMenuProps) {
                   </div>
                   {/* Copy Icon */}
                   <Copy className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-auto self-start mt-0.5" />
-                </Button>
+                </div>
               )
             })}
           </div>
