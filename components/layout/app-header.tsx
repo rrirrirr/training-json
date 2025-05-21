@@ -97,8 +97,8 @@ export function AppHeader({}: HeaderProps) {
                 "ml-2 p-1.5 rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
                 // Apply background and text color based on mode using CSS variables
                 mode === "edit"
-                  ? "bg-[var(--edit-mode-bg)] text-[var(--edit-mode-text)]"
-                  : "bg-[var(--view-mode-bg)] text-[var(--view-mode-text)]"
+                  ? "bg-edit-mode-bg text-edit-mode-text"
+                  : "bg-view-mode-bg text-view-mode-text"
               )}
               aria-label={mode === "edit" ? "Scroll to Edit Menu" : "Scroll to View Menu"}
               title={mode === "edit" ? "Editing Plan - Go to Menu" : "Viewing Plan - Go to Menu"} // Add tooltip text
