@@ -111,7 +111,14 @@ export function PlanModeMenu() {
   return (
     <>
       {/* Header Area */}
-      <div id="plan-mode-menu-anchor" className={cn(/* existing styles */)}>
+      <div
+        id="plan-mode-menu-anchor"
+        className={cn(
+          mode === "edit"
+            ? "bg-edit-mode-bg text-edit-mode-text hover:text-edit-mode-hover-text"
+            : "bg-view-mode-bg text-view-mode-text hover:text-view-mode-hover-text"
+        )}
+      >
         <div className="mx-auto flex w-full max-w-5xl flex-col items-start gap-4 px-4 py-4 sm:gap-5 sm:px-6 sm:py-5 lg:px-8">
           {/* Back Button */}
           <Button
@@ -184,16 +191,15 @@ export function PlanModeMenu() {
                 </Button>
               )}
               <Button
-                variant="default"
+                variant="outline"
                 size="sm"
                 onClick={handleSave}
                 disabled={isSaving || (mode === "edit" && !hasUnsavedChanges)}
                 data-testid="save-button"
                 className={cn(
                   "w-full sm:w-auto",
-                  mode === "edit"
-                    ? "text-edit-mode-text hover:bg-edit-mode-hover-text"
-                    : "text-view-mode-text hover:bg-view-mode-hover-text"
+                  "border-edit-mode-border text-edit-mode-text",
+                  "hover:bg-edit-mode-hover-bg hover:text-edit-mode-hover-text"
                 )}
               >
                 {isSaving ? (
