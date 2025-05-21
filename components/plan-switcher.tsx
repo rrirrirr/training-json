@@ -120,7 +120,7 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
             )}
             <span
               className={cn(
-                "text-sm font-medium truncate pointer-events-none",
+                "text-sm font-medium truncate pointer-events-none font-oswald",
                 "text-foreground",
                 isActive && "font-semibold"
               )}
