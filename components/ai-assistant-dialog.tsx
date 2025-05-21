@@ -164,7 +164,7 @@ function AiAssistantDialog({ isOpen, onClose }: AiAssistantDialogProps) {
           <Accordion type="single" collapsible className="w-full pt-4 border-t mt-6">
             <AccordionItem value="how-it-works">
               <AccordionTrigger className="text-xs sm:text-sm font-medium text-muted-foreground hover:no-underline">
-                Need the step-by-step details again?
+                Need a more comprehensive step-by-step guide?
               </AccordionTrigger>
               <AccordionContent className="pt-2">{howItWorksSteps}</AccordionContent>
             </AccordionItem>
