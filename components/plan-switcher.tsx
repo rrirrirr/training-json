@@ -120,7 +120,7 @@ export const PlanSwitcherItem: React.FC<PlanSwitcherItemProps> = ({
             )}
             <span
               className={cn(
-                "text-sm font-medium truncate pointer-events-none font-oswald",
+                "text-sm font-medium truncate pointer-events-none",
                 "text-foreground",
                 isActive && "font-semibold"
               )}
@@ -251,6 +251,7 @@ export const PlanSwitcher: React.FC<PlanSwitcherProps> = ({
                 "bg-primary text-primary-foreground",
                 "hover:bg-primary/90 focus-visible:bg-primary/90",
                 "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+                "font-oswald uppercase",
                 "m-1"
               )}
               onSelect={handleCreateClick}
