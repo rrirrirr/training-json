@@ -43,15 +43,24 @@ interface AIPromptMenuProps {
 // Helper function to get gradient styles for different prompt types
 const getPromptGradientStyle = (promptId: string): string => {
   const gradientMap: Record<string, string> = {
-    "novice-interview": "bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-150 border-green-200 hover:border-green-300",
-    "goal-oriented-request": "bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-150 border-blue-200 hover:border-blue-300", 
-    "experienced-optimizer": "bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-150 border-purple-200 hover:border-purple-300",
-    "constraint-focused": "bg-gradient-to-br from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-150 border-orange-200 hover:border-orange-300",
-    "modify-plan": "bg-gradient-to-br from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-150 border-indigo-200 hover:border-indigo-300",
-    "format-plan": "bg-gradient-to-br from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-150 border-emerald-200 hover:border-emerald-300"
+    "novice-interview":
+      "bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-150 border-green-200 hover:border-green-300 dark:from-green-700/70 dark:to-green-800/70 dark:hover:from-green-600/70 dark:hover:to-green-700/70 dark:border-green-600/80 dark:hover:border-green-500/80",
+    "goal-oriented-request":
+      "bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-150 border-blue-200 hover:border-blue-300 dark:from-blue-700/70 dark:to-blue-800/70 dark:hover:from-blue-600/70 dark:hover:to-blue-700/70 dark:border-blue-600/80 dark:hover:border-blue-500/80",
+    "experienced-optimizer":
+      "bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-150 border-purple-200 hover:border-purple-300 dark:from-purple-700/70 dark:to-purple-800/70 dark:hover:from-purple-600/70 dark:hover:to-purple-700/70 dark:border-purple-600/80 dark:hover:border-purple-500/80",
+    "constraint-focused":
+      "bg-gradient-to-br from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-150 border-orange-200 hover:border-orange-300 dark:from-orange-700/70 dark:to-orange-800/70 dark:hover:from-orange-600/70 dark:hover:to-orange-700/70 dark:border-orange-600/80 dark:hover:border-orange-500/80",
+    "modify-plan":
+      "bg-gradient-to-br from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-150 border-indigo-200 hover:border-indigo-300 dark:from-indigo-700/70 dark:to-indigo-800/70 dark:hover:from-indigo-600/70 dark:hover:to-indigo-700/70 dark:border-indigo-600/80 dark:hover:border-indigo-500/80",
+    "format-plan":
+      "bg-gradient-to-br from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-150 border-emerald-200 hover:border-emerald-300 dark:from-emerald-700/70 dark:to-emerald-800/70 dark:hover:from-emerald-600/70 dark:hover:to-emerald-700/70 dark:border-emerald-600/80 dark:hover:border-emerald-500/80",
   }
-  
-  return gradientMap[promptId] || "bg-gradient-to-br from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-150 border-gray-200 hover:border-gray-300"
+
+  return (
+    gradientMap[promptId] ||
+    "bg-gradient-to-br from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-150 border-gray-200 hover:border-gray-300 dark:from-gray-700/70 dark:to-gray-800/70 dark:hover:from-gray-600/70 dark:hover:to-gray-700/70 dark:border-gray-600/80 dark:hover:border-gray-500/80"
+  )
 }
 
 const usePromptController = () => {
@@ -179,7 +188,12 @@ const usePromptController = () => {
   ],
 
   // REQUIRED: Define groupings of weeks for navigation/overview
-  "blocks": [
+  // Note: There are two "blocks" definitions in your original code. I'm assuming this one is intended for navigation/grouping
+  // and the one above is for defining training phases. If this is a duplication, you might want to clarify or merge.
+  // For now, I'll keep it as is.
+  "blocks": [ // This seems like a duplicate of the "blocks" key defined earlier.
+              // Please verify if this is intended or if one should be removed/renamed.
+              // Assuming this is for UI grouping if the other is for training phases.
     {
       "id": "number (Unique ID for the block)", // REQUIRED
       "name": "string (Display name, e.g., 'Block 1 (Weeks 1-4)')", // REQUIRED
@@ -360,16 +374,19 @@ export function AIPromptMenu({ onCopy }: AIPromptMenuProps) {
         <DropdownMenuTrigger asChild>
           {/* Trigger Button */}
           <Button
-            variant="default"
+            variant="default" // Assuming your default button variant handles dark mode appropriately or you might need to adjust this too.
             size="lg"
-            className="w-full sm:w-auto min-w-[200px] px-6 shadow-md hover:shadow-lg hover:brightness-110 transition-all duration-150 ease-in-out flex items-center justify-center gap-2 group"
+            className="w-full sm:w-auto min-w-[200px] px-6 shadow-md hover:shadow-lg hover:brightness-110 transition-all duration-150 ease-in-out flex items-center justify-center gap-2 group dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-100" // Example dark mode for button itself
           >
             <Wand2 className="h-5 w-5 transition-transform duration-150 group-hover:rotate-12 flex-shrink-0" />
             <span className="text-sm sm:text-base whitespace-nowrap">AI Workout Plan Helper</span>
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent className="w-full max-w-lg md:max-w-xl lg:max-w-2xl p-0" align="start">
+        <DropdownMenuContent
+          className="w-full max-w-lg md:max-w-xl lg:max-w-2xl p-0 dark:bg-slate-800 border-slate-700" // Added dark mode background for dropdown content
+          align="start"
+        >
           {/* Dropdown Content Area */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 max-h-[70vh] overflow-y-auto">
             {promptTemplates.map((template) => {
@@ -379,6 +396,8 @@ export function AIPromptMenu({ onCopy }: AIPromptMenuProps) {
                   key={template.id}
                   className={cn(
                     "h-auto w-full p-3 text-left items-center flex gap-3 transition-all duration-200 ease-in-out hover:shadow-md cursor-pointer rounded-md border",
+                    // Dark mode text colors for better contrast on dark gradients
+                    "text-slate-800 dark:text-slate-200",
                     getPromptGradientStyle(template.id)
                   )}
                   onClick={() => handleItemClick(template.prompt)}
@@ -393,19 +412,25 @@ export function AIPromptMenu({ onCopy }: AIPromptMenuProps) {
                 >
                   {/* Icon Area */}
                   {IconComponent && (
-                    <div className="flex-shrink-0 p-1 bg-white/60 rounded-sm self-start mt-0.5">
-                      <IconComponent className="h-5 w-5 text-muted-foreground" />
+                    <div className="flex-shrink-0 p-1 bg-white/60 dark:bg-slate-700/50 rounded-sm self-start mt-0.5">
+                      {/* Adjusted icon text color for dark mode */}
+                      <IconComponent className="h-5 w-5 text-muted-foreground dark:text-slate-400" />
                     </div>
                   )}
                   {/* Text Content Area */}
                   <div className="flex flex-col flex-grow">
-                    <div className="font-medium mb-0.5">{template.title}</div>
-                    <div className="text-xs text-muted-foreground whitespace-normal">
+                    {/* Adjusted title text color for dark mode */}
+                    <div className="font-medium mb-0.5 text-slate-900 dark:text-slate-100">
+                      {template.title}
+                    </div>
+                    {/* Adjusted description text color for dark mode */}
+                    <div className="text-xs text-muted-foreground dark:text-slate-400 whitespace-normal">
                       {template.description}
                     </div>
                   </div>
                   {/* Copy Icon */}
-                  <Copy className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-auto self-start mt-0.5" />
+                  {/* Adjusted copy icon color for dark mode */}
+                  <Copy className="h-4 w-4 text-muted-foreground dark:text-slate-400 flex-shrink-0 ml-auto self-start mt-0.5" />
                 </div>
               )
             })}
