@@ -129,8 +129,8 @@ export function PlanModeMenu() {
             className={cn(
               "-ml-2 p-1",
               mode === "edit"
-                ? "text-edit-mode-text hover:text--edit-mode-hover-text"
-                : "text-view-mode-text hover:text--view-mode-hover-text"
+                ? "text-edit-mode-text hover:text-edit-mode-hover-text"
+                : "text-view-mode-text hover:text-view-mode-hover-text"
             )}
           >
             <ArrowLeft className="h-4 w-4 mr-1.5" />
@@ -144,7 +144,7 @@ export function PlanModeMenu() {
               <div
                 className={cn(
                   "flex items-center text-sm font-oswald font-light uppercase tracking-wide",
-                  mode === "edit" ? "text-[var(--edit-mode-text)]" : "text-[var(--view-mode-text)]"
+                  mode === "edit" ? "text-edit-mode-text" : "text-view-mode-text"
                 )}
               >
                 {mode === "edit" ? (
@@ -198,8 +198,9 @@ export function PlanModeMenu() {
                 data-testid="save-button"
                 className={cn(
                   "w-full sm:w-auto",
-                  "border-edit-mode-border text-edit-mode-text",
-                  "hover:bg-edit-mode-hover-bg hover:text-edit-mode-hover-text"
+                  mode === "edit"
+                    ? "border-edit-mode-border bg-edit-mode-bg text-edit-mode-text hover:text-edit-mode-hover-text"
+                    : "border-view-mode-border bg-view-mode-bg text-view-mode-text hover:text-view-mode-hover-text"
                 )}
               >
                 {isSaving ? (
@@ -224,11 +225,11 @@ export function PlanModeMenu() {
       {/* Alert Dialog for Discard Confirmation */}
       <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
         <AlertDialogContent
-          className={cn(mode === "edit" ? "border-[var(--edit-mode-border)]" : "")}
+          className={cn(mode === "edit" ? "border-edit-mode-border" : "")}
           data-testid="discard-warning-dialog"
         >
           <AlertDialogHeader>
-            <AlertDialogTitle className={cn(mode === "edit" ? "text-[var(--edit-mode-text)]" : "")}>
+            <AlertDialogTitle className={cn(mode === "edit" ? "text-edit-mode-text" : "")}>
               Discard unsaved changes?
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -238,11 +239,7 @@ export function PlanModeMenu() {
           <AlertDialogFooter>
             <AlertDialogCancel
               onClick={cancelDiscardChanges}
-              className={cn(
-                mode === "edit"
-                  ? "border-[var(--edit-mode-border)] text-[var(--edit-mode-text)]"
-                  : ""
-              )}
+              className={cn(mode === "edit" ? "border-edit-mode-border text-edit-mode-text" : "")}
               data-testid="cancel-button"
             >
               Cancel
