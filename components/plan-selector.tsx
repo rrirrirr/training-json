@@ -19,11 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 import { usePlanStore, type PlanMetadata } from "@/store/plan-store"
 import JsonEditor from "./json-editor" // Import the new JSON editor component
@@ -33,7 +29,7 @@ export default function PlanSelector() {
   const activePlan = usePlanStore((state) => state.activePlan)
   const activePlanId = usePlanStore((state) => state.activePlanId)
   const removeLocalPlan = usePlanStore((state) => state.removeLocalPlan)
-  
+
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isJsonEditorOpen, setIsJsonEditorOpen] = useState(false) // New state for JSON editor
@@ -43,7 +39,7 @@ export default function PlanSelector() {
   // Handle plan selection
   const handleSelectPlan = (plan: PlanMetadata) => {
     // Instead of directly updating the state, navigate to the plan page
-    window.location.href = `/plan/${plan.id}`;
+    window.location.href = `/plan/${plan.id}`
     setIsPopoverOpen(false)
   }
 
@@ -51,14 +47,17 @@ export default function PlanSelector() {
   const handleViewJsonClick = (plan: PlanMetadata, e: React.MouseEvent) => {
     e.stopPropagation()
     // Since we only have metadata, we need to make sure we have the full plan
-    const planData = activePlanId === plan.id ? { 
-      id: plan.id,
-      name: plan.name,
-      data: activePlan, 
-      createdAt: plan.createdAt,
-      updatedAt: plan.updatedAt,
-    } : plan
-    
+    const planData =
+      activePlanId === plan.id
+        ? {
+            id: plan.id,
+            name: plan.name,
+            data: activePlan,
+            createdAt: plan.createdAt,
+            updatedAt: plan.updatedAt,
+          }
+        : plan
+
     setPlanToViewJson(planData)
     setIsJsonEditorOpen(true)
     setIsPopoverOpen(false)
@@ -76,10 +75,10 @@ export default function PlanSelector() {
   const handleConfirmDelete = async () => {
     if (planToDelete) {
       await removeLocalPlan(planToDelete.id)
-      
+
       // If we just deleted the active plan, redirect to home
       if (activePlanId === planToDelete.id) {
-        window.location.href = "/";
+        window.location.href = "/"
       }
     }
     setPlanToDelete(null)
@@ -126,41 +125,41 @@ export default function PlanSelector() {
                   <div className="text-xs text-gray-500">Updated: {formatDate(plan.updatedAt)}</div>
                 </div>
                 <div className="flex items-center">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-blue-500 -translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200"
-                          onClick={(e) => handleViewJsonClick(plan, e)}
-                          aria-label={`Edit JSON for ${plan.name}`}
-                        >
-                          <FileText className="h-4 w-4" />
-                          <span className="sr-only">Edit JSON</span>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        <p>Edit JSON</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-500 -translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 delay-75"
-                          onClick={(e) => handleDeleteClick(plan, e)}
-                          aria-label={`Delete ${plan.name}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">Delete Plan</span>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        <p>Delete Plan</p>
-                      </TooltipContent>
-                    </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-blue-500 -translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200"
+                        onClick={(e) => handleViewJsonClick(plan, e)}
+                        aria-label={`Edit JSON for ${plan.name}`}
+                      >
+                        <FileText className="h-4 w-4" />
+                        <span className="sr-only">Edit JSON</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Edit JSON</p>
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-red-500 -translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 delay-75"
+                        onClick={(e) => handleDeleteClick(plan, e)}
+                        aria-label={`Delete ${plan.name}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Delete Plan</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Delete Plan</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             ))}
