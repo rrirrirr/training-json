@@ -52,19 +52,19 @@ export function SidebarDialogs() {
 
   // New callback for JsonEditor's onUnsavedChange prop
   const handleJsonEditorUnsavedChange = useCallback((hasChanges: boolean) => {
-    const currentStore = usePlanStore.getState();
+    const currentStore = usePlanStore.getState()
     // Only update if in edit mode and the status actually needs changing
-    if (currentStore.mode === 'edit' && currentStore.hasUnsavedChanges !== hasChanges) {
-      console.log(`[SidebarDialogs] JsonEditor hasChanges: ${hasChanges}. Updating store.`);
+    if (currentStore.mode === "edit" && currentStore.hasUnsavedChanges !== hasChanges) {
+      console.log(`[SidebarDialogs] JsonEditor hasChanges: ${hasChanges}. Updating store.`)
       // Use the existing _setModeState to update the hasUnsavedChanges flag
       currentStore._setModeState(
         currentStore.mode,
         currentStore.draftPlan, // Keep current draftPlan
         currentStore.originalPlanId,
         hasChanges // Update the unsaved flag
-      );
+      )
     }
-  }, []);
+  }, [])
 
   // New callback for JsonEditor's onSave prop
   const handleEditorSave = useCallback(
@@ -222,15 +222,15 @@ export function SidebarDialogs() {
           console.log(`[SidebarDialogs] Exiting current edit mode...`)
           exitMode({ navigateTo: false })
         }
-        
+
         // Close the dialog
         closeSwitchWarningDialog()
-        
+
         // Determine the target URL and perform a full page reload
         const targetUrl = isSwitchToEditMode ? `/plan/${planId}/edit` : `/plan/${planId}`
         console.log(`[SidebarDialogs] Hard reloading page to: ${targetUrl}`)
-        
-        // Use window.location.href for a full page reload 
+
+        // Use window.location.href for a full page reload
         // This is more reliable than router.push for complex state changes
         window.location.href = targetUrl
       } catch (error) {
