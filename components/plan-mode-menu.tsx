@@ -64,9 +64,8 @@ export function PlanModeMenu() {
       setShowExitConfirm(true)
     } else {
       // Exit mode AND navigate immediately if no unsaved changes
-      const targetUrl = currentStoreState.originalPlanId
-        ? `/plan/${currentStoreState.originalPlanId}`
-        : "/"
+      const targetUrl = "/"
+
       discardDraftPlan() // Reset state
       router.replace(targetUrl) // Navigate immediately
     }
