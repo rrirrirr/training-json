@@ -92,7 +92,7 @@ export default function WeekSelector({
       isSelected
         ? "bg-primary text-primary-foreground"
         : colorClasses
-          ? cn(colorClasses.bg, colorClasses.text)
+          ? cn(colorClasses.grid, colorClasses.text)
           : "hover:bg-muted text-foreground",
       // Indicator styles:
       hasBorderIndicator ? "border-l-4" : "",
