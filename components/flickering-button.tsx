@@ -55,14 +55,14 @@ export function FlickeringButton({ children, className, style, ...props }: Flick
           0%,
           100% {
             /* Animate background-color and box-shadow for glow */
-            background-color: #ff6347; /* Lighter orange-red */
+            background-color: #ff6347d5; /* Lighter orange-red */
             /* Adjust shadow to match desired glow */
             box-shadow:
               0 0 8px rgba(255, 69, 0, 0.6),
               0 0 15px rgba(255, 140, 0, 0.4);
           }
           50% {
-            background-color: #ff8c00; /* Darker orange */
+            background-color: #ff8c00d5; /* Darker orange */
             box-shadow:
               0 0 12px rgba(255, 140, 0, 0.7),
               0 0 25px rgba(255, 69, 0, 0.5);
