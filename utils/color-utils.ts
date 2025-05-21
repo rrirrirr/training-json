@@ -34,6 +34,7 @@ export interface StyleClasses {
   bg: string
   text: string
   border: string
+  grid: string // grid element bg
 }
 
 // Color intensity mapping for light/dark modes
@@ -55,91 +56,175 @@ const SPECIAL_MAPPINGS: Record<
   ColorName,
   Partial<Record<"light" | "dark", Partial<Record<"bg" | "text" | "border", string>>>>
 > = {
-  // Yellow needs lighter text in light mode for readability
-  yellow: {
-    light: {
-      text: "800", // Use a slightly lighter shade for better contrast
-    },
-    dark: {
-      text: "100", // Even lighter text for better contrast in dark mode
-      bg: "800", // Not as dark as the default 900 to maintain yellowy feeling
-    },
-  },
-  // Orange also needs adjustments for readability
-  orange: {
-    light: {
-      text: "800", // Lighter text for better contrast
-    },
-    dark: {
-      bg: "800", // Less dark to maintain orange feeling
-      border: "700", // Lighter border for contrast
-    },
-  },
-  // Red needs adjustments for readability in dark mode
-  red: {
-    dark: {
-      bg: "800", // Not too dark to maintain reddish feeling
-      border: "700", // Lighter border
-    },
-  },
-  // Blue adjustments for dark mode
-  blue: {
+  slate: {
     dark: {
       bg: "950",
-      border: "700", // Lighter border for better visibility
+      border: "700",
     },
   },
-  // Green adjustments
-  green: {
+  gray: {
     dark: {
-      bg: "950", // Not too dark to maintain green feeling
-      border: "700", // Lighter border
+      bg: "950",
+      border: "700",
     },
   },
-  // Cyan is often too light
+  zinc: {
+    dark: {
+      bg: "950",
+      border: "700",
+    },
+  },
+  neutral: {
+    dark: {
+      bg: "950",
+      border: "700",
+    },
+  },
+  stone: {
+    dark: {
+      bg: "950",
+      border: "700",
+    },
+  },
+  red: {
+    light: {
+      // Existing light mode settings preserved
+    },
+    dark: {
+      // bg was "800", border was "700"
+      bg: "950",
+      border: "700",
+    },
+  },
+  orange: {
+    light: {
+      text: "800", // Existing light mode settings preserved
+    },
+    dark: {
+      // bg was "800", border was "700"
+      bg: "950",
+      border: "700",
+    },
+  },
+  amber: {
+    dark: {
+      bg: "950",
+      border: "700",
+    },
+  },
+  yellow: {
+    light: {
+      text: "800", // Existing light mode settings preserved
+    },
+    dark: {
+      text: "100", // Existing dark mode text preserved
+      // bg was "800"
+      bg: "950",
+      border: "700", // New border setting
+    },
+  },
+  lime: {
+    dark: {
+      bg: "950",
+      border: "700",
+    },
+  },
+  green: {
+    light: {
+      // Existing light mode settings preserved (if any)
+    },
+    dark: {
+      // bg was "950", border was "700" - remains the same
+      bg: "950",
+      border: "700",
+    },
+  },
+  emerald: {
+    dark: {
+      bg: "950",
+      border: "700",
+    },
+  },
+  teal: {
+    dark: {
+      bg: "950",
+      border: "700",
+    },
+  },
   cyan: {
     light: {
-      text: "800", // Darker text for better contrast
+      text: "800", // Existing light mode settings preserved
     },
     dark: {
-      bg: "800", // Not too dark to maintain cyan feeling
+      // bg was "800"
+      bg: "950",
+      border: "700", // New border setting
     },
   },
-  // Purple adjustments
-  purple: {
+  sky: {
     dark: {
-      bg: "800", // Not too dark to maintain purple feeling
-      border: "700", // Lighter border
+      bg: "950",
+      border: "700",
     },
   },
-  // Violet adjustments
-  violet: {
+  blue: {
+    light: {
+      // Existing light mode settings preserved (if any)
+    },
     dark: {
-      bg: "950", // Not too dark to maintain violet feeling
-      border: "700", // Lighter border
+      // bg was "950", border was "700" - remains the same
+      bg: "950",
+      border: "700",
     },
   },
-  // Indigo adjustments
   indigo: {
+    light: {
+      // Existing light mode settings preserved (if any)
+    },
     dark: {
-      bg: "800", // Not too dark to maintain indigo feeling
-      border: "700", // Lighter border
+      // bg was "800", border was "700"
+      bg: "950",
+      border: "700",
     },
   },
-  // No special cases for other colors - they'll use the defaults
-  slate: {},
-  gray: {},
-  zinc: {},
-  neutral: {},
-  stone: {},
-  amber: {},
-  lime: {},
-  emerald: {},
-  teal: {},
-  sky: {},
-  fuchsia: {},
-  pink: {},
-  rose: {},
+  violet: {
+    light: {
+      // Existing light mode settings preserved (if any)
+    },
+    dark: {
+      // bg was "950", border was "700" - remains the same
+      bg: "950",
+      border: "700",
+    },
+  },
+  purple: {
+    light: {
+      // Existing light mode settings preserved (if any)
+    },
+    dark: {
+      // bg was "800", border was "700"
+      bg: "950",
+      border: "700",
+    },
+  },
+  fuchsia: {
+    dark: {
+      bg: "950",
+      border: "700",
+    },
+  },
+  pink: {
+    dark: {
+      bg: "950",
+      border: "700",
+    },
+  },
+  rose: {
+    dark: {
+      bg: "950",
+      border: "700",
+    },
+  },
 }
 
 /**
@@ -163,6 +248,7 @@ export function getThemeAwareColorClasses(
       bg: "bg-card",
       text: "text-card-foreground",
       border: "border-border",
+      grid: "bg-card",
     }
   }
 
@@ -182,6 +268,7 @@ export function getThemeAwareColorClasses(
     bg: `bg-${colorName}-${bgShade}`,
     text: `text-${colorName}-${textShade}`,
     border: `border-${colorName}-${borderShade}`,
+    grid: `bg-${colorName}-${borderShade}`,
   }
 }
 
