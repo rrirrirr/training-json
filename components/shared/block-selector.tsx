@@ -37,7 +37,7 @@ export default function BlockSelector({
           const customColorStyle =
             selectedBlockId !== block.id && colorClasses
               ? {
-                  className: colorClasses.bg,
+                  className: colorClasses.grid,
                   textClassName: colorClasses.text,
                 }
               : null
