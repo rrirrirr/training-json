@@ -55,7 +55,7 @@ export default function WeeklyView({ week, trainingPlan, compact = false }: Week
               {/* Week Type and Badges - Using BadgeWithTooltip */}
               {weekType && weekType !== "-" && (
                 <BadgeWithTooltip
-                  className="text-sm font-normal px-2 py-0.5 bg-muted rounded-full normal-case tracking-normal font-sans"
+                  className="text-sm font-normal px-2 py-0.5 bg-muted rounded-full normal-case tracking-normal font-sans text-primary"
                   tooltipContent={`This is a Type ${weekType} training week`}
                 >
                   Type {weekType}
