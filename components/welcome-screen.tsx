@@ -45,7 +45,7 @@ export default function WelcomeScreen({ onImportData }: WelcomeScreenProps) {
               onClick={() => {
                 aiInfoModalStore.open()
               }}
-              className="italic font-bold text-primary font-oswald uppercase w-full sm:w-auto sm:min-w-[320px] flex items-center justify-center py-4 sm:py-6 lg:py-8 px-6 text-base sm:text-xl shadow-md"
+              className="italic font-bold font-oswald uppercase w-full sm:w-auto sm:min-w-[320px] flex items-center justify-center py-4 sm:py-6 lg:py-8 px-6 text-base sm:text-xl shadow-md"
             >
               <div className="flex items-center">
                 <Sparkles className="h-6 w-6 mr-3" />
