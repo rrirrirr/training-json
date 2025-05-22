@@ -69,25 +69,22 @@ export function AppHeader({}: HeaderProps) {
   return (
     <header
       className={cn(
-        // Sticky header classes
-        "sticky top-0 z-30 flex h-14 items-center gap-2 px-3 sm:px-6 justify-between shadow-sm",
-        isRootRoute ? "bg-[var(--sidebar-80)]" : "bg-sidebar"
+        "sticky top-0 z-30 flex h-14 items-center gap-2 px-3 sm:px-6 justify-between shadow-sm md:hidden",
+        isRootRoute ? "bg-sidebar/60" : "bg-sidebar"
       )}
     >
       {/* --- Left Side: Conditional Toggle & Mode Indicator --- */}
       <div className="flex items-center">
-        {isMobile && (
-          <Button
-            variant="ghost"
-            size="icon"
-            // Use toggleSidebar function from the sidebar context
-            onClick={toggleSidebar}
-            // Dynamically set aria-label
-            aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          // Use toggleSidebar function from the sidebar context
+          onClick={toggleSidebar}
+          // Dynamically set aria-label
+          aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
 
         {/* --- Mode Indicator Icon (only when not on root route and in edit/view mode) --- */}
         {!isRootRoute && (mode === "edit" || mode === "view") && (
@@ -132,7 +129,7 @@ export function AppHeader({}: HeaderProps) {
         </Button>
       )}
       {/* --- Right Side Actions (Conditional) --- */}
-      {(!isMobile || !isRootRoute) && (
+      {isMobile && !isRootRoute && (
         <div className="flex items-center gap-2">
           {/* Dropdown Menu */}
           <DropdownMenu>
