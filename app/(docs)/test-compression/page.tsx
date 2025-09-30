@@ -156,7 +156,7 @@ export default function TestCompressionPage() {
             </Button>
           </a>
           <a
-            href={`https://t-json.vercel.app/create/${compressedInput}`}
+            href={`https://training-json.vercel.app/create/${compressedInput}`}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full"

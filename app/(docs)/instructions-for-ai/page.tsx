@@ -24,7 +24,7 @@ compressed = zlib.compress(json_data.encode("utf-8"))
 encoded = base64.urlsafe_b64encode(compressed).decode("utf-8")
 
 # 5. Build the URL
-url = f"https://t-json.vercel.app/create/{encoded}"
+url = f"https://training-json.vercel.app/create/{encoded}"
 print(url)
 `
 
@@ -191,7 +191,7 @@ const AiInstructions = () => {
       </h3>
       <p>
         Your final response to the user should be a single line containing only the generated URL.
-        For example: <code>https://t-json.vercel.app/create/COMPRESSED_DATA_HERE</code>
+        For example: <code>https://training-json.vercel.app/create/COMPRESSED_DATA_HERE</code>
       </p>
     </div>
   )
