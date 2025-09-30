@@ -11,18 +11,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 import { usePlanStore, type PlanMetadata } from "@/store/plan-store"
 import JsonEditor from "./json-editor" // Import the new JSON editor component
+import { DeletePlanDialog } from "@/components/dialogs/delete-plan-dialog"
 
 export default function PlanSelector() {
   const planMetadataList = usePlanStore((state) => state.planMetadataList)
@@ -178,38 +171,16 @@ export default function PlanSelector() {
       />
 
       {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={isDeleteDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsDeleteDialogOpen(false)
-            setPlanToDelete(null)
-          }
+      <DeletePlanDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => {
+          setIsDeleteDialogOpen(false)
+          setPlanToDelete(null)
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete JSON Plan</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete "{planToDelete?.name}"? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsDeleteDialogOpen(false)
-                setPlanToDelete(null)
-              }}
-            >
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmDelete}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onConfirm={handleConfirmDelete}
+        planName={planToDelete?.name}
+        title="Delete JSON Plan"
+      />
     </>
   )
 }

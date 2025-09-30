@@ -6,6 +6,7 @@ import { useUIState } from "@/contexts/ui-context"
 import { usePlanStore, type PlanData } from "@/store/plan-store" // Ensure PlanData is correctly typed if needed
 import { useRouter } from "next/navigation" // Import useRouter
 import JsonEditor from "@/components/json-editor"
+import { DeletePlanDialog } from "@/components/dialogs/delete-plan-dialog"
 import {
   Dialog,
   DialogContent,
@@ -250,28 +251,12 @@ export function SidebarDialogs() {
       />
 
       {/* Delete Plan Dialog */}
-      {/* Add the missing Dialog wrapper with open state and close handler */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={(open) => !open && closeDeleteDialog()}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Plan</DialogTitle>
-            <DialogDescription>
-              {/* Use optional chaining for safety */}
-              Are you sure you want to remove "{planToDelete?.name ?? "this plan"}"? This action
-              cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={closeDeleteDialog}>
-              Cancel
-            </Button>
-            {/* Button triggers the async handler */}
-            <Button variant="destructive" onClick={handleConfirmDelete}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeletePlanDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={closeDeleteDialog}
+        onConfirm={handleConfirmDelete}
+        planName={planToDelete?.name}
+      />
 
       {/* Switch Warning Dialog */}
       <AlertDialog

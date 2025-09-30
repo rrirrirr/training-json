@@ -15,16 +15,9 @@ import { Badge } from "@/components/ui/badge"
 import { usePlanStore, selectSortedPlanMetadata } from "@/store/plan-store" // Assuming selectSortedPlanMetadata is correctly typed
 import { formatDistanceToNow } from "date-fns"
 import { CalendarDays, ChevronRight, Edit, Trash2 } from "lucide-react"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog"
 import { useUIState } from "@/contexts/ui-context" // Assuming this context provides openJsonEditor
 import { useToast } from "@/components/ui/use-toast"
+import { DeletePlanDialog } from "@/components/dialogs/delete-plan-dialog"
 
 // Define a more specific type for plan metadata if available
 interface PlanMetadata {
@@ -59,8 +52,8 @@ export function PlansGrid() {
   const { openJsonEditor } = useUIState()
   const { toast } = useToast()
 
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [planToDelete, setPlanToDelete] = useState<{ id: string; name: string } | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   // This state is for when fetching full data for a *specific* plan for editing
   const [isFetchingSpecificPlan, setIsFetchingSpecificPlan] = useState(false)
 
@@ -208,25 +201,13 @@ export function PlansGrid() {
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Training Plan</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete &quot;{planToDelete?.name}&quot;? This action cannot
-              be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmDelete}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeletePlanDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleConfirmDelete}
+        planName={planToDelete?.name}
+        title="Delete Training Plan"
+      />
     </>
   )
 }

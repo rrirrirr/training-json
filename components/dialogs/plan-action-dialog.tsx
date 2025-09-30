@@ -3,15 +3,7 @@
 import { useUIState } from "@/contexts/ui-context"
 import { usePlanStore } from "@/store/plan-store"
 import JsonEditor from "@/components/json-editor"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
+import { DeletePlanDialog } from "@/components/dialogs/delete-plan-dialog"
 
 export function PlanActionDialog() {
   const { isPlanActionDialogOpen, planActionType, planActionTarget, closePlanActionDialog } = useUIState()
@@ -39,29 +31,13 @@ export function PlanActionDialog() {
   // If it's a delete dialog
   if (planActionType === 'delete' && planActionTarget) {
     return (
-      <Dialog open={isPlanActionDialogOpen} onOpenChange={(open) => !open && closePlanActionDialog()}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete JSON Plan</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete "
-              {planActionTarget?.metadata?.planName || planActionTarget?.name || "this plan"}"? This action
-              cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={closePlanActionDialog}
-            >
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmDelete}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeletePlanDialog
+        isOpen={isPlanActionDialogOpen}
+        onClose={closePlanActionDialog}
+        onConfirm={handleConfirmDelete}
+        planName={planActionTarget?.metadata?.planName || planActionTarget?.name}
+        title="Delete JSON Plan"
+      />
     )
   }
 
