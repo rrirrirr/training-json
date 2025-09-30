@@ -18,14 +18,29 @@ function CompressedPlanRedirector() {
   useEffect(() => {
     if (compressed) {
       try {
-        const base64Decoded = Buffer.from(compressed, "base64")
+        // 1. Manually and fully decode the URL component
+        const decodedCompressed = decodeURIComponent(compressed)
+
+        // 2. Convert from base64url to standard base64
+        let base64 = decodedCompressed.replace(/-/g, "+").replace(/_/g, "/")
+
+        // 3. Add back any missing padding
+        const padding = base64.length % 4
+        if (padding) {
+          base64 += "=".repeat(4 - padding)
+        }
+
+        // 4. Decode the corrected base64 string
+        const base64Decoded = Buffer.from(base64, "base64")
+
+        // 5. Decompress with pako
         const decompressed = pako.inflate(base64Decoded, { to: "string" })
         const jsonData: TrainingPlanData = JSON.parse(decompressed)
 
         // Set the store to view mode with the decompressed data
         setDraftPlan("view", jsonData, null, false)
 
-        // Redirect to the generic /create page which will display the draft plan
+        // Redirect to the view page
         router.replace("/create")
       } catch (e: any) {
         setError("Failed to decompress or parse the training plan link. The link may be invalid.")
